@@ -114,7 +114,7 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
             onKeyDown={handleKeyDown}
             variant="standard"
             InputProps={{ disableUnderline: true }}
-            sx={{ input: { fontSize: "1.1rem" } }}
+            sx={{ input: { fontSize: "1rem" } }}
           />
           <IconButton onClick={handleClose}>
             <CloseIcon sx={{ color: "var(--text-400)" }} />
