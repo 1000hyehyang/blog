@@ -11,6 +11,7 @@ import {
   MenuItem,
   Chip,
   OutlinedInput,
+  Input,
   InputLabel,
   Select,
 } from "@mui/material";
@@ -111,13 +112,42 @@ export default function NewPostPage() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           fullWidth
+          variant="standard"
+          InputProps={{
+            disableUnderline: true,
+            sx: {
+              px: 0,
+              py: 1,
+              fontSize: "1.5rem", // 입력 텍스트 크기 키우기
+              fontWeight: 600,
+            },
+          }}
+          InputLabelProps={{
+            shrink: true,
+            sx: {
+              fontSize: "1rem", // 라벨 텍스트 크기
+              color: "var(--text-400)",
+            },
+          }}
+          sx={{
+            backgroundColor: "transparent",
+          }}
         />
 
         {/* 카테고리 */}
         <Box>
-          <InputLabel shrink sx={{ mb: 1 }}>
+          <InputLabel
+            shrink
+            sx={{
+              mb: 1,
+              fontSize: "1rem",
+              fontWeight: 500,
+              color: "var(--text-300)",
+            }}
+          >
             카테고리
           </InputLabel>
+
           <Select
             value={category}
             onChange={(e: SelectChangeEvent<string>) =>
@@ -126,12 +156,35 @@ export default function NewPostPage() {
             fullWidth
             displayEmpty
             input={<OutlinedInput />}
+            sx={{
+              borderRadius: 2,
+              backgroundColor: "var(--bg-200)",
+              fontSize: "0.95rem",
+              fontWeight: 500,
+              color: "var(--text-200)",
+              ".MuiOutlinedInput-notchedOutline": {
+                borderColor: "var(--bg-200)",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "var(--primary-100)",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "var(--primary-100)",
+              },
+            }}
           >
-            <MenuItem value="" disabled>
-              선택하세요
+            <MenuItem value="" disabled sx={{ color: "var(--text-300)" }}>
+              카테고리를 선택하세요
             </MenuItem>
             {categoryList.map((cat) => (
-              <MenuItem key={cat} value={cat}>
+              <MenuItem
+                key={cat}
+                value={cat}
+                sx={{
+                  fontWeight: 500,
+                  fontSize: "0.95rem",
+                }}
+              >
                 {cat}
               </MenuItem>
             ))}
@@ -168,17 +221,39 @@ export default function NewPostPage() {
           <InputLabel shrink sx={{ mb: 1 }}>
             태그 (Enter 또는 , 로 추가)
           </InputLabel>
-          <OutlinedInput
+          <Input
             fullWidth
+            disableUnderline={false}
             onKeyDown={handleTagKeyDown}
             placeholder="예: react, springboot"
+            sx={{
+              fontSize: "0.95rem",
+              fontWeight: 400,
+              color: "var(--text-100)",
+              px: 0,
+              pb: 0.5,
+              borderBottom: "1px solid var(--bg-300)",
+              "&:hover": {
+                borderBottom: "1px solid var(--primary-100)",
+              },
+              "&.Mui-focused": {
+                borderBottom: "1px solid var(--primary-100)",
+              },
+            }}
           />
-          <Box mt={1} display="flex" gap={1} flexWrap="wrap">
+
+          <Box mt={2} display="flex" gap={1} flexWrap="wrap">
             {tags.map((tag) => (
               <Chip
                 key={tag}
                 label={`#${tag}`}
                 onDelete={() => handleTagDelete(tag)}
+                sx={{
+                  fontSize: "0.875rem",
+                  backgroundColor: "var(--bg-200)",
+                  color: "var(--text-300)",
+                  borderRadius: 8,
+                }}
               />
             ))}
           </Box>

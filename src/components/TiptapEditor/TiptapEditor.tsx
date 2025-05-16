@@ -44,7 +44,7 @@ export default function TiptapEditor({
       Highlight.configure({ multicolor: true }),
       TextStyle,
       Color,
-      Heading.configure({ levels: [1, 2, 3, 4] }),
+      Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
       Placeholder.configure({
         placeholder: placeholder || "내용을 입력하세요...",
       }),

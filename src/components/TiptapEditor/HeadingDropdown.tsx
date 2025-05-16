@@ -1,11 +1,6 @@
 // src/components/TiptapEditor/HeadingDropdown.tsx
 import { Editor } from "@tiptap/react";
-import {
-  IconButton,
-  Menu,
-  MenuItem,
-  Tooltip,
-} from "@mui/material";
+import { IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
 import { Title, ArrowDropDown } from "@mui/icons-material";
 
 interface HeadingDropdownProps {
@@ -21,7 +16,7 @@ export default function HeadingDropdown({
   onClick,
   onClose,
 }: HeadingDropdownProps) {
-  const headingLevels = [1, 2, 3, 4] as const;
+  const headingLevels = [1, 2, 3, 4, 5, 6] as const;
 
   return (
     <>
@@ -40,7 +35,7 @@ export default function HeadingDropdown({
               onClose();
             }}
           >
-            Heading {level}
+            H {level}
           </MenuItem>
         ))}
       </Menu>
