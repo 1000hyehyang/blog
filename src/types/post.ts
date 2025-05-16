@@ -1,4 +1,5 @@
 // src\types\post.ts
+import type { PostComment } from "./comment";
 
 // 목록용
 export interface PostSummary {
@@ -13,5 +14,6 @@ export interface PostSummary {
 export interface PostDetail extends PostSummary {
   html: string; // 본문 HTML (Tiptap 저장 결과)
   author: string;
-  comments: Comment[]; // 선택
+  tags: string[];
+  comments: PostComment[]; // 선택
 }

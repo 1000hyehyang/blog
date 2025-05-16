@@ -1,17 +1,27 @@
+import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { Box, Container } from "@mui/material";
 import PostMeta from "../components/Post/PostMeta";
 import PostContent from "../components/Post/PostContent";
 import PostComments from "../components/Post/PostComments";
 import { dummyPostDetail } from "../data/dummyPosts";
-import { useParams } from "react-router-dom";
+import type { PostComment } from "../types/comment";
 
 export default function PostDetailPage() {
   const { id } = useParams();
   const post = dummyPostDetail[Number(id)];
 
+  const [comments, setComments] = useState<PostComment[]>(post?.comments ?? []);
+
   if (!post) {
     return <div>게시글을 찾을 수 없습니다.</div>;
   }
+
+  const handleAddComment = (newComment: PostComment) => {
+    setComments((prev) => [newComment, ...prev]);
+    // API 연동 시 여기에 POST 요청 추가 예정
+    // await api.post(`/posts/${post.id}/comments`, newComment);
+  };
 
   return (
     <Container
@@ -23,7 +33,6 @@ export default function PostDetailPage() {
         gap: 6,
       }}
     >
-      {/* 썸네일 */}
       <Box
         component="img"
         src={post.thumbnailUrl}
@@ -35,15 +44,15 @@ export default function PostDetailPage() {
           objectFit: "cover",
         }}
       />
-
-      {/* 메타 정보 */}
-      <PostMeta title={post.title} author={post.author} date={post.date} />
-
-      {/* 본문 */}
+      <PostMeta
+        title={post.title}
+        author={post.author}
+        date={post.date}
+        tags={post.tags}
+      />
       <PostContent html={post.html} />
 
-      {/* 댓글 */}
-      <PostComments postId={post.id} />
+      <PostComments comments={comments} onAddComment={handleAddComment} />
     </Container>
   );
 }
