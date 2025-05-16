@@ -1,27 +1,40 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Container } from "@mui/material";
 import PostMeta from "../components/Post/PostMeta";
 import PostContent from "../components/Post/PostContent";
 import PostComments from "../components/Post/PostComments";
+import ShareButtonGroup from "../components/common/ShareButtonGroup";
 import { dummyPostDetail } from "../data/dummyPosts";
 import type { PostComment } from "../types/comment";
+import LoadingPostDetail from "./LoadingPostDetail";
 
 export default function PostDetailPage() {
   const { id } = useParams();
-  const post = dummyPostDetail[Number(id)];
+  const [isLoading, setIsLoading] = useState(true);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [post, setPost] = useState<(typeof dummyPostDetail)[1] | null>(null);
 
-  const [comments, setComments] = useState<PostComment[]>(post?.comments ?? []);
+  useEffect(() => {
+    // 더미 기준이므로 비동기 simulate
+    const loadPost = async () => {
+      setIsLoading(true);
+      await new Promise((r) => setTimeout(r, 1000)); // 1초 지연 시뮬레이션
+      const fetchedPost = dummyPostDetail[Number(id)];
+      setPost(fetchedPost);
+      setComments(fetchedPost?.comments ?? []);
+      setIsLoading(false);
+    };
 
-  if (!post) {
-    return <div>게시글을 찾을 수 없습니다.</div>;
-  }
+    loadPost();
+  }, [id]);
 
   const handleAddComment = (newComment: PostComment) => {
     setComments((prev) => [newComment, ...prev]);
-    // API 연동 시 여기에 POST 요청 추가 예정
-    // await api.post(`/posts/${post.id}/comments`, newComment);
+    // API 연동 시 POST 요청 추가
   };
+
+  if (isLoading || !post) return <LoadingPostDetail />;
 
   return (
     <Container
@@ -44,14 +57,24 @@ export default function PostDetailPage() {
           objectFit: "cover",
         }}
       />
+
+      {/* 콘텐츠 헤더 */}
       <PostMeta
         title={post.title}
         author={post.author}
         date={post.date}
         tags={post.tags}
       />
+
+      {/* 콘텐츠 본문 */}
       <PostContent html={post.html} />
 
+      {/* 콘텐츠 공유 버튼 */}
+      <Box display="flex" justifyContent="flex-end">
+        <ShareButtonGroup title={post.title} />
+      </Box>
+
+      {/* 댓글 */}
       <PostComments comments={comments} onAddComment={handleAddComment} />
     </Container>
   );
