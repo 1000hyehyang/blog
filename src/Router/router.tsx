@@ -2,13 +2,21 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "../components/common/Layout";
 import HomePage from "../pages/HomePage";
+import PostDetailPage from "../pages/PostDetailPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <HomePage /> },
+      {
+        index: true, // == path: ""
+        element: <HomePage />,
+      },
+      {
+        path: "post/:id",
+        element: <PostDetailPage />,
+      },
     ],
   },
 ]);
