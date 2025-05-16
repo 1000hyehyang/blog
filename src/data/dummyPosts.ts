@@ -6,6 +6,7 @@ export const dummyPostList: PostSummary[] = [
   {
     id: 1,
     title: "React에서 Zustand로 상태 관리하기",
+    category: "개발",
     content:
       "리덕스를 대체할 수 있는 훨씬 더 가벼운 상태 관리 라이브러리인 Zustand를 알아봅니다.",
     date: "2024.05.10",
@@ -17,6 +18,7 @@ export const dummyPostDetail: Record<number, PostDetail> = {
   1: {
     id: 1,
     title: "React에서 Zustand로 상태 관리하기",
+    category: "개발",
     content:
       "리덕스를 대체할 수 있는 훨씬 더 가벼운 상태 관리 라이브러리인 Zustand를 알아봅니다.",
     date: "2024.05.10",

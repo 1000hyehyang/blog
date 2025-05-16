@@ -1,4 +1,4 @@
-// src/components/Post/PostContentSkeleton.tsx
+// src/components/Post/skeletons/PostContentSkeleton.tsx
 import { Box, Skeleton } from "@mui/material";
 
 export default function PostContentSkeleton() {

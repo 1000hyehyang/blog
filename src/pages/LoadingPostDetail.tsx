@@ -1,10 +1,10 @@
 // src/pages/LoadingPostDetail.tsx
 import { Container } from "@mui/material";
-import PostThumbnailSkeleton from "../components/Post/PostThumbnailSkeleton";
-import PostMetaSkeleton from "../components/Post/PostMetaSkeleton";
-import PostContentSkeleton from "../components/Post/PostContentSkeleton";
-import CommentFormSkeleton from "../components/Post/CommentFormSkeleton";
-import CommentCardSkeleton from "../components/Post/CommentCardSkeleton";
+import PostThumbnailSkeleton from "../components/Post/skeletons/PostThumbnailSkeleton";
+import PostMetaSkeleton from "../components/Post/skeletons/PostMetaSkeleton";
+import PostContentSkeleton from "../components/Post/skeletons/PostContentSkeleton";
+import CommentFormSkeleton from "../components/Post/skeletons/CommentFormSkeleton";
+import CommentCardSkeleton from "../components/Post/skeletons/CommentCardSkeleton";
 
 export default function LoadingPostDetail() {
   return (

@@ -1,4 +1,4 @@
-// src/components/Post/PostCardSkeleton.tsx
+// src/components/Post/skeletons/PostCardSkeleton.tsx
 import { Box, Skeleton, Paper } from "@mui/material";
 
 export default function PostCardSkeleton() {

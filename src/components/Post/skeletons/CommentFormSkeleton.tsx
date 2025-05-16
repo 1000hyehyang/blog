@@ -1,4 +1,4 @@
-// src/components/Post/CommentFormSkeleton.tsx
+// src/components/Post/skeletons/CommentFormSkeleton.tsx
 import { Box, Stack, Skeleton, Avatar, Paper } from "@mui/material";
 
 export default function CommentFormSkeleton() {

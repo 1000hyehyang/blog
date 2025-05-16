@@ -1,4 +1,4 @@
-// src/components/Post/PostThumbnailSkeleton.tsx
+// src/components/Post/skeletons/PostThumbnailSkeleton.tsx
 import { Skeleton } from "@mui/material";
 
 export default function PostThumbnailSkeleton() {
