@@ -12,6 +12,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import SearchModal from "../SearchModal";
+import SocialLoginModal from "../../auth/SocialLoginModal";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../../assets/logo.svg";
@@ -22,6 +23,7 @@ export default function Navbar() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   return (
     <Box
@@ -84,21 +86,23 @@ export default function Navbar() {
               >
                 구독하기
               </Button>
-              <Link to="/login">
-                <Button
-                  sx={{
-                    backgroundColor: "var(--bg-200)",
-                    color: "var(--text-300)",
-                    fontWeight: 500,
-                    borderRadius: 2,
-                    "&:hover": {
-                      backgroundColor: "var(--bg-300)",
-                    },
-                  }}
-                >
-                  로그인
-                </Button>
-              </Link>
+              <Button
+                onClick={() => {
+                  setLoginOpen(true);
+                  setMenuOpen(false);
+                }}
+                sx={{
+                  backgroundColor: "var(--bg-200)",
+                  fontWeight: 500,
+                  color: "var(--text-300)",
+                  borderRadius: 2,
+                  "&:hover": {
+                    backgroundColor: "var(--bg-300)",
+                  },
+                }}
+              >
+                로그인
+              </Button>
             </>
           )}
 
@@ -142,27 +146,26 @@ export default function Navbar() {
               >
                 구독하기
               </Button>
-              <Link to="/login">
-                <Button
-                  fullWidth
-                  sx={{
-                    backgroundColor: "var(--bg-200)",
-                    fontWeight: 500,
-                    color: "var(--text-300)",
-                    borderRadius: 2,
-                    "&:hover": {
-                      backgroundColor: "var(--bg-300)",
-                    },
-                  }}
-                >
-                  로그인
-                </Button>
-              </Link>
+              <Button
+                onClick={() => setLoginOpen(true)}
+                sx={{
+                  backgroundColor: "var(--bg-200)",
+                  color: "var(--text-300)",
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  "&:hover": {
+                    backgroundColor: "var(--bg-300)",
+                  },
+                }}
+              >
+                로그인
+              </Button>
             </Stack>
           </Box>
         </Collapse>
       )}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SocialLoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </Box>
   );
 }
