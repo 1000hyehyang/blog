@@ -34,6 +34,7 @@
   --text-300: var(--stone-700);
   --text-400: var(--stone-500);
   --text-500: var(--stone-300);
+  --text-600: var(--stone-50);
 
   /* 메인 색 */
   --primary-50: var(--amber-300);

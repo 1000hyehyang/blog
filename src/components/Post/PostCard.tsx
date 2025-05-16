@@ -30,7 +30,7 @@ export default function PostCard({
         gap: 3,
         p: 3,
         border: "none",
-        borderRadius: 2,
+        borderRadius: 4,
         backgroundColor: "var(--bg-100)",
         cursor: "pointer",
         transition: "all 0.2s ease",
