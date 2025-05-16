@@ -1,0 +1,68 @@
+/* src/styles/variables.css */
+
+/* CSS 변수 정의 */
+:root {
+  /* === COLOR PALETTE === */
+  /* Amber */
+  --amber-100: #fef3c7;
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+
+  /* Stone */
+  --stone-50: #fafaf9;
+  --stone-100: #f5f5f4;
+  --stone-200: #e7e5e4;
+  --stone-300: #d6d3d1;
+  --stone-500: #78716c;
+  --stone-700: #44403c;
+  --stone-800: #292524;
+  --stone-900: #1c1917;
+
+  /* === SEMANTIC COLOR ROLES === */
+
+  /* 배경색 */
+  --bg-100: var(--stone-50);
+  --bg-200: var(--stone-100);
+  --bg-300: var(--stone-200);
+
+  /* 텍스트 */
+  --text-100: var(--stone-900);
+  --text-200: var(--stone-800);
+  --text-300: var(--stone-700);
+  --text-400: var(--stone-500);
+  --text-500: var(--stone-300);
+
+  /* 메인 색 */
+  --primary-50: var(--amber-300);
+  --primary-100: var(--amber-400);
+  --primary-200: var(--amber-500);
+  --primary-300: var(--amber-600);
+
+  /* 기타 */
+  --scrollbar-thumb: var(--amber-100);
+  --scrollbar-thumb-hover: var(--amber-200);
+}
+
+/* 스크롤바 커스텀 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
+  background-color: var(--scrollbar-thumb-hover);
+}
