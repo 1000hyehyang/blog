@@ -1,6 +1,7 @@
-// src/components/Post/PostCardList.tsx
 import { Stack } from "@mui/material";
 import PostCard from "./PostCard";
+import PostCardSkeleton from "./PostCardSkeleton";
+import { useState, useEffect } from "react";
 
 const dummyPosts = [
   {
@@ -33,11 +34,18 @@ const dummyPosts = [
 ];
 
 export default function PostCardList() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Stack spacing={3}>
-      {dummyPosts.map((post) => (
-        <PostCard key={post.id} {...post} />
-      ))}
+      {loading
+        ? [...Array(3)].map((_, i) => <PostCardSkeleton key={i} />)
+        : dummyPosts.map((post) => <PostCard key={post.id} {...post} />)}
     </Stack>
   );
 }

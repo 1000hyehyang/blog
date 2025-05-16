@@ -14,7 +14,7 @@ export default function CategoryTabs() {
   return (
     <Box
       sx={{
-        borderBottom: "1px solid var(--border)",
+        border: "none",
         mb: 4,
       }}
     >
@@ -24,24 +24,24 @@ export default function CategoryTabs() {
         variant="scrollable"
         scrollButtons="auto"
         sx={{
-          ".MuiTab-root": {
-            color: "var(--text-400)",
-            fontWeight: 500,
-            fontSize: "1rem",
-            px: 2,
-            textTransform: "none",
-          },
-          ".Mui-selected": {
-            color: "var(--amber-500)",
-            fontWeight: 500,
-          },
           ".MuiTabs-indicator": {
-            backgroundColor: "var(--amber-500)",
+            backgroundColor: "var(--primary-200)",
           },
         }}
       >
         {categories.map((label, index) => (
-          <Tab key={index} label={label} />
+          <Tab
+            key={index}
+            label={label}
+            sx={{
+              color:
+                selectedTab === index ? "var(--primary-200)" : "var(--text-400)",
+              fontWeight: 500,
+              fontSize: "1rem",
+              px: 2,
+              textTransform: "none",
+            }}
+          />
         ))}
       </Tabs>
     </Box>
