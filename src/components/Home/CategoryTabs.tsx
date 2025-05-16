@@ -25,6 +25,7 @@ export default function CategoryTabs({
       variant="scrollable"
       scrollButtons="auto"
       sx={{
+        py: 3,
         ".MuiTabs-indicator": {
           backgroundColor: "var(--primary-200)",
         },
