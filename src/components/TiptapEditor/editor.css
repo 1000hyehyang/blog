@@ -1,0 +1,12 @@
+/* src/components/Editor/editor.css */
+.ProseMirror {
+  outline: none;
+  min-height: 200px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-100);
+}
+
+.ProseMirror p {
+  margin: 0 0 1rem;
+}

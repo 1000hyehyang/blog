@@ -2,7 +2,6 @@
 import {
   Box,
   IconButton,
-  Button,
   Stack,
   Collapse,
   useMediaQuery,
@@ -17,6 +16,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../../assets/logo.svg";
 import mobileLogo from "../../../assets/tangerine.svg";
+import DesktopNav from "./DesktopNav";
+import MobileNav from "./MobileNav";
 
 export default function Navbar() {
   const theme = useTheme();
@@ -34,7 +35,6 @@ export default function Navbar() {
         borderBottom: "1px solid var(--border)",
       }}
     >
-      {/* 상단 바 */}
       <Box
         sx={{
           maxWidth: "1140px",
@@ -46,7 +46,6 @@ export default function Navbar() {
           justifyContent: "space-between",
         }}
       >
-        {/* 로고 */}
         <Link to="/" style={{ textDecoration: "none" }}>
           <Box
             component="img"
@@ -59,55 +58,12 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* 우측 메뉴 영역 */}
         <Stack direction="row" spacing={1} alignItems="center">
-          {/* 검색 아이콘 */}
           <IconButton onClick={() => setSearchOpen(true)}>
             <SearchIcon sx={{ color: "var(--text-400)" }} />
           </IconButton>
 
-          {/* 데스크탑 버튼 */}
-          {!isMobile && (
-            <>
-              <Button
-                variant="contained"
-                sx={{
-                  color: "var(--text-600)",
-                  backgroundColor: "var(--primary-200)",
-                  boxShadow: "none",
-                  fontWeight: 500,
-                  borderRadius: 2,
-                  px: 3,
-                  "&:hover": {
-                    backgroundColor: "var(--primary-100)",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                구독하기
-              </Button>
-              <Button
-                onClick={() => {
-                  setLoginOpen(true);
-                  setMenuOpen(false);
-                }}
-                sx={{
-                  backgroundColor: "var(--bg-200)",
-                  fontWeight: 500,
-                  color: "var(--text-300)",
-                  borderRadius: 2,
-                  "&:hover": {
-                    backgroundColor: "var(--bg-300)",
-                  },
-                }}
-              >
-                로그인
-              </Button>
-            </>
-          )}
-
-          {/* 모바일 햄버거 메뉴 */}
-          {isMobile && (
+          {isMobile ? (
             <IconButton onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? (
                 <CloseIcon sx={{ color: "var(--primary-200)" }} />
@@ -115,55 +71,18 @@ export default function Navbar() {
                 <MenuIcon sx={{ color: "var(--text-300)" }} />
               )}
             </IconButton>
+          ) : (
+            <DesktopNav onLoginOpen={() => setLoginOpen(true)} />
           )}
         </Stack>
       </Box>
 
-      {/* 모바일 드롭다운 메뉴 */}
       {isMobile && (
         <Collapse in={menuOpen} timeout="auto" unmountOnExit>
-          <Box
-            sx={{
-              px: 3,
-              bgcolor: "var(--bg-100)",
-            }}
-          >
-            <Stack spacing={2}>
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{
-                  color: "var(--text-600)",
-                  backgroundColor: "var(--primary-200)",
-                  "&:hover": {
-                    backgroundColor: "var(--primary-100)",
-                    boxShadow: "none",
-                  },
-                  borderRadius: 2,
-                  boxShadow: "none",
-                  fontWeight: 500,
-                }}
-              >
-                구독하기
-              </Button>
-              <Button
-                onClick={() => setLoginOpen(true)}
-                sx={{
-                  backgroundColor: "var(--bg-200)",
-                  color: "var(--text-300)",
-                  fontWeight: 500,
-                  borderRadius: 2,
-                  "&:hover": {
-                    backgroundColor: "var(--bg-300)",
-                  },
-                }}
-              >
-                로그인
-              </Button>
-            </Stack>
-          </Box>
+          <MobileNav onLoginOpen={() => setLoginOpen(true)} />
         </Collapse>
       )}
+
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <SocialLoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </Box>
