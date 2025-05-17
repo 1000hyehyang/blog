@@ -55,11 +55,7 @@ axiosInstance.interceptors.response.use(
 
       isRefreshing = true;
       try {
-        const { data } = await axios.post(
-          "/auth/refresh-token",
-          null,
-          { withCredentials: true }
-        );
+        const { data } = await axiosInstance.post("/auth/refresh-token", null);
         const newAccessToken = data.data.accessToken;
         localStorage.setItem("accessToken", newAccessToken);
         authStore.setAccessToken(newAccessToken);
