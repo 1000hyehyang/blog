@@ -20,12 +20,10 @@ export default function SocialLoginModal({
   open,
   onClose,
 }: SocialLoginModalProps) {
-  const handleGithubLogin = () => {
-    window.location.href = "/oauth2/authorization/github"; // 실제 API 엔드포인트로 교체
-  };
+  const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL;
 
-  const handleGoogleLogin = () => {
-    window.location.href = "/oauth2/authorization/google"; // 실제 API 엔드포인트로 교체
+  const handleLogin = (provider: "github" | "google") => {
+    window.location.href = `${oauthBaseUrl}/${provider}`;
   };
 
   return (
@@ -76,7 +74,7 @@ export default function SocialLoginModal({
             variant="contained"
             fullWidth
             startIcon={<GitHubIcon />}
-            onClick={handleGithubLogin}
+            onClick={() => handleLogin("github")}
             sx={{
               backgroundColor: "#24292f",
               color: "var(--text-600)",
@@ -94,7 +92,7 @@ export default function SocialLoginModal({
             variant="outlined"
             fullWidth
             startIcon={<GoogleIcon />}
-            onClick={handleGoogleLogin}
+            onClick={() => handleLogin("google")}
             sx={{
               color: "#555",
               borderColor: "#ddd",

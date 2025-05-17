@@ -1,27 +1,32 @@
+// src/store/useAuthStore.ts
 import { create } from "zustand";
 
+type Role = "USER" | "ADMIN";
+
 interface User {
-  id: string;
+  id: number;
   nickname: string;
-  role: "USER" | "ADMIN";
+  role: Role;
 }
 
 interface AuthState {
   user: User | null;
+  accessToken: string | null;
   setUser: (user: User | null) => void;
+  setAccessToken: (token: string) => void;
+  logout: () => void;
 }
 
-// 관리자 모드
 export const useAuthStore = create<AuthState>((set) => ({
-  user: {
-    id: "dev-user",
-    nickname: "관리자",
-    role: "ADMIN",
-  },
+  user: null,
+  accessToken: localStorage.getItem("accessToken"),
   setUser: (user) => set({ user }),
+  setAccessToken: (token) => {
+    localStorage.setItem("accessToken", token);
+    set({ accessToken: token });
+  },
+  logout: () => {
+    localStorage.removeItem("accessToken");
+    set({ user: null, accessToken: null });
+  },
 }));
-
-// export const useAuthStore = create<AuthState>((set) => ({
-//   user: null,
-//   setUser: (user) => set({ user }),
-// }));

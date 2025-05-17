@@ -2,16 +2,17 @@
 import { Stack, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../../store/useAuthStore";
+import { logoutUser } from "../../../lib/utils/logout";
 
 interface Props {
   onLoginOpen: () => void;
 }
 
 export default function DesktopNav({ onLoginOpen }: Props) {
-  const { user, setUser } = useAuthStore();
+  const { user } = useAuthStore();
 
-  const handleLogout = () => {
-    setUser(null); // 상태 초기화
+  const handleLogout = async () => {
+    await logoutUser(); // 서버 + 클라이언트 상태 정리
   };
 
   return (
@@ -35,7 +36,7 @@ export default function DesktopNav({ onLoginOpen }: Props) {
         구독하기
       </Button>
 
-      {/* 관리자 로그인 시 글쓰기 버튼 */}
+      {/* 관리자만 글쓰기 가능 */}
       {user?.role === "ADMIN" && (
         <Link to="/post/new">
           <Button variant="outlined" sx={{ fontWeight: 500, borderRadius: 2 }}>
@@ -44,7 +45,7 @@ export default function DesktopNav({ onLoginOpen }: Props) {
         </Link>
       )}
 
-      {/* 로그인 로그아웃 */}
+      {/* 로그인 / 로그아웃 버튼 */}
       {user ? (
         <Button
           onClick={handleLogout}

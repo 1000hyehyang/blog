@@ -1,17 +1,18 @@
-// src/components/common/MobileNav.tsx
+// src/components/common/Navbar/MobileNav.tsx
 import { Box, Stack, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../../store/useAuthStore";
+import { logoutUser } from "../../../lib/utils/logout";
 
 interface Props {
   onLoginOpen: () => void;
 }
 
 export default function MobileNav({ onLoginOpen }: Props) {
-  const { user, setUser } = useAuthStore();
+  const { user } = useAuthStore();
 
-  const handleLogout = () => {
-    setUser(null);
+  const handleLogout = async () => {
+    await logoutUser();
   };
 
   return (
@@ -37,6 +38,7 @@ export default function MobileNav({ onLoginOpen }: Props) {
           구독하기
         </Button>
 
+        {/* 관리자 전용 글쓰기 */}
         {user?.role === "ADMIN" && (
           <Link to="/post/new">
             <Button
@@ -49,6 +51,7 @@ export default function MobileNav({ onLoginOpen }: Props) {
           </Link>
         )}
 
+        {/* 로그인/로그아웃 */}
         {user ? (
           <Button
             onClick={handleLogout}
