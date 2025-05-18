@@ -1,9 +1,9 @@
 // src/components/TiptapEditor/TiptapEditor.tsx
 import { useEditor, EditorContent } from "@tiptap/react";
+import CustomImage from "./extensions/CustomImage"; 
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
 import TextStyle from "@tiptap/extension-text-style";
@@ -35,49 +35,50 @@ export default function TiptapEditor({
   const [editorContent, setEditorContent] = useState(value || "");
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ heading: false }),
-      Underline,
-      Link,
-      Image,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Highlight.configure({ multicolor: true }),
-      TextStyle,
-      Color,
-      Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
-      Placeholder.configure({
-        placeholder: placeholder || "내용을 입력하세요...",
-      }),
-    ],
-    content: value,
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      setEditorContent(html);
-      onChange?.(html);
-    },
-  });
+  extensions: [
+    StarterKit.configure({ heading: false }),
+    Underline,
+    Link,
+    CustomImage,
+    TextAlign.configure({ types: ["heading", "paragraph"] }),
+    Highlight.configure({ multicolor: true }),
+    TextStyle,
+    Color,
+    Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
+    Placeholder.configure({
+      placeholder: placeholder || "내용을 입력하세요...",
+    }),
+  ],
+  content: value,
+  onUpdate: ({ editor }) => {
+    const html = editor.getHTML();
+    console.log("실시간 HTML 내용:", html);
+    setEditorContent(html);
+    onChange?.(html);
+  },
+});
 
   useEffect(() => {
     if (editor && value !== editorContent) {
       editor.commands.setContent(value);
-      setEditorContent(value);
     }
   }, [value, editor]);
 
-  const handleImageInsert = async (file: File) => {
-    if (!file || !editor) return;
-    try {
-      setUploading(true);
-      const res = await uploadEditorImage(file);
-      const imageUrl = res.publicUrl;
-      editor.chain().focus().setImage({ src: imageUrl }).run();
-      onChange(editor.getHTML());
-    } catch {
-      alert("이미지 업로드 실패");
-    } finally {
-      setUploading(false);
-    }
-  };
+const handleImageInsert = async (file: File) => {
+  if (!file || !editor) return;
+  try {
+    setUploading(true);
+    const res = await uploadEditorImage(file);
+    const imageUrl = res.url;
+
+    editor.chain().focus().setImage({ src: imageUrl }).run();
+
+  } catch {
+    alert("이미지 업로드 실패");
+  } finally {
+    setUploading(false);
+  }
+};
 
   if (!editor) return null;
 

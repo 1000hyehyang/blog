@@ -1,4 +1,3 @@
-// src/pages/NewPostPage.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,19 +14,17 @@ import {
   InputLabel,
   Select,
 } from "@mui/material";
-import type { SelectChangeEvent } from "@mui/material";
 import TiptapEditor from "../components/TiptapEditor/TiptapEditor";
 import { useAuthStore } from "../store/useAuthStore";
 import { createPost } from "../lib/api/postApi";
 import { uploadThumbnail } from "../lib/api/fileApi";
+import type { SelectChangeEvent } from "@mui/material";
 
 const categoryList = ["개발", "DevOps", "디자인", "프로젝트/회고", "기타"];
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [html, setHtml] = useState("");
@@ -43,22 +40,15 @@ export default function NewPostPage() {
     }
   }, [isAdmin, navigate]);
 
-  useEffect(() => {
-    if (thumbnailFile) {
-      console.log("업로드된 썸네일 파일:", thumbnailFile);
-    }
-  }, [thumbnailFile]);
-
   const handleThumbnailChange = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const uploaded = await uploadThumbnail(file);
-      setThumbnailUrl(uploaded.publicUrl);
-      setThumbnailFile(file);
+      console.log("썸네일 업로드 성공:", uploaded);
+      setThumbnailUrl(uploaded.url);
     } catch (err) {
       console.error("썸네일 업로드 실패", err);
       alert("썸네일 업로드에 실패했습니다.");
@@ -86,21 +76,22 @@ export default function NewPostPage() {
       return;
     }
 
+    const payload = {
+      title,
+      category,
+      html,
+      content: html.replace(/<[^>]+>/g, "").slice(0, 150),
+      thumbnailUrl: thumbnailUrl || undefined,
+      tags,
+    };
+
+    console.log("📦 최종 전송할 payload:", payload);
+
     try {
-      const payload = {
-        title,
-        category,
-        html,
-        content: html.replace(/<[^>]+>/g, "").slice(0, 150),
-        thumbnailUrl: thumbnailUrl || undefined,
-        tags,
-      };
       const postId = await createPost(payload);
-      alert("게시글이 등록되었습니다!");
       navigate(`/post/${postId}`);
     } catch (err) {
       console.error("게시글 등록 실패", err);
-      alert("게시글 등록 중 오류가 발생했습니다.");
     }
   };
 
@@ -120,39 +111,19 @@ export default function NewPostPage() {
           variant="standard"
           InputProps={{
             disableUnderline: true,
-            sx: {
-              px: 0,
-              py: 1,
-              fontSize: "1.5rem", // 입력 텍스트 크기 키우기
-              fontWeight: 600,
-            },
+            sx: { fontSize: "1.5rem", fontWeight: 600, py: 1 },
           }}
           InputLabelProps={{
             shrink: true,
-            sx: {
-              fontSize: "1rem", // 라벨 텍스트 크기
-              color: "var(--text-400)",
-            },
-          }}
-          sx={{
-            backgroundColor: "transparent",
+            sx: { fontSize: "1rem", color: "var(--text-400)" },
           }}
         />
 
         {/* 카테고리 */}
         <Box>
-          <InputLabel
-            shrink
-            sx={{
-              mb: 1,
-              fontSize: "1rem",
-              fontWeight: 500,
-              color: "var(--text-300)",
-            }}
-          >
+          <InputLabel shrink sx={{ mb: 1, fontSize: "1rem" }}>
             카테고리
           </InputLabel>
-
           <Select
             value={category}
             onChange={(e: SelectChangeEvent<string>) =>
@@ -166,7 +137,6 @@ export default function NewPostPage() {
               backgroundColor: "var(--bg-200)",
               fontSize: "0.95rem",
               fontWeight: 500,
-              color: "var(--text-200)",
               ".MuiOutlinedInput-notchedOutline": {
                 borderColor: "var(--bg-200)",
               },
@@ -182,20 +152,12 @@ export default function NewPostPage() {
               카테고리를 선택하세요
             </MenuItem>
             {categoryList.map((cat) => (
-              <MenuItem
-                key={cat}
-                value={cat}
-                sx={{
-                  fontWeight: 500,
-                  fontSize: "0.95rem",
-                }}
-              >
+              <MenuItem key={cat} value={cat}>
                 {cat}
               </MenuItem>
             ))}
           </Select>
         </Box>
-
         {/* 썸네일 업로드 */}
         <Box>
           <InputLabel shrink sx={{ mb: 1 }}>
@@ -211,13 +173,13 @@ export default function NewPostPage() {
             />
           </Button>
 
-          {/* 미리보기 */}
           {thumbnailUrl && (
             <Box mt={2}>
               <img
                 src={thumbnailUrl}
                 alt="썸네일 미리보기"
                 style={{ maxWidth: "100%", borderRadius: 8 }}
+                onError={() => console.warn("이미지 로드 실패", thumbnailUrl)}
               />
             </Box>
           )}
@@ -237,8 +199,6 @@ export default function NewPostPage() {
               fontSize: "0.95rem",
               fontWeight: 400,
               color: "var(--text-100)",
-              px: 0,
-              pb: 0.5,
               borderBottom: "1px solid var(--bg-300)",
               "&:hover": {
                 borderBottom: "1px solid var(--primary-100)",
@@ -266,10 +226,10 @@ export default function NewPostPage() {
           </Box>
         </Box>
 
-        {/* 본문 */}
+        {/* 본문 에디터 */}
         <TiptapEditor value={html} onChange={setHtml} />
 
-        {/* 저장 */}
+        {/* 저장 버튼 */}
         <Box textAlign="right">
           <Button
             variant="contained"

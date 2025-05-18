@@ -26,7 +26,7 @@ export default function PostDetailPage() {
         const postData = await getPostDetail(Number(id));
         const commentData = await getComments(Number(id));
         setPost(postData);
-        setComments(commentData);
+        setComments(commentData ?? []);
       } catch (err) {
         console.error("게시글 상세 조회 실패", err);
       } finally {

@@ -1,8 +1,5 @@
-import {
-  Box,
-  Typography,
-  Stack,
-} from "@mui/material";
+// src/components/Post/PostComments.tsx
+import { Box, Typography, Stack } from "@mui/material";
 import type { PostComment } from "../../types/comment";
 import CommentForm from "./CommentForm";
 import CommentCard from "./CommentCard";
@@ -15,11 +12,16 @@ interface PostCommentsProps {
 export default function PostComments({ comments, onAddComment }: PostCommentsProps) {
   return (
     <Box>
-      <Typography variant="h6" fontWeight={600} mb={2} sx={{ color: "var(--text-100)" }}>
+      <Typography
+        variant="h6"
+        fontWeight={600}
+        mb={2}
+        sx={{ color: "var(--text-100)" }}
+      >
         댓글 {comments.length}
       </Typography>
 
-      {/* 입력 폼 */}
+      {/* 댓글 작성 입력 폼 */}
       <CommentForm onSubmit={onAddComment} />
 
       {/* 댓글 리스트 */}

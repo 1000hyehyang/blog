@@ -1,4 +1,5 @@
-import { Avatar, Box, Typography } from "@mui/material";
+// src/components/Post/CommentCard.tsx
+import { Box, Stack, Avatar, Typography, Paper } from "@mui/material";
 import type { PostComment } from "../../types/comment";
 
 interface CommentCardProps {
@@ -7,55 +8,47 @@ interface CommentCardProps {
 
 export default function CommentCard({ comment }: CommentCardProps) {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        gap: 1.5,
-        px: 2,
-        py: 2,
-        bgcolor: "var(--bg-200)",
-        borderRadius: 3,
-      }}
-    >
+    <Stack direction="row" spacing={2} alignItems="flex-start">
+      {/* 아바타 */}
       <Avatar
         sx={{
           fontSize: 24,
-          width: 40,
-          height: 40,
-          bgcolor: comment.bgColor || "var(--bg-200)",
+          bgcolor: comment.bgColor,
+          flexShrink: 0,
         }}
       >
         {comment.emoji}
       </Avatar>
 
+      {/* 본문 */}
       <Box flex={1}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={0.5}
-        >
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 600, color: "var(--text-100)" }}
-          >
+        {/* 작성자 닉네임 + 작성일 */}
+        <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+          <Typography variant="body2" fontWeight={600} sx={{ color: "var(--text-200)" }}>
             {comment.nickname}
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: "var(--text-300)", fontSize: 12 }}
-          >
+          <Typography variant="caption" sx={{ color: "var(--text-400)" }}>
             {comment.createdAt}
           </Typography>
-        </Box>
+        </Stack>
 
-        <Typography
-          variant="body2"
-          sx={{ color: "var(--text-200)", fontSize: 14 }}
+        {/* 댓글 내용 */}
+        <Paper
+          elevation={0}
+          sx={{
+            backgroundColor: "var(--bg-100)",
+            p: 1.5,
+            borderRadius: 2,
+            border: "1px solid var(--bg-300)",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
         >
-          {comment.content}
-        </Typography>
+          <Typography fontSize={14} sx={{ color: "var(--text-100)" }}>
+            {comment.content}
+          </Typography>
+        </Paper>
       </Box>
-    </Box>
+    </Stack>
   );
 }
