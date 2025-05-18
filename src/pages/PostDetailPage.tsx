@@ -10,7 +10,6 @@ import LoadingPostDetail from "./LoadingPostDetail";
 import type { PostComment } from "../types/comment";
 import type { PostDetail } from "../types/post";
 import { getPostDetail, getComments } from "../lib/api/postApi";
-import { formatDate } from "../lib/utils/formatDate";
 import { useAuthStore } from "../store/useAuthStore";
 
 export default function PostDetailPage() {
