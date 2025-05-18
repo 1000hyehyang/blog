@@ -6,10 +6,12 @@ export interface PostSummary {
   id: number;
   title: string;
   category: string;
-  content: string; // 짧은 텍스트 또는 요약
-  date: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string; 
   thumbnailUrl?: string;
 }
+
 
 // 상세용
 export interface PostDetail extends PostSummary {

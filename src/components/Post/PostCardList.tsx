@@ -39,7 +39,17 @@ export default function PostCardList({ selectedCategory }: PostCardListProps) {
     <Stack spacing={3}>
       {loading
         ? [...Array(3)].map((_, i) => <PostCardSkeleton key={i} />)
-        : filteredPosts.map((post) => <PostCard key={post.id} {...post} />)}
+        : filteredPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              id={post.id}
+              title={post.title}
+              content={post.content}
+              thumbnailUrl={post.thumbnailUrl}
+              createdAt={post.createdAt}
+              updatedAt={post.updatedAt}
+            />
+          ))}
     </Stack>
   );
 }

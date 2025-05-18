@@ -1,11 +1,13 @@
 import { Box, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { formatDate } from "../../lib/utils/formatDate";
 
 interface PostCardProps {
   id: number;
   title: string;
   content: string;
-  date: string;
+  createdAt: string;
+  updatedAt: string;
   thumbnailUrl?: string;
 }
 
@@ -13,10 +15,11 @@ export default function PostCard({
   id,
   title,
   content,
-  date,
+  createdAt,
   thumbnailUrl,
 }: PostCardProps) {
   const navigate = useNavigate();
+  const formattedDate = formatDate(createdAt); 
 
   return (
     <Paper
@@ -83,7 +86,7 @@ export default function PostCard({
         </Typography>
 
         <Typography variant="caption" sx={{ color: "var(--text-300)" }}>
-          {date}
+          {formattedDate}
         </Typography>
       </Box>
     </Paper>

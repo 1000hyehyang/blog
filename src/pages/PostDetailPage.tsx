@@ -1,7 +1,7 @@
 // src/pages/PostDetailPage.tsx
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Button } from "@mui/material";
 import PostMeta from "../components/Post/PostMeta";
 import PostContent from "../components/Post/PostContent";
 import PostComments from "../components/Post/PostComments";
@@ -10,12 +10,17 @@ import LoadingPostDetail from "./LoadingPostDetail";
 import type { PostComment } from "../types/comment";
 import type { PostDetail } from "../types/post";
 import { getPostDetail, getComments } from "../lib/api/postApi";
+import { formatDate } from "../lib/utils/formatDate";
+import { useAuthStore } from "../store/useAuthStore";
 
 export default function PostDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<PostComment[]>([]);
+
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -43,6 +48,8 @@ export default function PostDetailPage() {
 
   if (isLoading || !post) return <LoadingPostDetail />;
 
+  const isAuthor = user?.nickname === post.author;
+
   return (
     <Container
       maxWidth="md"
@@ -69,16 +76,35 @@ export default function PostDetailPage() {
       <PostMeta
         title={post.title}
         author={post.author}
-        date={post.date}
+        date={formatDate(post.createdAt)}
         tags={post.tags}
       />
 
       {/* 콘텐츠 본문 */}
       <PostContent html={post.html} />
 
-      {/* 콘텐츠 공유 버튼 */}
-      <Box display="flex" justifyContent="flex-end">
+      {/* 공유 + 수정 */}
+      <Box display="flex" justifyContent="flex-end" gap={1.5}>
         <ShareButtonGroup title={post.title} />
+        {isAuthor && (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => navigate(`/post/${post.id}/edit`)}
+            sx={{
+              borderRadius: 2,
+              color: "var(--text-400)",
+              borderColor: "var(--bg-300)",
+              fontWeight: 500,
+              "&:hover": {
+                borderColor: "var(--primary-100)",
+                color: "var(--primary-100)",
+              },
+            }}
+          >
+            수정하기
+          </Button>
+        )}
       </Box>
 
       {/* 댓글 섹션 */}

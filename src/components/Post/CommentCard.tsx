@@ -1,6 +1,7 @@
 // src/components/Post/CommentCard.tsx
 import { Box, Stack, Avatar, Typography, Paper } from "@mui/material";
 import type { PostComment } from "../../types/comment";
+import { formatDate } from "../../lib/utils/formatDate";
 
 interface CommentCardProps {
   comment: PostComment;
@@ -24,11 +25,15 @@ export default function CommentCard({ comment }: CommentCardProps) {
       <Box flex={1}>
         {/* 작성자 닉네임 + 작성일 */}
         <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
-          <Typography variant="body2" fontWeight={600} sx={{ color: "var(--text-200)" }}>
+          <Typography
+            variant="body2"
+            fontWeight={600}
+            sx={{ color: "var(--text-200)" }}
+          >
             {comment.nickname}
           </Typography>
           <Typography variant="caption" sx={{ color: "var(--text-400)" }}>
-            {comment.createdAt}
+            {formatDate(comment.createdAt)}
           </Typography>
         </Stack>
 
