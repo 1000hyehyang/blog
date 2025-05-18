@@ -1,8 +1,10 @@
+// src/components/Post/PostCardList.tsx
+import { useEffect, useState } from "react";
 import { Stack } from "@mui/material";
 import PostCard from "./PostCard";
 import PostCardSkeleton from "./skeletons/PostCardSkeleton";
-import { useState, useEffect } from "react";
-import { dummyPostList } from "../../data/dummyPosts";
+import { getRecentPosts } from "../../lib/api/postApi";
+import type { PostSummary } from "../../types/post";
 
 interface PostCardListProps {
   selectedCategory: string;
@@ -10,16 +12,28 @@ interface PostCardListProps {
 
 export default function PostCardList({ selectedCategory }: PostCardListProps) {
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<PostSummary[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const data = await getRecentPosts();
+        setPosts(data);
+      } catch (err) {
+        console.error("게시글 목록 조회 실패", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
   }, []);
 
   const filteredPosts =
     selectedCategory === "전체"
-      ? dummyPostList
-      : dummyPostList.filter((post) => post.category === selectedCategory);
+      ? posts
+      : posts.filter((post) => post.category === selectedCategory);
 
   return (
     <Stack spacing={3}>

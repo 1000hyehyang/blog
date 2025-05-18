@@ -11,6 +11,8 @@ import {
   Typography,
 } from "@mui/material";
 import type { PostComment } from "../../types/comment";
+import { createComment } from "../../lib/api/postApi";
+import { useParams } from "react-router-dom";
 
 const emojiPool = [
   "🐶",
@@ -45,11 +47,13 @@ interface CommentFormProps {
 }
 
 export default function CommentForm({ onSubmit }: CommentFormProps) {
+  const { id } = useParams();
   const [input, setInput] = useState("");
   const [inputError, setInputError] = useState("");
   const [nickname, setNickname] = useState("익명의 댓글");
   const [currentEmoji, setCurrentEmoji] = useState("🦊");
   const [currentAvatarBg, setCurrentAvatarBg] = useState(avatarBgColors[0]);
+  const [loading, setLoading] = useState(false);
 
   const getRandomAvatar = () => {
     const emoji = emojiPool[Math.floor(Math.random() * emojiPool.length)];
@@ -64,19 +68,28 @@ export default function CommentForm({ onSubmit }: CommentFormProps) {
     setCurrentAvatarBg(bgColor);
   };
 
-  const handleSubmit = () => {
-    if (!input.trim()) return;
-    const newComment: PostComment = {
-      id: Date.now(),
-      content: input.trim(),
-      createdAt: "방금 전",
+  const handleSubmit = async () => {
+    if (!input.trim() || !id) return;
+
+    const newComment = {
       nickname,
+      content: input.trim(),
       emoji: currentEmoji,
       bgColor: currentAvatarBg,
     };
-    onSubmit(newComment);
-    setInput("");
-    setInputError("");
+
+    try {
+      setLoading(true);
+      const created = await createComment(Number(id), newComment);
+      onSubmit(created);
+      setInput("");
+      setInputError("");
+    } catch (error) {
+      console.error("댓글 작성 실패", error);
+      alert("댓글 작성 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -184,7 +197,7 @@ export default function CommentForm({ onSubmit }: CommentFormProps) {
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={!input.trim()}
+          disabled={!input.trim() || loading}
           sx={{
             backgroundColor: "var(--primary-100)",
             color: "var(--text-600)",

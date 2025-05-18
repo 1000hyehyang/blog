@@ -18,22 +18,24 @@ import {
 import type { SelectChangeEvent } from "@mui/material";
 import TiptapEditor from "../components/TiptapEditor/TiptapEditor";
 import { useAuthStore } from "../store/useAuthStore";
+import { createPost } from "../lib/api/postApi";
+import { uploadThumbnail } from "../lib/api/fileApi";
 
 const categoryList = ["개발", "DevOps", "디자인", "프로젝트/회고", "기타"];
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [html, setHtml] = useState("");
 
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user); // ✅ 사용자 정보 가져오기
-  const isAdmin = user?.role === "ADMIN"; // ✅ 관리자 여부 확인
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === "ADMIN";
 
-  // ✅ 접근 제한: 관리자가 아니면 홈으로 리디렉션
   useEffect(() => {
     if (!isAdmin) {
       alert("접근 권한이 없습니다.");
@@ -41,20 +43,25 @@ export default function NewPostPage() {
     }
   }, [isAdmin, navigate]);
 
-  // 썸네일 미리보기 해제 (cleanup)
   useEffect(() => {
-    return () => {
-      if (thumbnailPreview) {
-        URL.revokeObjectURL(thumbnailPreview);
-      }
-    };
-  }, [thumbnailPreview]);
+    if (thumbnailFile) {
+      console.log("업로드된 썸네일 파일:", thumbnailFile);
+    }
+  }, [thumbnailFile]);
 
-  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setThumbnail(file);
-      setThumbnailPreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    try {
+      const uploaded = await uploadThumbnail(file);
+      setThumbnailUrl(uploaded.publicUrl);
+      setThumbnailFile(file);
+    } catch (err) {
+      console.error("썸네일 업로드 실패", err);
+      alert("썸네일 업로드에 실패했습니다.");
     }
   };
 
@@ -73,30 +80,28 @@ export default function NewPostPage() {
     setTags((prev) => prev.filter((tag) => tag !== tagToDelete));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title || !category || !html) {
       alert("제목, 카테고리, 본문은 필수입니다.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("category", category);
-    formData.append("html", html);
-    formData.append("tags", JSON.stringify(tags));
-    if (thumbnail) {
-      formData.append("thumbnail", thumbnail);
+    try {
+      const payload = {
+        title,
+        category,
+        html,
+        content: html.replace(/<[^>]+>/g, "").slice(0, 150),
+        thumbnailUrl: thumbnailUrl || undefined,
+        tags,
+      };
+      const postId = await createPost(payload);
+      alert("게시글이 등록되었습니다!");
+      navigate(`/post/${postId}`);
+    } catch (err) {
+      console.error("게시글 등록 실패", err);
+      alert("게시글 등록 중 오류가 발생했습니다.");
     }
-
-    console.log({
-      title,
-      category,
-      tags,
-      html,
-      thumbnail,
-    });
-
-    alert("✅ 작성 완료 (콘솔 확인)");
   };
 
   return (
@@ -205,10 +210,12 @@ export default function NewPostPage() {
               onChange={handleThumbnailChange}
             />
           </Button>
-          {thumbnailPreview && (
+
+          {/* 미리보기 */}
+          {thumbnailUrl && (
             <Box mt={2}>
               <img
-                src={thumbnailPreview}
+                src={thumbnailUrl}
                 alt="썸네일 미리보기"
                 style={{ maxWidth: "100%", borderRadius: 8 }}
               />

@@ -1,3 +1,4 @@
+// src/pages/PostDetailPage.tsx
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Box, Container } from "@mui/material";
@@ -5,25 +6,32 @@ import PostMeta from "../components/Post/PostMeta";
 import PostContent from "../components/Post/PostContent";
 import PostComments from "../components/Post/PostComments";
 import ShareButtonGroup from "../components/common/ShareButtonGroup";
-import { dummyPostDetail } from "../data/dummyPosts";
-import type { PostComment } from "../types/comment";
 import LoadingPostDetail from "./LoadingPostDetail";
+import type { PostComment } from "../types/comment";
+import type { PostDetail } from "../types/post";
+import { getPostDetail, getComments } from "../lib/api/postApi";
 
 export default function PostDetailPage() {
   const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
+  const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<PostComment[]>([]);
-  const [post, setPost] = useState<(typeof dummyPostDetail)[1] | null>(null);
 
   useEffect(() => {
-    // 더미 기준이므로 비동기 simulate
     const loadPost = async () => {
+      if (!id) return;
       setIsLoading(true);
-      await new Promise((r) => setTimeout(r, 1000)); // 1초 지연 시뮬레이션
-      const fetchedPost = dummyPostDetail[Number(id)];
-      setPost(fetchedPost);
-      setComments(fetchedPost?.comments ?? []);
-      setIsLoading(false);
+
+      try {
+        const postData = await getPostDetail(Number(id));
+        const commentData = await getComments(Number(id));
+        setPost(postData);
+        setComments(commentData);
+      } catch (err) {
+        console.error("게시글 상세 조회 실패", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadPost();
@@ -31,7 +39,6 @@ export default function PostDetailPage() {
 
   const handleAddComment = (newComment: PostComment) => {
     setComments((prev) => [newComment, ...prev]);
-    // API 연동 시 POST 요청 추가
   };
 
   if (isLoading || !post) return <LoadingPostDetail />;
@@ -74,7 +81,7 @@ export default function PostDetailPage() {
         <ShareButtonGroup title={post.title} />
       </Box>
 
-      {/* 댓글 */}
+      {/* 댓글 섹션 */}
       <PostComments comments={comments} onAddComment={handleAddComment} />
     </Container>
   );

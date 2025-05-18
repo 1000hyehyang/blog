@@ -12,7 +12,7 @@ import Heading from "@tiptap/extension-heading";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Box } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import axiosInstance from "../../lib/axiosInstance";
+import { uploadEditorImage } from "../../lib/api/fileApi";
 import Toolbar from "./Toolbar";
 import "./editor.css";
 
@@ -68,15 +68,8 @@ export default function TiptapEditor({
     if (!file || !editor) return;
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("directory", "editor-images");
-
-      const res = await axiosInstance.post("/api/uploads", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const imageUrl = res.data.data;
+      const res = await uploadEditorImage(file);
+      const imageUrl = res.publicUrl;
       editor.chain().focus().setImage({ src: imageUrl }).run();
       onChange(editor.getHTML());
     } catch {
