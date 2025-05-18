@@ -76,7 +76,7 @@ export default function PostDetailPage() {
       <PostMeta
         title={post.title}
         author={post.author}
-        date={formatDate(post.createdAt)}
+        createdAt={post.createdAt}
         tags={post.tags}
       />
 

@@ -1,17 +1,18 @@
 // src/components/Post/PostMeta.tsx
 import { Box, Typography, Stack, Chip } from "@mui/material";
+import { formatDate } from "../../lib/utils/formatDate";
 
 interface PostMetaProps {
   title: string;
   author: string;
-  date: string;
+  createdAt: string;
   tags?: string[];
 }
 
 export default function PostMeta({
   title,
   author,
-  date,
+  createdAt,
   tags = [],
 }: PostMetaProps) {
   return (
@@ -50,7 +51,7 @@ export default function PostMeta({
 
       <Stack direction="row" spacing={1} alignItems="center">
         <Typography variant="caption" sx={{ color: "var(--text-300)" }}>
-          {date}
+          {formatDate(createdAt)}
         </Typography>
         <Typography variant="caption" sx={{ color: "var(--text-300)" }}>
           · {author}
