@@ -21,7 +21,7 @@ export default function Footer() {
         }}
       >
         <Typography variant="body2" sx={{ color: "var(--text-300)" }}> 
-          © {new Date().getFullYear()} MyBlog. All rights reserved.
+          © {new Date().getFullYear()} 천혜향 기술 블로그. All rights reserved.
         </Typography>
       </Box>
     </Box>
