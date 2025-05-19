@@ -9,6 +9,7 @@ interface CreatePostPayload {
   html: string;
   thumbnailUrl?: string;
   tags: string[];
+  draft?: boolean; 
 }
 
 type UpdatePostPayload = CreatePostPayload;
@@ -46,6 +47,12 @@ export const getPostDetail = async (id: number): Promise<PostDetail> => {
 // 게시글 목록 조회
 export const getRecentPosts = async (limit = 10): Promise<PostSummary[]> => {
   const res = await axiosInstance.get("/posts", { params: { limit } });
+  return res.data.data;
+};
+
+// 게시글 임시저장 목록 조회
+export const getDraftPosts = async (): Promise<PostSummary[]> => {
+  const res = await axiosInstance.get("/posts/drafts");
   return res.data.data;
 };
 

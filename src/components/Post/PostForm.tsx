@@ -25,21 +25,25 @@ interface PostFormProps {
     tags: string[];
     html: string;
   };
-  onSubmit: (payload: {
-    title: string;
-    category: string;
-    html: string;
-    content: string;
-    thumbnailUrl?: string;
-    tags: string[];
-  }) => void;
+  onSubmit: (payload: PostPayload) => void;
+  onDraftSubmit: (payload: PostPayload) => void;
   uploadThumbnail: (file: File) => Promise<{ url: string }>;
+}
+
+export interface PostPayload {
+  title: string;
+  category: string;
+  content: string;
+  html: string;
+  thumbnailUrl?: string;
+  tags: string[];
 }
 
 export default function PostForm({
   mode,
   initialData,
   onSubmit,
+  onDraftSubmit,
   uploadThumbnail,
 }: PostFormProps) {
   const [title, setTitle] = useState(initialData?.title || "");
@@ -228,7 +232,34 @@ export default function PostForm({
         <TiptapEditor value={html} onChange={setHtml} />
 
         {/* 제출 */}
-        <Box textAlign="right">
+        <Box display="flex" justifyContent="flex-end" gap={2}>
+          <Button
+            variant="outlined"
+            onClick={() =>
+              onDraftSubmit?.({
+                title,
+                category,
+                html,
+                content: html.replace(/<[^>]+>/g, "").slice(0, 150),
+                thumbnailUrl: thumbnailUrl || undefined,
+                tags,
+              })
+            }
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              color: "var(--text-400)",
+              borderColor: "var(--bg-300)",
+              fontWeight: 500,
+              "&:hover": {
+                borderColor: "var(--primary-100)",
+                color: "var(--primary-100)",
+              },
+            }}
+          >
+            임시 저장
+          </Button>
+
           <Button
             variant="contained"
             onClick={handleSubmit}

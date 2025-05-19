@@ -40,15 +40,36 @@ export default function MobileNav({ onLoginOpen }: Props) {
 
         {/* 관리자 전용 글쓰기 */}
         {user?.role === "ADMIN" && (
-          <Link to="/post/new">
-            <Button
-              fullWidth
-              variant="outlined"
-              sx={{ fontWeight: 500, borderRadius: 2 }}
-            >
-              글쓰기
-            </Button>
-          </Link>
+          <>
+            <Link to="/post/new">
+              <Button
+                fullWidth
+                variant="outlined"
+                sx={{ fontWeight: 500, borderRadius: 2 }}
+              >
+                글쓰기
+              </Button>
+            </Link>
+
+            <Link to="/drafts">
+              <Button
+                fullWidth
+                variant="outlined"
+                sx={{
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  color: "var(--text-300)",
+                  borderColor: "var(--bg-300)",
+                  "&:hover": {
+                    borderColor: "var(--primary-100)",
+                    color: "var(--primary-100)",
+                  },
+                }}
+              >
+                임시저장함
+              </Button>
+            </Link>
+          </>
         )}
 
         {/* 로그인/로그아웃 */}

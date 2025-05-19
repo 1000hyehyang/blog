@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getPostDetail, updatePost } from "../lib/api/postApi";
 import { uploadThumbnail } from "../lib/api/fileApi";
 import type { PostDetail } from "../types/post";
+import type { PostPayload } from "../components/Post/PostForm";
 import PostForm from "../components/Post/PostForm";
 
 export default function EditPostPage() {
@@ -26,20 +27,24 @@ export default function EditPostPage() {
     fetchPost();
   }, [id, navigate]);
 
-  const handleUpdate = async (payload: {
-    title: string;
-    category: string;
-    content: string;
-    html: string;
-    thumbnailUrl?: string;
-    tags: string[];
-  }) => {
+  const handleUpdate = async (payload: PostPayload) => {
     if (!id) return;
     try {
-      await updatePost(Number(id), payload);
+      await updatePost(Number(id), { ...payload, draft: false });
       navigate(`/post/${id}`);
     } catch (err) {
       alert("수정에 실패했습니다.");
+      console.error(err);
+    }
+  };
+  
+  const handleDraftUpdate = async (payload: PostPayload) => {
+    if (!id) return;
+    try {
+      await updatePost(Number(id), { ...payload, draft: true });
+      alert("임시 저장되었습니다.");
+    } catch (err) {
+      alert("임시 저장 실패");
       console.error(err);
     }
   };
@@ -57,6 +62,7 @@ export default function EditPostPage() {
         html: post.html,
       }}
       onSubmit={handleUpdate}
+      onDraftSubmit={handleDraftUpdate}
       uploadThumbnail={uploadThumbnail}
     />
   );
