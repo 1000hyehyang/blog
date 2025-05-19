@@ -52,7 +52,6 @@ export default function TiptapEditor({
   content: value,
   onUpdate: ({ editor }) => {
     const html = editor.getHTML();
-    console.log("실시간 HTML 내용:", html);
     setEditorContent(html);
     onChange?.(html);
   },

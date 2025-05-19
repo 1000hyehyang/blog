@@ -14,8 +14,6 @@ export const uploadThumbnail = async (file: File): Promise<UploadResponse> => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-  console.log("📦 썸네일 업로드 응답 전체:", res.data); 
-
   return res.data.data;
 };
 
