@@ -68,8 +68,16 @@ export default function PostContent({ html }: PostContentProps) {
         },
         "& img": {
           maxWidth: "100%",
-          borderRadius: 8,
+          borderRadius: 2,
           my: 3,
+          transition: "all 0.2s ease-in-out",
+          display: "block",
+          marginLeft: "auto",
+          marginRight: "auto",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+            transform: "translateY(-4px)",
+          },
         },
         "& a": {
           color: "var(--primary-200)",

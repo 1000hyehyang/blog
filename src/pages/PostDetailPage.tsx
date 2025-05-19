@@ -65,7 +65,6 @@ export default function PostDetailPage() {
         alt="썸네일"
         sx={{
           width: "100%",
-          maxHeight: 320,
           borderRadius: 2,
           objectFit: "cover",
         }}

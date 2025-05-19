@@ -115,7 +115,15 @@ export default function PostForm({
           variant="standard"
           InputProps={{
             disableUnderline: true,
-            sx: { fontSize: "1.5rem", fontWeight: 600, py: 1 },
+            sx: {
+              fontSize: "1.5rem",
+              fontWeight: 600,
+              py: 1,
+              backgroundColor: "var(--bg-100)",
+              "&:focus-within": {
+                backgroundColor: "var(--bg-100)",
+              },
+            },
           }}
           InputLabelProps={{
             shrink: true,
