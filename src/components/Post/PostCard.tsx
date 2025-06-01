@@ -83,7 +83,6 @@ export default function PostCard({
                 fontWeight: 600,
                 borderColor: "var(--primary-100)",
                 color: "var(--primary-100)",
-                backgroundColor: "transparent",
               }}
             />
           )}
