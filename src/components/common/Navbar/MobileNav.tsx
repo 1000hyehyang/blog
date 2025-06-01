@@ -1,6 +1,8 @@
 // src/components/common/Navbar/MobileNav.tsx
 import { Box, Stack, Button } from "@mui/material";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import SubscribeModal from "../SubscribeModal";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { logoutUser } from "../../../lib/utils/logout";
 
@@ -10,6 +12,7 @@ interface Props {
 
 export default function MobileNav({ onLoginOpen }: Props) {
   const { user } = useAuthStore();
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -20,6 +23,7 @@ export default function MobileNav({ onLoginOpen }: Props) {
       <Stack spacing={2}>
         {/* 구독하기 버튼 */}
         <Button
+          onClick={() => setSubscribeOpen(true)}
           fullWidth
           variant="contained"
           sx={{
@@ -37,6 +41,11 @@ export default function MobileNav({ onLoginOpen }: Props) {
         >
           구독하기
         </Button>
+
+        <SubscribeModal
+          open={subscribeOpen}
+          onClose={() => setSubscribeOpen(false)}
+        />
 
         {/* 관리자 전용 글쓰기 */}
         {user?.role === "ADMIN" && (

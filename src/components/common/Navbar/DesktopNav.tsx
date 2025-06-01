@@ -1,6 +1,8 @@
 // src/components/common/Navbar/DesktopNav.tsx
 import { Stack, Button } from "@mui/material";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import SubscribeModal from "../SubscribeModal";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { logoutUser } from "../../../lib/utils/logout";
 
@@ -10,6 +12,7 @@ interface Props {
 
 export default function DesktopNav({ onLoginOpen }: Props) {
   const { user } = useAuthStore();
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
 
   const handleLogout = async () => {
     await logoutUser(); // 서버 + 클라이언트 상태 정리
@@ -19,6 +22,7 @@ export default function DesktopNav({ onLoginOpen }: Props) {
     <Stack direction="row" spacing={2} alignItems="center">
       {/* 구독 버튼 */}
       <Button
+        onClick={() => setSubscribeOpen(true)}
         variant="contained"
         sx={{
           color: "var(--text-600)",
@@ -35,6 +39,8 @@ export default function DesktopNav({ onLoginOpen }: Props) {
       >
         구독하기
       </Button>
+
+      <SubscribeModal open={subscribeOpen} onClose={() => setSubscribeOpen(false)} />
 
       {/* 관리자만 글쓰기 가능 */}
       {user?.role === "ADMIN" && (
