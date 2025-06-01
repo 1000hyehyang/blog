@@ -9,14 +9,14 @@ import {
   Typography,
   Fade,
 } from "@mui/material";
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import type { TransitionProps } from "@mui/material/transitions";
 import logo from "../../assets/logo.svg";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
-import { useEffect, useRef, useState } from "react";
-import { dummyPostList } from "../../data/dummyPosts";
 import { useNavigate } from "react-router-dom";
+import { getRecentPosts } from "../../lib/api/postApi";
+import type { PostSummary } from "../../types/post";
 
 interface SearchModalProps {
   open: boolean;
@@ -35,11 +35,29 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState("");
   const [recent, setRecent] = useState<string[]>([]);
+  const [allPosts, setAllPosts] = useState<PostSummary[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 포커싱
   useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 150);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const posts = await getRecentPosts(100); // 최대 100개까지
+        setAllPosts(posts);
+      } catch (err) {
+        console.error("게시글 불러오기 실패", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchPosts();
     }
   }, [open]);
 
@@ -62,7 +80,7 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
     setRecent(updated);
   };
 
-  const filteredPosts = dummyPostList.filter((post) =>
+  const filteredPosts = allPosts.filter((post) =>
     post.title.toLowerCase().includes(keyword.toLowerCase())
   );
 
@@ -93,21 +111,21 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
             display: "flex",
             alignItems: "center",
             gap: 1,
-            border: "1px solid var(--text-500)",
+            border: "1.5px solid var(--text-500)",
             "&:hover": {
               borderColor: "var(--primary-100)",
             },
             "&:focus-within": {
               borderColor: "var(--primary-100)",
             },
-            borderRadius: 2,
+            borderRadius: 12,
             py: 0.5,
           }}
         >
           <SearchIcon sx={{ color: "var(--text-400)" }} />
           <TextField
             fullWidth
-            placeholder="주제, 시리즈 검색"
+            placeholder="검색어를 입력해주세요"
             inputRef={inputRef}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -123,41 +141,49 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
 
         <Box sx={{ mt: 4, maxWidth: "700px", mx: "auto" }}>
           {keyword.trim() ? (
-            <Stack spacing={2}>
-              {filteredPosts.map((post) => (
-                <Box
-                  key={post.id}
-                  display="flex"
-                  gap={2}
-                  alignItems="center"
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => {
-                    navigate(`/post/${post.id}`);
-                    handleClose();
-                  }}
-                >
+            loading ? (
+              <Typography sx={{ color: "var(--text-300)" }}>
+                불러오는 중...
+              </Typography>
+            ) : filteredPosts.length > 0 ? (
+              <Stack spacing={2}>
+                {filteredPosts.map((post) => (
                   <Box
-                    component="img"
-                    src={post.thumbnailUrl}
-                    alt="썸네일"
-                    sx={{
-                      width: 64,
-                      height: 48,
-                      borderRadius: 2,
-                      objectFit: "cover",
+                    key={post.id}
+                    display="flex"
+                    gap={2}
+                    alignItems="center"
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => {
+                      navigate(`/post/${post.id}`);
+                      handleClose();
                     }}
-                  />
-                  <Typography variant="body1" sx={{ color: "var(--text-100)" }}>
-                    {post.title}
-                  </Typography>
-                </Box>
-              ))}
-              {filteredPosts.length === 0 && (
-                <Typography sx={{ color: "var(--text-300)" }}>
-                  "{keyword}"에 대한 검색 결과가 없습니다.
-                </Typography>
-              )}
-            </Stack>
+                  >
+                    <Box
+                      component="img"
+                      src={post.thumbnailUrl}
+                      alt="썸네일"
+                      sx={{
+                        width: 64,
+                        height: 48,
+                        borderRadius: 2,
+                        objectFit: "cover",
+                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      sx={{ color: "var(--text-100)" }}
+                    >
+                      {post.title}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <Typography sx={{ color: "var(--text-300)" }}>
+                "{keyword}"에 대한 검색 결과가 없습니다.
+              </Typography>
+            )
           ) : (
             <Box>
               <Typography
