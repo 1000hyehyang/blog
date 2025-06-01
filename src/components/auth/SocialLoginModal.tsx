@@ -2,12 +2,11 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  IconButton,
   Stack,
   Typography,
   Button,
+  Divider,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import GoogleIcon from "@mui/icons-material/Google";
 
@@ -34,6 +33,7 @@ export default function SocialLoginModal({
       fullWidth
       PaperProps={{
         sx: {
+          py: 0.5,
           borderRadius: 4,
         },
       }}
@@ -42,19 +42,13 @@ export default function SocialLoginModal({
         sx={{
           textAlign: "center",
           fontWeight: 600,
+          fontSize: 28,
           pb: 1,
           color: "var(--text-200)",
         }}
       >
-        로그인
+        BLOG
       </DialogTitle>
-
-      <IconButton
-        onClick={onClose}
-        sx={{ position: "absolute", top: 8, right: 8,           color: "var(--text-400)", }}
-      >
-        <CloseIcon />
-      </IconButton>
 
       <DialogContent
         sx={{
@@ -68,6 +62,15 @@ export default function SocialLoginModal({
         >
           소셜 계정으로 간편하게 로그인하세요
         </Typography>
+
+        {/* 경계선 */}
+        <Divider
+          sx={{
+            mb: 3,
+            borderColor: "var(--text-400)",
+            opacity: 0.3,
+          }}
+        />
 
         <Stack spacing={2}>
           <Button
@@ -95,15 +98,31 @@ export default function SocialLoginModal({
             onClick={() => handleLogin("google")}
             sx={{
               color: "#555",
-              borderColor: "#ddd",
+              borderColor: "var(--bg-300)",
               fontWeight: 500,
-              "&:hover": { backgroundColor: "#f5f5f5" },
+              "&:hover": { backgroundColor: "var(--bg-100)" },
               textTransform: "none",
               py: 1.5,
               borderRadius: 2,
             }}
           >
             Google 계정으로 로그인
+          </Button>
+
+          {/* 닫기 버튼 */}
+          <Button
+            onClick={onClose}
+            fullWidth
+            sx={{
+              mt: 3,
+              color: "var(--text-300)",
+              "&:hover": { backgroundColor: "var(--bg-100)" },
+              textTransform: "none",
+              py: 1.5,
+              fontWeight: 500,
+            }}
+          >
+            닫기
           </Button>
         </Stack>
       </DialogContent>
