@@ -4,6 +4,7 @@ import { useAuthStore } from "./store/useAuthStore";
 import { fetchAndSetUserProfile } from "./lib/utils/authUtils";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./Router/router";
+import { useGlobalRippleEffect } from "./hooks/useGlobalRippleEffect";
 
 export default function App() {
   const { user, accessToken, setAccessToken } = useAuthStore();
@@ -23,6 +24,8 @@ export default function App() {
       fetchAndSetUserProfile();
     }
   }, [accessToken, user]);
+
+  useGlobalRippleEffect();
 
   return <RouterProvider router={router} />;
 }

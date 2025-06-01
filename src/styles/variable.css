@@ -49,21 +49,48 @@
 
 /* 스크롤바 커스텀 */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background-color: var(--bg-200);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb);
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  cursor: pointer;
   background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+
+/* 커서 ripple 효과 */
+.cursor-ripple {
+  position: fixed;
+  width: 36px;
+  height: 36px;
+  background: var(--amber-200);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple-animation 0.6s ease-out;
+  z-index: 9999;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
 }
