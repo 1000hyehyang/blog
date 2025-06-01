@@ -1,4 +1,4 @@
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography, Paper, Chip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../../lib/utils/formatDate";
 
@@ -19,7 +19,10 @@ export default function PostCard({
   thumbnailUrl,
 }: PostCardProps) {
   const navigate = useNavigate();
-  const formattedDate = formatDate(createdAt); 
+  const formattedDate = formatDate(createdAt);
+
+  const isNew =
+    Date.now() - new Date(createdAt).getTime() < 1000 * 60 * 60 * 24; // 24시간 이내
 
   return (
     <Paper
@@ -61,14 +64,30 @@ export default function PostCard({
 
       {/* 텍스트 */}
       <Box flex={1}>
-        <Typography
-          variant="h6"
-          fontWeight={700}
-          sx={{ color: "var(--text-100)" }}
-          gutterBottom
-        >
-          {title}
-        </Typography>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Typography
+            variant="h6"
+            fontWeight={700}
+            sx={{ color: "var(--text-100)" }}
+          >
+            {title}
+          </Typography>
+          {isNew && (
+            <Chip
+              label="NEW"
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 20,
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                borderColor: "var(--primary-100)",
+                color: "var(--primary-100)",
+                backgroundColor: "transparent",
+              }}
+            />
+          )}
+        </Box>
 
         <Typography
           variant="body2"
