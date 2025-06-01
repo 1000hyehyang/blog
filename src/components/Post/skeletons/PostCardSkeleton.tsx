@@ -38,8 +38,8 @@ export default function PostCardSkeleton() {
       {/* 텍스트 영역 */}
       <Box flex={1}>
         <Skeleton variant="text" width="80%" height={28} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width="100%" height={20} />
-        <Skeleton variant="text" width="90%" height={20} sx={{ mb: 2 }} />
+        <Skeleton variant="text" width="70%" height={20} />
+        <Skeleton variant="text" width="60%" height={20} sx={{ mb: 2 }} />
         <Skeleton variant="text" width="30%" height={16} />
       </Box>
     </Paper>
