@@ -1,3 +1,4 @@
+// src/lib/api/postApi.ts
 import axiosInstance from "../axiosInstance";
 import type { PostDetail, PostSummary } from "../../types/post";
 import type { PostComment } from "../../types/comment";
