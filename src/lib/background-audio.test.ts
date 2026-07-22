@@ -21,4 +21,21 @@ describe("background-audio", () => {
 
     expect(audio.volume).toBe(TARGET_VOLUME);
   });
+
+  it("페이드 중 볼륨이 0~1 범위를 벗어나지 않는다", async () => {
+    const volumes: number[] = [];
+    const audio = {
+      get volume() {
+        return volumes.at(-1) ?? 0;
+      },
+      set volume(value: number) {
+        volumes.push(value);
+      },
+    } as HTMLAudioElement;
+
+    await fadeAudioVolume(audio, 0, 450);
+
+    expect(volumes.every((value) => value >= 0 && value <= 1)).toBe(true);
+    expect(audio.volume).toBe(0);
+  });
 });

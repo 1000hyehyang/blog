@@ -18,18 +18,24 @@ export function AnimatedMusicIcon({
     duration: reduceMotion ? 0 : ICON_TRANSITION_DURATION,
     ease: "easeInOut" as const,
   };
+  const offIconState = {
+    opacity: showSound ? 0 : 1,
+    rotate: showSound ? -100 : 0,
+    scale: showSound ? 0.5 : 1,
+  };
+  const onIconState = {
+    opacity: showSound ? 1 : 0,
+    rotate: showSound ? 0 : 100,
+    scale: showSound ? 1 : 0.5,
+  };
 
   return (
     <span className="relative inline-grid size-5 place-items-center">
       <motion.span
         aria-hidden="true"
         className="absolute inset-0 grid place-items-center"
-        initial={false}
-        animate={{
-          opacity: showSound ? 0 : 1,
-          rotate: showSound ? -100 : 0,
-          scale: showSound ? 0.5 : 1,
-        }}
+        initial={offIconState}
+        animate={offIconState}
         transition={transition}
         style={{ transformOrigin: "50% 50%" }}
       >
@@ -38,12 +44,8 @@ export function AnimatedMusicIcon({
       <motion.span
         aria-hidden="true"
         className="absolute inset-0 grid place-items-center"
-        initial={false}
-        animate={{
-          opacity: showSound ? 1 : 0,
-          rotate: showSound ? 0 : 100,
-          scale: showSound ? 1 : 0.5,
-        }}
+        initial={onIconState}
+        animate={onIconState}
         transition={transition}
         style={{ transformOrigin: "50% 50%" }}
       >

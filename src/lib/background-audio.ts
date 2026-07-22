@@ -35,7 +35,7 @@ export async function fadeAudioVolume(
       }
 
       const progress = Math.min(1, (now - start) / resolvedDuration);
-      audio.volume = from + (target - from) * progress;
+      audio.volume = clampVolume(from + (target - from) * progress);
 
       if (progress < 1) {
         requestAnimationFrame(step);
