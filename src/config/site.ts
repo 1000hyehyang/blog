@@ -39,8 +39,8 @@ export const siteConfig = {
   ],
   socialLinks: {
     github: "https://github.com/1000hyehyang",
-    email: "mailto:hello@example.com",
-    portfolio: "/about",
+    email: "ducogus12@gmail.com",
+    portfolio: "https://www.1000hyehyang.me/",
     library: "/posts",
   },
   defaultImage: "/og-default.png",
