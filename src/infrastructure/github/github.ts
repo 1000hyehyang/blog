@@ -115,7 +115,7 @@ const FALLBACK_AUTHOR: Actor = {
   url: "https://github.com",
 };
 
-export function mapDiscussion(node: DiscussionNode): Post {
+function mapDiscussion(node: DiscussionNode): Post {
   const { body, metadata } = parsePostBody(node.body);
   return {
     id: node.id,

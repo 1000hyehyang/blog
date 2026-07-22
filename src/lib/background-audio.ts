@@ -88,5 +88,3 @@ export async function pauseBackgroundAudio(
     audio.pause();
   }
 }
-
-export { TARGET_VOLUME };

@@ -3,10 +3,6 @@ import { normalizeDiscussionSource, splitFrontmatterBlock } from "./frontmatter"
 import { mergeMetadata, metadataSchema, resolveCoverImage } from "./metadata";
 import { stripFrontmatterArtifacts, stripTemplateBoilerplate } from "./sanitize";
 
-export { createExcerpt } from "./excerpt";
-export { resolveCoverImage, type PostMetadata } from "./metadata";
-export { stripTemplateBoilerplate } from "./sanitize";
-
 export function parsePostBody(source: string) {
   const normalizedSource = normalizeDiscussionSource(source);
   const { raw, body: rawBody } = splitFrontmatterBlock(normalizedSource);

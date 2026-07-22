@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { createExcerpt, formatDate, parsePostBody, resolveCoverImage, toSlug } from "./content";
+import { createExcerpt } from "./content/excerpt";
+import { formatDate, parsePostBody, toSlug } from "./content";
+import { resolveCoverImage } from "./content/metadata";
 
 describe("게시글 콘텐츠 유틸리티", () => {
   it("frontmatter를 본문에서 제거하고 메타데이터를 검증한다", () => {

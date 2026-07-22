@@ -1,10 +1,5 @@
-export const backgroundMusicConfig = {
-  enabled: true,
-  src: "/Memento%20mori.mp3",
-  title: "Memento mori",
-} as const;
+const BACKGROUND_MUSIC_SRC = "/Memento%20mori.mp3";
 
 export function getBackgroundMusicSrc() {
-  if (!backgroundMusicConfig.enabled) return null;
-  return backgroundMusicConfig.src;
+  return BACKGROUND_MUSIC_SRC;
 }

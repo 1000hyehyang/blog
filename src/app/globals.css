@@ -31,11 +31,6 @@ html.theme-circle-transition::view-transition-new(root) {
 }
 
 :root {
-  --brand: #fdba74;
-  --brand-foreground: #1c1917;
-  --brand-soft: rgb(253 186 116 / 14%);
-  --brand-strong: #fb923c;
-  --brand-pale: #fed7aa;
   --code-block-background: #f3f4f6;
   --code-block-foreground: #1e293b;
   --code-inline-background: #fff7ed;
@@ -46,12 +41,8 @@ html.theme-circle-transition::view-transition-new(root) {
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --font-family: "Wanted Sans Variable", sans-serif;
@@ -60,7 +51,6 @@ html.theme-circle-transition::view-transition-new(root) {
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
   --shadow-md: 0 12px 35px rgb(0 0 0 / 0.08);
   --spacing-section: clamp(3.5rem, 7vw, 6.5rem);
   --header-height: 68px;
@@ -85,12 +75,8 @@ html.theme-circle-transition::view-transition-new(root) {
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --ring: oklch(0.556 0 0);
   --scrollbar-thumb: #fed7aa;
@@ -105,19 +91,10 @@ html.theme-circle-transition::view-transition-new(root) {
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
-  --color-brand: var(--brand);
-  --color-brand-foreground: var(--brand-foreground);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-strong: var(--brand-strong);
-  --color-brand-pale: var(--brand-pale);
   --color-surface: var(--card);
   --color-secondary: var(--muted-foreground);
   --color-tertiary: var(--ring);

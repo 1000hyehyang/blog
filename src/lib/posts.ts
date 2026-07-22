@@ -1,6 +1,6 @@
 import type { Post } from "@/domain/post";
 
-export function sortFeaturedPosts(posts: Post[]) {
+function sortFeaturedPosts(posts: Post[]) {
   return [...posts].sort((a, b) => {
     const orderDiff = (a.featuredOrder ?? 999) - (b.featuredOrder ?? 999);
     if (orderDiff !== 0) return orderDiff;

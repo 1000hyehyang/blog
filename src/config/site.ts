@@ -41,12 +41,9 @@ export const siteConfig = {
     github: "https://github.com/1000hyehyang",
     email: "ducogus12@gmail.com",
     portfolio: "https://www.1000hyehyang.me/",
-    library: "/posts",
   },
   defaultImage: "/og-default.png",
 } as const;
-
-export type SiteNavigation = (typeof siteConfig.navigation)[number];
 
 export function getCategoryNavigation(category: string) {
   return siteConfig.navigation.find((item) => item.category === category);
