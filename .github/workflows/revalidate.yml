@@ -25,9 +25,17 @@ jobs:
             exit 1
           fi
 
+          DISCUSSION_NUMBER="${{ github.event.discussion.number }}"
+          if [ -n "$DISCUSSION_NUMBER" ] && [ "$DISCUSSION_NUMBER" != "null" ]; then
+            PAYLOAD="{\"number\": $DISCUSSION_NUMBER}"
+          else
+            PAYLOAD="{}"
+          fi
+
           response="$(curl -sS -w $'\n%{http_code}' -X POST "$REVALIDATE_URL" \
             -H "Authorization: Bearer $REVALIDATE_SECRET" \
-            -H "Content-Type: application/json")"
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")"
           body="${response%$'\n'*}"
           status="${response##*$'\n'}"
 

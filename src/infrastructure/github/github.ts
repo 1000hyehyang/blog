@@ -86,6 +86,7 @@ async function request<T>(
   config: GitHubConfig,
   query: string,
   variables: Record<string, unknown>,
+  tags: string[] = ["posts"],
 ): Promise<T> {
   const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
     method: "POST",
@@ -94,7 +95,7 @@ async function request<T>(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: REVALIDATE_SECONDS, tags: ["posts"] },
+    next: { revalidate: REVALIDATE_SECONDS, tags },
   });
 
   if (!response.ok) throw new Error("콘텐츠 제공자에 연결할 수 없습니다.");
@@ -178,11 +179,16 @@ export async function getPost(number: number): Promise<Post | null> {
   const config = getConfig();
   if (!config) return null;
 
-  const data = await request<DiscussionDetailData>(config, DETAIL_QUERY, {
-    owner: config.GITHUB_OWNER,
-    repo: config.GITHUB_REPO,
-    number,
-  });
+  const data = await request<DiscussionDetailData>(
+    config,
+    DETAIL_QUERY,
+    {
+      owner: config.GITHUB_OWNER,
+      repo: config.GITHUB_REPO,
+      number,
+    },
+    ["posts", `post:${number}`],
+  );
 
   if (!data.repository.discussion) return null;
   return mapDiscussion(data.repository.discussion);
