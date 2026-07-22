@@ -9,7 +9,7 @@ const basePost = (overrides: Partial<Post> & Pick<Post, "number" | "category">):
   title: `게시글 ${overrides.number}`,
   body: "본문",
   excerpt: "요약",
-  coverImage: "/default-cover.svg",
+  coverImage: "/og-default.png",
   featured: false,
   published: true,
   tags: [],

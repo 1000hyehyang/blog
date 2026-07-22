@@ -2,12 +2,13 @@ import Link from "next/link";
 
 import { PostCoverImage } from "@/components/post-cover-image";
 import type { Post } from "@/domain/post";
+import { routes } from "@/lib/routes";
 
 function RelatedPostCard({ post }: { post: Post }) {
   return (
     <article className="group">
       <Link
-        href={`/posts/${post.number}`}
+        href={routes.post(post.number)}
         className="block focus-visible:outline-offset-4"
       >
         <div className="relative aspect-video overflow-hidden bg-muted">

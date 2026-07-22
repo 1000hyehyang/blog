@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 
 import { siteConfig } from "@/config/site";
+import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "소개",
   description: `${siteConfig.author.name} 소개`,
+  alternates: { canonical: routes.about },
 };
 
 export default function AboutPage() {

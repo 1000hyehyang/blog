@@ -49,8 +49,7 @@ html.theme-circle-transition::view-transition-new(root) {
   --shadow-md: 0 12px 35px rgb(0 0 0 / 0.08);
   --spacing-section: clamp(3.5rem, 7vw, 6.5rem);
   --header-height: 68px;
-  --header-glass-bg: rgb(255 255 255 / 0.6);
-  --header-glass-blur: 20px;
+  --header-glass-blur: 1rem;
   --theme-transition-duration: 0.7s;
   --theme-transition-easing: cubic-bezier(0.16, 1, 0.3, 1);
   --scrollbar-size: 6px;
@@ -73,7 +72,6 @@ html.theme-circle-transition::view-transition-new(root) {
   --color-text-tertiary: #858580;
   --color-border: #30302d;
   --color-accent: #f3f3f1;
-  --header-glass-bg: rgb(17 17 16 / 0.6);
   --scrollbar-thumb: #3a3a37;
   --scrollbar-thumb-hover: #52524e;
   --ripple-color: rgb(180 180 175 / 0.16);
@@ -124,6 +122,12 @@ html.theme-circle-transition::view-transition-new(root) {
 
 html {
   scroll-behavior: smooth;
+  /*
+   * 세로 스크롤바를 항상 표시해 페이지별 콘텐츠 양(스크롤바 유무)에 따라
+   * 가운데 정렬된 콘텐츠와 fixed 헤더가 좌우로 밀리는 현상을 방지한다.
+   * 트랙이 투명해서 스크롤이 불필요한 페이지에서는 시각적으로 드러나지 않는다.
+   */
+  overflow-y: scroll;
 }
 body {
   background: var(--color-background);
@@ -164,6 +168,46 @@ button:not(:disabled):hover {
   -webkit-appearance: none;
 }
 
+/* 브라우저 기본 검색 지우기(X) 버튼을 숨기고 커스텀 아이콘 버튼을 사용한다. */
+.header-search input::-webkit-search-cancel-button,
+.header-search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.header-search-field {
+  width: 13rem;
+  max-width: 13rem;
+  transition:
+    width var(--theme-transition-duration) var(--theme-transition-easing),
+    max-width var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.header-search-field:focus-within {
+  width: 16rem;
+  max-width: 16rem;
+}
+
+.header-search-clear {
+  transition:
+    opacity 200ms var(--theme-transition-easing),
+    transform 200ms var(--theme-transition-easing);
+}
+
+.header-search-clear[data-visible="false"] {
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-search-field,
+  .header-search-clear {
+    transition-duration: 0.01ms;
+  }
+}
+
 .click-ripple {
   position: absolute;
   width: 20px;
@@ -187,14 +231,13 @@ button:not(:disabled):hover {
 }
 
 .site-header-glass {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 50;
-  background: var(--header-glass-bg);
-  backdrop-filter: blur(var(--header-glass-blur));
-  -webkit-backdrop-filter: blur(var(--header-glass-blur));
+  width: 100%;
+  background: transparent;
+  -webkit-backdrop-filter: blur(var(--header-glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--header-glass-blur)) saturate(140%);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

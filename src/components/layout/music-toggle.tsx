@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useReducedMotion } from "framer-motion";
 
-import { AnimatedMusicIcon } from "@/components/layout/AnimatedMusicIcon";
+import { AnimatedMusicIcon } from "@/components/layout/animated-music-icon";
 import { getBackgroundMusicSrc } from "@/config/background-music";
 import {
   createBackgroundAudio,
@@ -34,11 +34,7 @@ export function useMusicToggle() {
     () => true,
     () => false,
   );
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    setIsPlaying(readStoredPreference());
-  }, []);
+  const [isPlaying, setIsPlaying] = useState(readStoredPreference);
 
   useEffect(() => {
     if (!isMounted) return;

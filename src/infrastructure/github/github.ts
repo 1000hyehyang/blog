@@ -5,11 +5,17 @@ import { z } from "zod";
 import type { Post, PostPage } from "@/domain/post";
 import { parsePostBody, toSlug } from "@/lib/content";
 
+const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
+const REVALIDATE_SECONDS = 300;
+const MAX_PAGE_SIZE = 50;
+
 const envSchema = z.object({
   GITHUB_TOKEN: z.string().min(1),
   GITHUB_OWNER: z.string().min(1),
   GITHUB_REPO: z.string().min(1),
 });
+
+type GitHubConfig = z.infer<typeof envSchema>;
 
 type Actor = { login: string; avatarUrl: string; url: string };
 type ReactionGroup = { users: { totalCount: number } };
@@ -27,18 +33,33 @@ type DiscussionNode = {
   reactionGroups: ReactionGroup[];
 };
 
+type DiscussionListData = {
+  repository: {
+    discussions: {
+      nodes: DiscussionNode[];
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    };
+  };
+};
+
+type DiscussionDetailData = {
+  repository: { discussion: DiscussionNode | null };
+};
+
+const DISCUSSION_FIELDS = `
+  id number title body url createdAt updatedAt
+  category { id name }
+  author { login avatarUrl url }
+  comments { totalCount }
+  reactionGroups { users { totalCount } }
+`;
+
 const LIST_QUERY = `
   query Posts($owner: String!, $repo: String!, $first: Int!, $after: String) {
     repository(owner: $owner, name: $repo) {
       discussions(first: $first, after: $after, orderBy: {field: UPDATED_AT, direction: DESC}) {
         pageInfo { hasNextPage endCursor }
-        nodes {
-          id number title body url createdAt updatedAt
-          category { id name }
-          author { login avatarUrl url }
-          comments { totalCount }
-          reactionGroups { users { totalCount } }
-        }
+        nodes { ${DISCUSSION_FIELDS} }
       }
     }
   }
@@ -47,41 +68,33 @@ const LIST_QUERY = `
 const DETAIL_QUERY = `
   query Post($owner: String!, $repo: String!, $number: Int!) {
     repository(owner: $owner, name: $repo) {
-      discussion(number: $number) {
-        id number title body url createdAt updatedAt
-        category { id name }
-        author { login avatarUrl url }
-        reactionGroups { users { totalCount } }
-        comments { totalCount }
-      }
+      discussion(number: $number) { ${DISCUSSION_FIELDS} }
     }
   }
 `;
 
-function getConfig() {
-  return envSchema.safeParse(process.env);
+function getConfig(): GitHubConfig | null {
+  const result = envSchema.safeParse(process.env);
+  return result.success ? result.data : null;
 }
 
 export function isGitHubConfigured() {
-  return getConfig().success;
+  return getConfig() !== null;
 }
 
 async function request<T>(
+  config: GitHubConfig,
   query: string,
   variables: Record<string, unknown>,
 ): Promise<T> {
-  const config = getConfig();
-  if (!config.success)
-    throw new Error("GitHub Discussions 환경 변수가 설정되지 않았습니다.");
-
-  const response = await fetch("https://api.github.com/graphql", {
+  const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${config.data.GITHUB_TOKEN}`,
+      Authorization: `Bearer ${config.GITHUB_TOKEN}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: 300, tags: ["posts"] },
+    next: { revalidate: REVALIDATE_SECONDS, tags: ["posts"] },
   });
 
   if (!response.ok) throw new Error("콘텐츠 제공자에 연결할 수 없습니다.");
@@ -92,13 +105,15 @@ async function request<T>(
   return payload.data;
 }
 
-function reactions(groups: ReactionGroup[] = []) {
+function countReactions(groups: ReactionGroup[] = []) {
   return groups.reduce((total, group) => total + group.users.totalCount, 0);
 }
 
-function fallbackAuthor(): Actor {
-  return { login: "unknown", avatarUrl: "", url: "https://github.com" };
-}
+const FALLBACK_AUTHOR: Actor = {
+  login: "unknown",
+  avatarUrl: "",
+  url: "https://github.com",
+};
 
 export function mapDiscussion(node: DiscussionNode): Post {
   const { body, metadata } = parsePostBody(node.body);
@@ -119,11 +134,11 @@ export function mapDiscussion(node: DiscussionNode): Post {
       name: node.category.name,
       slug: toSlug(node.category.name),
     },
-    author: node.author ?? fallbackAuthor(),
+    author: node.author ?? FALLBACK_AUTHOR,
     createdAt: node.createdAt,
     updatedAt: node.updatedAt,
     commentsCount: node.comments.totalCount,
-    reactionsCount: reactions(node.reactionGroups),
+    reactionsCount: countReactions(node.reactionGroups),
     url: node.url,
   };
 }
@@ -135,45 +150,40 @@ export async function getPosts(
     category?: string;
   } = {},
 ): Promise<PostPage> {
-  if (!isGitHubConfigured()) {
+  const config = getConfig();
+  if (!config) {
     return { posts: [], pageInfo: { hasNextPage: false, endCursor: null } };
   }
-  const config = getConfig();
-  if (!config.success) throw new Error("GitHub 설정 오류");
-  const data = await request<{
-    repository: {
-      discussions: {
-        nodes: DiscussionNode[];
-        pageInfo: { hasNextPage: boolean; endCursor: string | null };
-      };
-    };
-  }>(LIST_QUERY, {
-    owner: config.data.GITHUB_OWNER,
-    repo: config.data.GITHUB_REPO,
-    first: Math.min(options.first ?? 12, 50),
+
+  const data = await request<DiscussionListData>(config, LIST_QUERY, {
+    owner: config.GITHUB_OWNER,
+    repo: config.GITHUB_REPO,
+    first: Math.min(options.first ?? 12, MAX_PAGE_SIZE),
     after: options.after ?? null,
   });
+
   const posts = data.repository.discussions.nodes
     .map(mapDiscussion)
     .filter((post) => post.published)
     .filter(
       (post) => !options.category || post.category.slug === options.category,
     );
+
   return { posts, pageInfo: data.repository.discussions.pageInfo };
 }
 
-export async function getPost(number: number) {
-  if (!Number.isInteger(number) || number < 1 || !isGitHubConfigured())
-    return null;
+export async function getPost(number: number): Promise<Post | null> {
+  if (!Number.isInteger(number) || number < 1) return null;
+
   const config = getConfig();
-  if (!config.success) return null;
-  const data = await request<{
-    repository: { discussion: DiscussionNode | null };
-  }>(DETAIL_QUERY, {
-    owner: config.data.GITHUB_OWNER,
-    repo: config.data.GITHUB_REPO,
+  if (!config) return null;
+
+  const data = await request<DiscussionDetailData>(config, DETAIL_QUERY, {
+    owner: config.GITHUB_OWNER,
+    repo: config.GITHUB_REPO,
     number,
   });
+
   if (!data.repository.discussion) return null;
   return mapDiscussion(data.repository.discussion);
 }

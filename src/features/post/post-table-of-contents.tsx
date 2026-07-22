@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export type PostHeading = {
-  text: string;
-  id: string;
-  level: 1 | 2 | 3;
-};
+import type { PostHeading } from "@/lib/content";
 
 const HEADER_OFFSET = 96;
 

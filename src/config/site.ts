@@ -43,19 +43,11 @@ export const siteConfig = {
     portfolio: "/about",
     library: "/posts",
   },
-  defaultImage: "/default-cover.svg",
+  defaultImage: "/og-default.png",
 } as const;
 
 export type SiteNavigation = (typeof siteConfig.navigation)[number];
 
 export function getCategoryNavigation(category: string) {
   return siteConfig.navigation.find((item) => item.category === category);
-}
-
-export function getCategoryLabel(category: string) {
-  return getCategoryNavigation(category)?.label ?? category;
-}
-
-export function getCategoryTagline(category: string) {
-  return getCategoryNavigation(category)?.tagline ?? "기록을 모아 두었습니다.";
 }

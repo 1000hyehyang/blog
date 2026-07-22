@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { siteConfig } from "@/config/site";
@@ -5,14 +6,27 @@ import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
 import { getPosts, isGitHubConfigured } from "@/infrastructure/github/github";
 import { getFeaturedPosts } from "@/lib/posts";
+import { routes } from "@/lib/routes";
+import { buildBlogJsonLd, serializeJsonLd } from "@/lib/seo";
+
+const RECENT_POSTS_COUNT = 9;
+
+export const metadata: Metadata = {
+  alternates: { canonical: routes.home },
+};
 
 export default async function Home() {
   const { posts } = await getPosts({ first: 50 });
   const featured = getFeaturedPosts(posts);
-  const recent = posts.slice(0, 9);
+  const recent = posts.slice(0, RECENT_POSTS_COUNT);
 
   return (
     <div className="container-shell py-16 sm:py-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildBlogJsonLd()) }}
+      />
+
       <section>
         <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">
           {siteConfig.title}
@@ -32,7 +46,7 @@ export default async function Home() {
             최근 포스트
           </h2>
           <Link
-            href="/posts"
+            href={routes.posts}
             className="text-sm text-secondary hover:text-foreground"
           >
             View all →

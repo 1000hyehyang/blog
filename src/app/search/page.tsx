@@ -6,6 +6,8 @@ import { getPosts } from "@/infrastructure/github/github";
 export const metadata: Metadata = {
   title: "검색",
   description: "블로그 게시글 검색",
+  // 검색 결과 페이지는 쿼리별로 내용이 달라져 색인 대상에서 제외한다.
+  robots: { index: false, follow: true },
 };
 
 export default async function SearchPage({
@@ -19,9 +21,7 @@ export default async function SearchPage({
   ]);
   return (
     <div className="container-shell py-16">
-      <div className="mx-auto max-w-3xl">
-        <SearchResults posts={posts} query={query.q} />
-      </div>
+      <SearchResults posts={posts} query={query.q} />
     </div>
   );
 }

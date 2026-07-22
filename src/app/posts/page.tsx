@@ -4,10 +4,12 @@ import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
 import { getPosts } from "@/infrastructure/github/github";
+import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "모든 게시글",
   description: `${siteConfig.name}의 모든 개발 기록`,
+  alternates: { canonical: routes.posts },
 };
 
 export default async function PostsPage({
@@ -33,7 +35,7 @@ export default async function PostsPage({
         </div>
         <div className="flex gap-3 text-xs">
           <Link
-            href="/posts?sort=latest"
+            href={`${routes.posts}?sort=latest`}
             className={
               query.sort !== "oldest" ? "font-semibold" : "text-secondary"
             }
@@ -41,7 +43,7 @@ export default async function PostsPage({
             최신순
           </Link>
           <Link
-            href="/posts?sort=oldest"
+            href={`${routes.posts}?sort=oldest`}
             className={
               query.sort === "oldest" ? "font-semibold" : "text-secondary"
             }
@@ -61,7 +63,7 @@ export default async function PostsPage({
       {result.pageInfo.hasNextPage && result.pageInfo.endCursor && (
         <div className="mt-14 text-center">
           <Link
-            href={`/posts?cursor=${encodeURIComponent(result.pageInfo.endCursor)}`}
+            href={`${routes.posts}?cursor=${encodeURIComponent(result.pageInfo.endCursor)}`}
             className="inline-flex rounded-full border px-6 py-3 text-xs"
           >
             다음 게시글

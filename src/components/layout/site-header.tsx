@@ -6,9 +6,10 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { HeaderSearch } from "@/components/header-search";
-import { MusicToggle } from "@/components/layout/MusicToggle";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { MusicToggle } from "@/components/layout/music-toggle";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { siteConfig } from "@/config/site";
+import { routes } from "@/lib/routes";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -18,7 +19,7 @@ export function SiteHeader() {
     <header className="site-header-glass">
       <div className="container-shell flex h-[var(--header-height)] items-center gap-6">
         <Link
-          href="/"
+          href={routes.home}
           className="shrink-0 text-sm font-semibold tracking-tight"
         >
           {siteConfig.shortName}
@@ -28,7 +29,7 @@ export function SiteHeader() {
           className="hidden flex-1 justify-center gap-7 md:flex"
         >
           {siteConfig.navigation.map((item) => {
-            const href = `/category/${item.category}`;
+            const href = routes.category(item.category);
             return (
               <Link
                 key={item.category}
@@ -63,26 +64,18 @@ export function SiteHeader() {
         >
           <HeaderSearch variant="mobile" />
           <div className="flex gap-5 overflow-x-auto">
-          {siteConfig.navigation.map((item) => (
-            <Link
-              key={item.category}
-              href={`/category/${item.category}`}
-              className="whitespace-nowrap text-sm text-secondary"
-            >
-              {item.label}
-            </Link>
-          ))}
+            {siteConfig.navigation.map((item) => (
+              <Link
+                key={item.category}
+                href={routes.category(item.category)}
+                className="whitespace-nowrap text-sm text-secondary"
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
         </nav>
       )}
     </header>
-  );
-}
-
-export function SiteFooter() {
-  return (
-    <footer className="container-shell mt-[var(--spacing-section)] border-t py-10 text-center text-xs text-tertiary">
-      <p>Copyright ⓒ {siteConfig.author.name}</p>
-    </footer>
   );
 }

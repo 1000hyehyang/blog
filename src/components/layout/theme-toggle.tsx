@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 
-import { AnimatedThemeIcon } from "@/components/layout/AnimatedThemeIcon";
+import { AnimatedThemeIcon } from "@/components/layout/animated-theme-icon";
 
 const TRANSITION_CLASS_NAME = "theme-circle-transition";
 

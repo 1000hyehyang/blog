@@ -16,7 +16,7 @@ const post: Post = {
   title: "첫 번째 Next.js 게시글",
   body: "서버 컴포넌트 본문",
   excerpt: "첫 번째 게시글 요약",
-  coverImage: "/default-cover.svg",
+  coverImage: "/og-default.png",
   featured: true,
   featuredOrder: 1,
   published: true,
@@ -75,8 +75,10 @@ describe("검색과 테마 UI", () => {
   });
 
   it("ThemeToggle이 문서 테마를 변경한다", async () => {
-    const { ThemeProvider } = await import("@/components/layout/ThemeProvider");
-    const { SiteHeader } = await import("@/components/site-chrome");
+    const { ThemeProvider } = await import(
+      "@/components/layout/theme-provider"
+    );
+    const { SiteHeader } = await import("@/components/layout/site-header");
     render(
       <ThemeProvider>
         <SiteHeader />
@@ -88,8 +90,10 @@ describe("검색과 테마 UI", () => {
   });
 
   it("MusicToggle이 재생 상태를 전환한다", async () => {
-    const { ThemeProvider } = await import("@/components/layout/ThemeProvider");
-    const { SiteHeader } = await import("@/components/site-chrome");
+    const { ThemeProvider } = await import(
+      "@/components/layout/theme-provider"
+    );
+    const { SiteHeader } = await import("@/components/layout/site-header");
     render(
       <ThemeProvider>
         <SiteHeader />

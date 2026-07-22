@@ -1,7 +1,3 @@
-"use client";
-
-import { useMemo } from "react";
-
 import type { Post } from "@/domain/post";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
 import { filterPosts } from "@/features/search/filter-posts";
@@ -14,10 +10,7 @@ export function SearchResults({
   query?: string;
 }) {
   const normalizedQuery = query.trim();
-  const results = useMemo(
-    () => filterPosts(posts, normalizedQuery),
-    [posts, normalizedQuery],
-  );
+  const results = filterPosts(posts, normalizedQuery);
 
   return (
     <div aria-live="polite">

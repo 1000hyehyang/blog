@@ -53,8 +53,6 @@ class MockAudio {
   currentTime = 0;
   paused = true;
 
-  constructor(_src?: string) {}
-
   play() {
     this.paused = false;
     return Promise.resolve();

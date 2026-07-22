@@ -5,77 +5,75 @@ import { GiscusComments } from "@/components/giscus-comments";
 import { MarkdownContent } from "@/components/markdown";
 import { siteConfig } from "@/config/site";
 import { PostHero } from "@/features/post/post-hero";
-import { RelatedPosts } from "@/features/post/related-posts";
 import { PostTableOfContents } from "@/features/post/post-table-of-contents";
+import { RelatedPosts } from "@/features/post/related-posts";
 import { getPost, getPosts } from "@/infrastructure/github/github";
-import { toSlug } from "@/lib/content";
+import { extractHeadings } from "@/lib/content";
 import { getRelatedPosts } from "@/lib/posts";
+import { routes } from "@/lib/routes";
+import { buildPostJsonLd, serializeJsonLd } from "@/lib/seo";
 
-function parseNumber(value: string) {
+type PostPageProps = {
+  params: Promise<{ number: string }>;
+};
+
+function parsePostNumber(value: string) {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ number: string }>;
-}): Promise<Metadata> {
-  const number = parseNumber((await params).number);
+}: PostPageProps): Promise<Metadata> {
+  const number = parsePostNumber((await params).number);
   if (!number) return {};
   const post = await getPost(number);
   if (!post) return {};
+
+  const images = [post.coverImage || siteConfig.defaultImage];
+
   return {
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/posts/${number}` },
+    keywords: post.tags,
+    alternates: { canonical: routes.post(number) },
     openGraph: {
       type: "article",
       title: post.title,
       description: post.excerpt,
-      images: post.coverImage ? [post.coverImage] : [siteConfig.defaultImage],
+      url: routes.post(number),
+      images,
       publishedTime: post.createdAt,
       modifiedTime: post.updatedAt,
+      authors: [siteConfig.author.name],
+      tags: post.tags,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images,
     },
   };
 }
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ number: string }>;
-}) {
-  const number = parseNumber((await params).number);
+export default async function PostPage({ params }: PostPageProps) {
+  const number = parsePostNumber((await params).number);
   if (!number) notFound();
+
   const post = await getPost(number);
   if (!post || !post.published) notFound();
-  const all = (await getPosts({ first: 50 })).posts;
-  const relatedPosts = getRelatedPosts(all, post);
-  const headings = [...post.body.matchAll(/^(#{1,3})\s+(.+)$/gm)].map(
-    (match) => ({
-      level: match[1].length as 1 | 2 | 3,
-      text: match[2],
-      id: toSlug(match[2]),
-    }),
-  );
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.excerpt,
-    image: post.coverImage || siteConfig.defaultImage,
-    datePublished: post.createdAt,
-    dateModified: post.updatedAt,
-    author: { "@type": "Person", name: siteConfig.author.name },
-    mainEntityOfPage: `${siteConfig.url}/posts/${post.number}`,
-  };
+
+  const { posts } = await getPosts({ first: 50 });
+  const relatedPosts = getRelatedPosts(posts, post);
+  const headings = extractHeadings(post.body);
 
   return (
     <article className="container-shell py-10 sm:py-14">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          __html: serializeJsonLd(buildPostJsonLd(post)),
         }}
       />
 
