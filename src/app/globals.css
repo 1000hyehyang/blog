@@ -24,6 +24,7 @@
   --scrollbar-track: transparent;
   --scrollbar-thumb: #d8d8d5;
   --scrollbar-thumb-hover: #b8b8b3;
+  --ripple-color: rgb(146 146 142 / 0.28);
 }
 
 .dark {
@@ -37,6 +38,7 @@
   --color-accent: #f3f3f1;
   --scrollbar-thumb: #3a3a37;
   --scrollbar-thumb-hover: #52524e;
+  --ripple-color: rgb(180 180 175 / 0.16);
 }
 
 @theme inline {
@@ -96,6 +98,29 @@ button {
   outline: 2px solid var(--color-text-primary);
   outline-offset: 3px;
 }
+
+.click-ripple {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+  border-radius: 999px;
+  background: var(--ripple-color);
+  animation: click-ripple-wave 650ms ease-out forwards;
+}
+
+@keyframes click-ripple-wave {
+  from {
+    transform: scale(0.2);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(5);
+    opacity: 0;
+  }
+}
+
 .container-shell {
   width: min(calc(100% - 2rem), var(--container-width));
   margin-inline: auto;
@@ -191,5 +216,9 @@ button {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+
+  .click-ripple {
+    display: none;
   }
 }

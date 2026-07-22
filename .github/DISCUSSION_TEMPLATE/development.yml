@@ -2,15 +2,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Development** 카테고리 블로그 게시글입니다.
-        - `published: true` 확인
-        - `featured: true`면 홈 Pinned Posts 후보
-        - slug / excerpt / coverImage는 필요할 때만 수정
+        💻 **Development** 카테고리
+        - `published: true` — 블로그 공개 여부
+        - `featured: true` — 고정 게시글
   - type: textarea
     id: post-body
     attributes:
       label: 게시글 본문
-      description: frontmatter와 Markdown 본문을 작성하세요.
+      description: ✍️ 게시글을 작성해주세요
       value: |
         ---
         slug:

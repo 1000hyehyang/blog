@@ -2,11 +2,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Retrospective** 카테고리 블로그 게시글입니다.
+        🔍 **Retrospective** 카테고리
+        - `published: true` — 블로그 공개 여부
+        - `featured: true` — 고정 게시글
   - type: textarea
     id: post-body
     attributes:
       label: 게시글 본문
+      description: ✍️ 게시글을 작성해주세요
       value: |
         ---
         slug:

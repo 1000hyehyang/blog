@@ -98,24 +98,8 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="container-shell mt-[var(--spacing-section)] border-t py-10 text-xs text-tertiary">
-      <div className="flex items-center justify-between gap-4">
-        <p>
-          © {new Date().getFullYear()} {siteConfig.author.name}
-        </p>
-        <div className="flex items-center gap-4">
-          <a
-            href={siteConfig.socialLinks.github}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="GitHub"
-          >
-            GH
-          </a>
-          <a href={siteConfig.socialLinks.email}>Email</a>
-          <Link href="/about">About</Link>
-        </div>
-      </div>
+    <footer className="container-shell mt-[var(--spacing-section)] border-t py-10 text-center text-xs text-tertiary">
+      <p>Copyright ⓒ {siteConfig.author.name}</p>
     </footer>
   );
 }
