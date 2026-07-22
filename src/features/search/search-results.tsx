@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import type { Post } from "@/domain/post";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
+import { filterPosts } from "@/features/search/filter-posts";
 
 export function SearchResults({
   posts,
@@ -14,16 +15,7 @@ export function SearchResults({
   initialQuery?: string;
 }) {
   const [query, setQuery] = useState(initialQuery);
-  const results = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase();
-    if (!normalized) return [];
-    return posts.filter((post) =>
-      [post.title, post.excerpt, post.body, post.category.name, ...post.tags]
-        .join(" ")
-        .toLocaleLowerCase()
-        .includes(normalized),
-    );
-  }, [posts, query]);
+  const results = useMemo(() => filterPosts(posts, query), [posts, query]);
 
   return (
     <>

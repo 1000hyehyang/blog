@@ -62,10 +62,15 @@ describe("검색과 테마 UI", () => {
   });
 
   it("ThemeToggle이 문서 테마를 변경한다", async () => {
+    const { ThemeProvider } = await import("@/components/layout/ThemeProvider");
     const { SiteHeader } = await import("@/components/site-chrome");
-    document.documentElement.classList.remove("dark");
-    render(<SiteHeader />);
+    render(
+      <ThemeProvider>
+        <SiteHeader />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "다크 모드로 전환" }));
+    await screen.findByRole("button", { name: "라이트 모드로 전환" });
     expect(document.documentElement).toHaveClass("dark");
   });
 });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { ClickRipple } from "@/components/click-ripple";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { siteConfig } from "@/config/site";
 
@@ -45,18 +46,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{const t=localStorage.getItem("theme");document.documentElement.classList.toggle("dark",t==="dark")}catch{}`,
-          }}
-        />
-      </head>
       <body className="flex min-h-full flex-col">
-        <ClickRipple />
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <ThemeProvider>
+          <ClickRipple />
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </ThemeProvider>
       </body>
     </html>
   );

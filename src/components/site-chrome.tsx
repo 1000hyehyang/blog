@@ -1,26 +1,20 @@
 "use client";
 
-import { Menu, Moon, Search, Sun, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { HeaderSearch } from "@/components/header-search";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { siteConfig } from "@/config/site";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dark, setDark] = useState(false);
-
-  function toggleTheme() {
-    const next = !document.documentElement.classList.contains("dark");
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-    setDark(next);
-  }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur">
+    <header className="site-header-glass sticky top-0 z-50">
       <div className="container-shell flex h-[var(--header-height)] items-center gap-6">
         <Link
           href="/"
@@ -47,21 +41,8 @@ export function SiteHeader() {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/search"
-            aria-label="검색"
-            className="hidden h-9 min-w-52 items-center gap-2 rounded-full bg-muted px-3 text-xs text-tertiary sm:flex"
-          >
-            <Search size={14} /> 게시글 검색
-          </Link>
-          <button
-            type="button"
-            aria-label={dark ? "라이트 모드로 전환" : "다크 모드로 전환"}
-            onClick={toggleTheme}
-            className="grid size-9 place-items-center rounded-full bg-muted"
-          >
-            {dark ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
+          <HeaderSearch />
+          <ThemeToggle />
           <button
             type="button"
             aria-label={menuOpen ? "메뉴 닫기" : "메뉴 열기"}
@@ -76,11 +57,10 @@ export function SiteHeader() {
       {menuOpen && (
         <nav
           aria-label="모바일 메뉴"
-          className="container-shell flex gap-5 overflow-x-auto border-t py-4 md:hidden"
+          className="container-shell space-y-4 py-4 md:hidden"
         >
-          <Link href="/search" className="text-sm">
-            검색
-          </Link>
+          <HeaderSearch variant="mobile" />
+          <div className="flex gap-5 overflow-x-auto">
           {siteConfig.navigation.map((item) => (
             <Link
               key={item.category}
@@ -90,6 +70,7 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          </div>
         </nav>
       )}
     </header>

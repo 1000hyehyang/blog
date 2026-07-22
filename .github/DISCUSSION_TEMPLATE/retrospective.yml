@@ -2,9 +2,18 @@ body:
   - type: markdown
     attributes:
       value: |
-        🔍 **Retrospective** 카테고리
-        - `published: true` — 블로그 공개 여부
-        - `featured: true` — 고정 게시글
+        🔍 **Retrospective** 카테고리 · Category를 **Retrospective**로 선택했는지 확인하세요.
+
+        **frontmatter 안내**
+        - `slug` — SEO용 짧은 이름 (비우면 제목에서 자동 생성)
+        - `excerpt` — 카드·검색용 요약 (비우면 본문에서 자동 생성)
+        - `coverImage` — 대표 이미지 URL, `https://` 필수 (비우면 기본 이미지)
+        - `featured` — `true`면 홈 Pinned Posts 후보
+        - `featuredOrder` — 고정글 순서, 작을수록 앞 (1 → 2 → 3)
+        - `published` — `true`면 블로그 공개, `false`면 숨김
+        - `tags` — 검색용 키워드 (카테고리와 별개)
+
+        보통은 `published: true`만 확인하고 본문을 작성하면 됩니다.
   - type: textarea
     id: post-body
     attributes:
