@@ -47,7 +47,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{const t=localStorage.getItem("theme");document.documentElement.classList.toggle("dark",t==="dark"||(!t&&matchMedia("(prefers-color-scheme:dark)").matches))}catch{}`,
+            __html: `try{const t=localStorage.getItem("theme");document.documentElement.classList.toggle("dark",t==="dark")}catch{}`,
           }}
         />
       </head>

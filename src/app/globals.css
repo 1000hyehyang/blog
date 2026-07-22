@@ -20,6 +20,10 @@
   --shadow-md: 0 12px 35px rgb(0 0 0 / 0.08);
   --spacing-section: clamp(3.5rem, 7vw, 6.5rem);
   --header-height: 68px;
+  --scrollbar-size: 6px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #d8d8d5;
+  --scrollbar-thumb-hover: #b8b8b3;
 }
 
 .dark {
@@ -31,6 +35,8 @@
   --color-text-tertiary: #858580;
   --color-border: #30302d;
   --color-accent: #f3f3f1;
+  --scrollbar-thumb: #3a3a37;
+  --scrollbar-thumb-hover: #52524e;
 }
 
 @theme inline {
@@ -48,7 +54,32 @@
 
 * {
   border-color: var(--color-border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 html {
   scroll-behavior: smooth;
 }

@@ -24,40 +24,6 @@ export default async function Home() {
         <FeaturedPosts posts={featured} />
       </div>
 
-      <section className="section-space grid gap-6 rounded-[var(--radius-lg)] bg-muted p-6 text-xs sm:grid-cols-[1.1fr_1fr] sm:p-8">
-        <div>
-          <p className="text-tertiary">반갑습니다!</p>
-          <p className="mt-2 text-sm font-semibold">
-            {siteConfig.profileMessage}
-          </p>
-          <p className="mt-5 text-secondary">
-            {siteConfig.author.name} · {siteConfig.author.role}
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-          <a
-            href={siteConfig.socialLinks.github}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <strong className="block text-foreground">GitHub</strong>
-            <span className="text-tertiary">코드와 프로젝트</span>
-          </a>
-          <Link href={siteConfig.socialLinks.portfolio}>
-            <strong className="block text-foreground">Portfolio</strong>
-            <span className="text-tertiary">작업 소개</span>
-          </Link>
-          <a href={siteConfig.socialLinks.email}>
-            <strong className="block text-foreground">Email</strong>
-            <span className="text-tertiary">연락하기</span>
-          </a>
-          <Link href={siteConfig.socialLinks.library}>
-            <strong className="block text-foreground">Library</strong>
-            <span className="text-tertiary">모든 기록</span>
-          </Link>
-        </div>
-      </section>
-
       <section className="section-space" aria-labelledby="recent-title">
         <div className="mb-6 flex items-end justify-between">
           <h2 id="recent-title" className="text-sm font-semibold">
