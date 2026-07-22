@@ -6,7 +6,7 @@ import type { Post, PostPage } from "@/domain/post";
 import { parsePostBody, toSlug } from "@/lib/content";
 
 const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
-const REVALIDATE_SECONDS = 300;
+const REVALIDATE_SECONDS = 3600;
 const MAX_PAGE_SIZE = 50;
 
 const envSchema = z.object({
