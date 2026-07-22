@@ -135,6 +135,21 @@ body {
   font-family: var(--font-family);
 }
 
+@media (max-width: 767px) {
+  /*
+   * 모바일 브라우저 UI(주소창) 표시/숨김과 가로 overflow가 겹치면
+   * fixed 헤더·본문 너비가 스크롤 방향마다 미세하게 달라진다.
+   */
+  html {
+    overflow-x: clip;
+    overflow-y: auto;
+  }
+
+  body {
+    overflow-x: clip;
+  }
+}
+
 ::selection {
   background: var(--color-selection);
   color: #171717;
@@ -231,8 +246,10 @@ button:not(:disabled):hover {
 }
 
 .site-header-glass {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   width: 100%;
   background: transparent;

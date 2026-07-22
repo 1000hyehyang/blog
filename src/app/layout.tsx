@@ -62,7 +62,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ClickRipple />
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pt-[var(--header-height)]">{children}</main>
           <SiteFooter />
         </ThemeProvider>
       </body>

@@ -69,7 +69,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
               onClick={() => api?.scrollPrev()}
               className={cn(
                 navButtonClassName,
-                "pointer-events-auto left-0 -translate-x-1/2",
+                "pointer-events-auto left-3 md:left-0 md:-translate-x-1/2",
               )}
             >
               <ChevronLeft size={14} />
@@ -80,7 +80,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
               onClick={() => api?.scrollNext()}
               className={cn(
                 navButtonClassName,
-                "pointer-events-auto right-0 translate-x-1/2",
+                "pointer-events-auto right-3 md:right-0 md:translate-x-1/2",
               )}
             >
               <ChevronRight size={14} />
