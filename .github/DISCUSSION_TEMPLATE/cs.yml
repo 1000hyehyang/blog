@@ -1,0 +1,26 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **CS** 카테고리 블로그 게시글입니다.
+  - type: textarea
+    id: post-body
+    attributes:
+      label: 게시글 본문
+      value: |
+        ---
+        slug:
+        excerpt:
+        coverImage:
+        featured: false
+        featuredOrder: 1
+        published: true
+        tags:
+          - CS
+        ---
+
+        ## 제목
+
+        CS 개념과 정리를 작성하세요.
+    validations:
+      required: true

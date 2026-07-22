@@ -15,6 +15,15 @@ const metadataSchema = z.object({
 
 export type PostMetadata = z.infer<typeof metadataSchema>;
 
+function normalizeDiscussionSource(source: string) {
+  const lines = source.split("\n");
+  const frontmatterIndex = lines.findIndex((line) => line.trim() === "---");
+  if (frontmatterIndex > 0) {
+    return lines.slice(frontmatterIndex).join("\n");
+  }
+  return source;
+}
+
 export function createExcerpt(markdown: string, length = 150) {
   const plainText = markdown
     .replace(/```[\s\S]*?```/g, " ")
@@ -29,8 +38,10 @@ export function createExcerpt(markdown: string, length = 150) {
 }
 
 export function parsePostBody(source: string) {
+  const normalizedSource = normalizeDiscussionSource(source);
+
   try {
-    const parsed = matter(source);
+    const parsed = matter(normalizedSource);
     const result = metadataSchema.safeParse(parsed.data);
     const metadata = result.success ? result.data : metadataSchema.parse({});
 
@@ -44,11 +55,14 @@ export function parsePostBody(source: string) {
       valid: result.success,
     };
   } catch {
+    const fallbackBody = normalizeDiscussionSource(source)
+      .replace(/^---[\s\S]*?---/, "")
+      .trim();
     return {
-      body: source.replace(/^---[\s\S]*?---/, "").trim(),
+      body: fallbackBody,
       metadata: {
         ...metadataSchema.parse({}),
-        excerpt: createExcerpt(source),
+        excerpt: createExcerpt(fallbackBody),
         coverImage: siteConfig.defaultImage,
       },
       valid: false,

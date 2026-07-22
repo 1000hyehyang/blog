@@ -1,0 +1,26 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Study** 카테고리 블로그 게시글입니다.
+  - type: textarea
+    id: post-body
+    attributes:
+      label: 게시글 본문
+      value: |
+        ---
+        slug:
+        excerpt:
+        coverImage:
+        featured: false
+        featuredOrder: 1
+        published: true
+        tags:
+          - Study
+        ---
+
+        ## 제목
+
+        공부 내용을 정리하세요.
+    validations:
+      required: true

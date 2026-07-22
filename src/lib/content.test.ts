@@ -38,6 +38,19 @@ tags: invalid
     );
   });
 
+  it("GitHub Discussion form 헤더 뒤 frontmatter를 파싱한다", () => {
+    const result = parsePostBody(`### 게시글 본문
+
+---
+published: true
+tags: [Development]
+---
+
+# Hello`);
+    expect(result.metadata.published).toBe(true);
+    expect(result.body).toBe("# Hello");
+  });
+
   it("카테고리 이름을 URL slug로 변환한다", () => {
     expect(toSlug("Web Development")).toBe("web-development");
   });
