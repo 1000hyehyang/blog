@@ -4,12 +4,12 @@ import { siteConfig } from "@/config/site";
 import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
 import { getPosts, isGitHubConfigured } from "@/infrastructure/github/github";
+import { getFeaturedPosts } from "@/lib/posts";
 
 export default async function Home() {
-  const { posts } = await getPosts({ first: 12 });
-  const featured = posts
-    .filter((post) => post.featured)
-    .sort((a, b) => (a.featuredOrder ?? 999) - (b.featuredOrder ?? 999));
+  const { posts } = await getPosts({ first: 50 });
+  const featured = getFeaturedPosts(posts);
+  const recent = posts.slice(0, 9);
 
   return (
     <div className="container-shell py-16 sm:py-24">
@@ -20,24 +20,26 @@ export default async function Home() {
         <p className="mt-3 text-sm text-secondary">{siteConfig.description}</p>
       </section>
 
-      <div className="section-space">
-        <FeaturedPosts posts={featured} />
-      </div>
+      {featured.length > 0 && (
+        <div className="section-space">
+          <FeaturedPosts posts={featured} />
+        </div>
+      )}
 
       <section className="section-space" aria-labelledby="recent-title">
         <div className="mb-6 flex items-end justify-between">
-          <h2 id="recent-title" className="text-sm font-semibold">
+          <h2 id="recent-title" className="text-base font-semibold">
             최근 포스트
           </h2>
           <Link
             href="/posts"
-            className="text-xs text-secondary hover:text-foreground"
+            className="text-sm text-secondary hover:text-foreground"
           >
-            전체 보기 →
+            View all →
           </Link>
         </div>
-        {posts.length ? (
-          <PostGrid posts={posts.slice(0, 9)} />
+        {recent.length ? (
+          <PostGrid posts={recent} />
         ) : (
           <EmptyState
             title={

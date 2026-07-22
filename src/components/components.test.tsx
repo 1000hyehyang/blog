@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Post } from "@/domain/post";
 import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState, PostCard } from "@/features/post/post-card";
+import { HeaderSearch } from "@/components/header-search";
 import { SearchResults } from "@/features/search/search-results";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
@@ -36,14 +37,20 @@ describe("게시글 UI", () => {
     render(<PostCard post={post} />);
     expect(screen.getByRole("link")).toHaveAttribute("href", "/posts/1");
     expect(screen.getByText(post.title)).toBeVisible();
-    expect(screen.getByText("Development")).toBeVisible();
+    expect(screen.getByText(post.excerpt)).toBeVisible();
   });
 
-  it("FeaturedPosts의 다음 게시글로 이동한다", () => {
+  it("FeaturedPosts 캐러셀 UI를 표시한다", () => {
     const second = { ...post, id: "D_2", number: 2, title: "두 번째 게시글" };
     render(<FeaturedPosts posts={[post, second]} />);
-    fireEvent.click(screen.getByRole("button", { name: "다음 고정 게시글" }));
-    expect(screen.getByText("두 번째 게시글")).toBeVisible();
+    expect(screen.getByText("Featured")).toBeVisible();
+    expect(screen.getByText(post.title)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "다음 featured 게시글" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "2번째 featured 게시글 보기" }),
+    ).toBeVisible();
   });
 
   it("EmptyState 안내를 표시한다", () => {
@@ -53,12 +60,18 @@ describe("게시글 UI", () => {
 });
 
 describe("검색과 테마 UI", () => {
-  it("SearchField 입력으로 게시글을 필터링한다", () => {
-    render(<SearchResults posts={[post]} />);
-    fireEvent.change(screen.getByRole("searchbox"), {
-      target: { value: "Next.js" },
-    });
+  it("HeaderSearch가 검색 페이지로 제출한다", () => {
+    render(<HeaderSearch />);
+    const form = screen.getByRole("search");
+    expect(form).toHaveAttribute("action", "/search");
+    expect(form).toHaveAttribute("method", "get");
+    expect(screen.getByRole("searchbox")).toHaveAttribute("name", "q");
+  });
+
+  it("SearchResults가 검색어에 맞는 게시글을 표시한다", () => {
+    render(<SearchResults posts={[post]} query="Next.js" />);
     expect(screen.getByText(post.title)).toBeVisible();
+    expect(screen.getByText(/검색 결과 1개/)).toBeVisible();
   });
 
   it("ThemeToggle이 문서 테마를 변경한다", async () => {
@@ -72,5 +85,18 @@ describe("검색과 테마 UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "다크 모드로 전환" }));
     await screen.findByRole("button", { name: "라이트 모드로 전환" });
     expect(document.documentElement).toHaveClass("dark");
+  });
+
+  it("MusicToggle이 재생 상태를 전환한다", async () => {
+    const { ThemeProvider } = await import("@/components/layout/ThemeProvider");
+    const { SiteHeader } = await import("@/components/site-chrome");
+    render(
+      <ThemeProvider>
+        <SiteHeader />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "음악 켜기" }));
+    await screen.findByRole("button", { name: "음악 끄기" });
+    expect(window.localStorage.getItem("blog-music-enabled")).toBe("true");
   });
 });

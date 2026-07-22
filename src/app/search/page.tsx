@@ -20,8 +20,7 @@ export default async function SearchPage({
   return (
     <div className="container-shell py-16">
       <div className="mx-auto max-w-3xl">
-        <h1 className="mb-8 text-3xl font-semibold tracking-tight">검색</h1>
-        <SearchResults posts={posts} initialQuery={query.q} />
+        <SearchResults posts={posts} query={query.q} />
       </div>
     </div>
   );

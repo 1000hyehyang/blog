@@ -17,7 +17,7 @@ export function CopyCodeButton({ code }: { code: string }) {
       type="button"
       onClick={copy}
       aria-label="코드 복사"
-      className="absolute right-3 top-8 z-10 grid size-8 place-items-center rounded border border-white/15 bg-black/30 text-zinc-300"
+      className="absolute right-2 top-2 z-10 grid size-7 place-items-center rounded-md bg-surface text-tertiary opacity-0 transition hover:text-foreground group-hover:opacity-100"
     >
       {copied ? <Check size={13} /> : <Copy size={13} />}
     </button>

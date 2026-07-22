@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { HeaderSearch } from "@/components/header-search";
+import { MusicToggle } from "@/components/layout/MusicToggle";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { siteConfig } from "@/config/site";
 
@@ -14,7 +15,7 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="site-header-glass sticky top-0 z-50">
+    <header className="site-header-glass">
       <div className="container-shell flex h-[var(--header-height)] items-center gap-6">
         <Link
           href="/"
@@ -42,6 +43,7 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <HeaderSearch />
+          <MusicToggle />
           <ThemeToggle />
           <button
             type="button"

@@ -11,11 +11,13 @@ test("홈과 주요 탐색 UI를 표시한다", async ({ page }) => {
   await expect(page.getByRole("searchbox").first()).toBeVisible();
 });
 
-test("헤더 검색창에서 결과 패널을 표시한다", async ({ page }) => {
+test("헤더 검색창에서 엔터 시 검색 페이지로 이동한다", async ({ page }) => {
   await page.goto("/");
   const searchbox = page.getByRole("searchbox").first();
   await searchbox.fill("test");
-  await expect(page.getByRole("listbox", { name: "검색 결과" })).toBeVisible();
+  await searchbox.press("Enter");
+  await expect(page).toHaveURL(/\/search(\?q=test|\/\?q=test)/);
+  await expect(page.getByText(/test/)).toBeVisible();
 });
 
 test("다크 모드를 전환한다", async ({ page }) => {

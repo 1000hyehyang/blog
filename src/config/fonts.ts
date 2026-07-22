@@ -1,0 +1,4 @@
+export const wantedSansStylesheetUrl =
+  "https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.1/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css";
+
+export const fontFamily = '"Wanted Sans Variable", sans-serif';

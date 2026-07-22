@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { getCategoryLabel, getCategoryTagline } from "@/config/site";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
 import { getPosts } from "@/infrastructure/github/github";
 
@@ -9,9 +10,11 @@ export async function generateMetadata({
   params: Promise<{ category: string }>;
 }): Promise<Metadata> {
   const { category } = await params;
+  const label = getCategoryLabel(category);
+  const tagline = getCategoryTagline(category);
   return {
-    title: `${category} 카테고리`,
-    description: `${category} 카테고리의 게시글`,
+    title: `${label} 카테고리`,
+    description: tagline,
   };
 }
 
@@ -22,14 +25,13 @@ export default async function CategoryPage({
 }) {
   const { category } = await params;
   const { posts } = await getPosts({ first: 50, category });
+  const label = getCategoryLabel(category);
+  const tagline = getCategoryTagline(category);
+
   return (
     <div className="container-shell py-16">
-      <h1 className="text-3xl font-semibold capitalize tracking-tight">
-        {category}
-      </h1>
-      <p className="mb-12 mt-2 text-sm text-secondary">
-        이 카테고리에 발행된 글입니다.
-      </p>
+      <h1 className="text-3xl font-semibold tracking-tight">{label}</h1>
+      <p className="mb-12 mt-2 text-sm text-secondary">{tagline}</p>
       {posts.length ? (
         <PostGrid posts={posts} />
       ) : (

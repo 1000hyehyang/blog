@@ -1,97 +1,171 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import {
+  Carousel,
+  type CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { PostCoverImage } from "@/components/post-cover-image";
 import type { Post } from "@/domain/post";
+import { formatDate } from "@/lib/content";
+import { cn } from "@/lib/utils";
 
-export function FeaturedPosts({ posts }: { posts: Post[] }) {
-  const [index, setIndex] = useState(0);
+type FeaturedPostsProps = {
+  posts: Post[];
+};
+
+export function FeaturedPosts({ posts }: FeaturedPostsProps) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
   if (!posts.length) return null;
-  const post = posts[index] ?? posts[0];
 
-  function move(amount: number) {
-    setIndex((current) => (current + amount + posts.length) % posts.length);
-  }
+  const hasMultiple = posts.length > 1;
+
+  const navButtonClassName =
+    "absolute top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-surface/90 shadow-[0_1px_3px_rgb(0_0_0/0.04)] outline-none backdrop-blur-sm transition hover:bg-muted focus:outline-none focus-visible:outline-none";
 
   return (
-    <section
-      aria-labelledby="featured-title"
-      onKeyDown={(event) => {
-        if (event.key === "ArrowLeft") move(-1);
-        if (event.key === "ArrowRight") move(1);
-      }}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <h2 id="featured-title" className="text-xs font-semibold">
-          ✣ Pinned Posts
+    <section aria-labelledby="featured-title">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h2
+          id="featured-title"
+          className="text-xs font-semibold uppercase tracking-widest text-tertiary"
+        >
+          Featured
         </h2>
-        {posts.length > 1 && (
-          <div className="flex gap-1">
+        {hasMultiple && (
+          <span className="text-[10px] tabular-nums text-tertiary">
+            {String(current + 1).padStart(2, "0")} /{" "}
+            {String(posts.length).padStart(2, "0")}
+          </span>
+        )}
+      </div>
+
+      <div className="relative">
+        {hasMultiple && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-[16/10] md:inset-0 md:aspect-auto">
             <button
-              onClick={() => move(-1)}
-              aria-label="이전 고정 게시글"
-              className="grid size-9 place-items-center rounded-full border"
+              type="button"
+              aria-label="이전 featured 게시글"
+              onClick={() => api?.scrollPrev()}
+              className={cn(
+                navButtonClassName,
+                "pointer-events-auto left-0 -translate-x-1/2",
+              )}
             >
-              <ArrowLeft size={14} />
+              <ChevronLeft size={14} />
             </button>
             <button
-              onClick={() => move(1)}
-              aria-label="다음 고정 게시글"
-              className="grid size-9 place-items-center rounded-full border"
+              type="button"
+              aria-label="다음 featured 게시글"
+              onClick={() => api?.scrollNext()}
+              className={cn(
+                navButtonClassName,
+                "pointer-events-auto right-0 translate-x-1/2",
+              )}
             >
-              <ArrowRight size={14} />
+              <ChevronRight size={14} />
             </button>
           </div>
         )}
-      </div>
-      <div className="grid items-center gap-8 md:grid-cols-[1.35fr_1fr]">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] bg-muted">
-          <Image
-            key={post.id}
-            src={post.coverImage}
-            alt={`${post.title} 대표 이미지`}
-            fill
-            priority={index === 0}
-            unoptimized
-            sizes="(max-width: 768px) 100vw, 60vw"
-            className="object-cover"
-          />
-          <span className="absolute bottom-3 left-3 rounded bg-black/75 px-2 py-1 text-[10px] text-white">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-widest text-tertiary">
-            {post.category.name}
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight">
-            {post.title}
-          </h3>
-          <p className="mt-5 line-clamp-3 text-xs leading-6 text-secondary">
-            {post.excerpt}
-          </p>
-          <Link
-            href={`/posts/${post.number}`}
-            className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-accent px-5 py-2.5 text-xs text-background"
-          >
-            자세히 보기
-          </Link>
-        </div>
-      </div>
-      {posts.length > 1 && (
-        <div
-          className="mt-3 flex justify-center gap-1.5"
-          aria-label={`${posts.length}개 중 ${index + 1}번째`}
+
+        <Carousel
+          setApi={setApi}
+          className="w-full"
+          opts={{
+            loop: hasMultiple,
+            align: "start",
+          }}
         >
-          {posts.map((item, itemIndex) => (
+        <CarouselContent className="-ml-0">
+          {posts.map((post, index) => (
+            <CarouselItem key={post.id} className="basis-full pl-0">
+              <article className="grid items-center gap-8 md:grid-cols-[1.2fr_1fr] md:gap-10">
+                <Link
+                  href={`/posts/${post.number}`}
+                  className="group relative block aspect-[16/10] overflow-hidden rounded-[var(--radius-lg)] bg-muted"
+                >
+                  <PostCoverImage
+                    src={post.coverImage}
+                    alt=""
+                    fill
+                    priority={index === 0}
+                    unoptimized
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                  />
+                </Link>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest text-tertiary">
+                    {post.category.name}
+                  </p>
+                  <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                    <Link
+                      href={`/posts/${post.number}`}
+                      className="hover:underline hover:underline-offset-4"
+                    >
+                      {post.title}
+                    </Link>
+                  </h3>
+                  <p className="mt-4 line-clamp-3 text-sm leading-7 text-secondary">
+                    {post.excerpt}
+                  </p>
+                  <div className="mt-5 flex items-center gap-3 text-[10px] text-tertiary">
+                    <time dateTime={post.updatedAt}>
+                      {formatDate(post.updatedAt)}
+                    </time>
+                  </div>
+                  <Link
+                    href={`/posts/${post.number}`}
+                    className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-accent px-5 py-2.5 text-xs text-background"
+                  >
+                    자세히 보기
+                  </Link>
+                </div>
+              </article>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+      </div>
+
+      {hasMultiple && (
+        <div
+          className="mt-5 flex justify-center gap-1.5"
+          aria-label={`${posts.length}개 중 ${current + 1}번째`}
+        >
+          {posts.map((post, index) => (
             <button
-              key={item.id}
-              onClick={() => setIndex(itemIndex)}
-              aria-label={`${itemIndex + 1}번째 게시글 보기`}
-              className={`h-1.5 rounded-full transition-all ${itemIndex === index ? "w-5 bg-foreground" : "w-1.5 bg-border"}`}
+              key={post.id}
+              type="button"
+              onClick={() => api?.scrollTo(index)}
+              aria-label={`${index + 1}번째 featured 게시글 보기`}
+              aria-current={current === index ? "true" : undefined}
+              className={cn(
+                "h-1.5 rounded-full transition-all outline-none focus:outline-none focus-visible:outline-none",
+                current === index
+                  ? "w-5 bg-foreground"
+                  : "w-1.5 bg-border hover:bg-tertiary",
+              )}
             />
           ))}
         </div>

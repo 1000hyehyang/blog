@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import type { Comment, Post, PostPage } from "@/domain/post";
+import type { Post, PostPage } from "@/domain/post";
 import { parsePostBody, toSlug } from "@/lib/content";
 
 const envSchema = z.object({
@@ -23,15 +23,7 @@ type DiscussionNode = {
   updatedAt: string;
   category: { id: string; name: string };
   author: Actor | null;
-  comments: { totalCount: number; nodes?: CommentNode[] };
-  reactionGroups: ReactionGroup[];
-};
-type CommentNode = {
-  id: string;
-  body: string;
-  createdAt: string;
-  url: string;
-  author: Actor | null;
+  comments: { totalCount: number };
   reactionGroups: ReactionGroup[];
 };
 
@@ -60,14 +52,7 @@ const DETAIL_QUERY = `
         category { id name }
         author { login avatarUrl url }
         reactionGroups { users { totalCount } }
-        comments(first: 100) {
-          totalCount
-          nodes {
-            id body createdAt url
-            author { login avatarUrl url }
-            reactionGroups { users { totalCount } }
-          }
-        }
+        comments { totalCount }
       }
     }
   }
@@ -143,17 +128,6 @@ export function mapDiscussion(node: DiscussionNode): Post {
   };
 }
 
-function mapComment(node: CommentNode): Comment {
-  return {
-    id: node.id,
-    body: node.body,
-    author: node.author ?? fallbackAuthor(),
-    createdAt: node.createdAt,
-    reactionsCount: reactions(node.reactionGroups),
-    url: node.url,
-  };
-}
-
 export async function getPosts(
   options: {
     first?: number;
@@ -201,9 +175,5 @@ export async function getPost(number: number) {
     number,
   });
   if (!data.repository.discussion) return null;
-  const post = mapDiscussion(data.repository.discussion);
-  return {
-    post,
-    comments: (data.repository.discussion.comments.nodes ?? []).map(mapComment),
-  };
+  return mapDiscussion(data.repository.discussion);
 }

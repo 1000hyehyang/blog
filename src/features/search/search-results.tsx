@@ -1,7 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { Post } from "@/domain/post";
 import { EmptyState, PostGrid } from "@/features/post/post-card";
@@ -9,51 +8,37 @@ import { filterPosts } from "@/features/search/filter-posts";
 
 export function SearchResults({
   posts,
-  initialQuery = "",
+  query = "",
 }: {
   posts: Post[];
-  initialQuery?: string;
+  query?: string;
 }) {
-  const [query, setQuery] = useState(initialQuery);
-  const results = useMemo(() => filterPosts(posts, query), [posts, query]);
+  const normalizedQuery = query.trim();
+  const results = useMemo(
+    () => filterPosts(posts, normalizedQuery),
+    [posts, normalizedQuery],
+  );
 
   return (
-    <>
-      <label className="relative block">
-        <span className="sr-only">게시글 검색어</span>
-        <Search
-          size={18}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-tertiary"
+    <div aria-live="polite">
+      {!normalizedQuery ? (
+        <EmptyState
+          title="검색어를 입력하세요"
+          description="헤더 검색창에서 검색어를 입력하고 Enter를 눌러 주세요."
         />
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="제목, 본문, 태그를 검색하세요"
-          className="h-14 w-full rounded-full border bg-surface pl-12 pr-5 text-sm outline-none placeholder:text-tertiary"
-          autoFocus
+      ) : results.length ? (
+        <>
+          <p className="mb-6 text-xs text-secondary">
+            &lsquo;{normalizedQuery}&rsquo; 검색 결과 {results.length}개
+          </p>
+          <PostGrid posts={results} />
+        </>
+      ) : (
+        <EmptyState
+          title="검색 결과가 없습니다"
+          description="다른 검색어로 다시 검색해 보세요."
         />
-      </label>
-      <div className="mt-12" aria-live="polite">
-        {!query.trim() ? (
-          <EmptyState
-            title="검색어를 입력하세요"
-            description="제목, 요약, 카테고리, 본문을 검색합니다."
-          />
-        ) : results.length ? (
-          <>
-            <p className="mb-6 text-xs text-secondary">
-              {results.length}개의 결과
-            </p>
-            <PostGrid posts={results} />
-          </>
-        ) : (
-          <EmptyState
-            title="검색 결과가 없습니다"
-            description="다른 검색어를 입력해 보세요."
-          />
-        )}
-      </div>
-    </>
+      )}
+    </div>
   );
 }

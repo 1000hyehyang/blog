@@ -19,15 +19,6 @@ export interface Post {
   url: string;
 }
 
-export interface Comment {
-  id: string;
-  body: string;
-  author: { login: string; avatarUrl: string; url: string };
-  createdAt: string;
-  reactionsCount: number;
-  url: string;
-}
-
 export interface PostPage {
   posts: Post[];
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
