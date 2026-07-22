@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ClickRipple } from "@/components/click-ripple";
+import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -60,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
+          <ScrollToTop />
           <ClickRipple />
           <SiteHeader />
           <main className="flex-1 pt-[var(--header-height)]">{children}</main>

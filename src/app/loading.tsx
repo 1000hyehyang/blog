@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div
-      className="container-shell animate-pulse py-20"
+      className="page-shell animate-pulse"
       aria-label="콘텐츠 로딩 중"
     >
       <div className="h-10 w-64 rounded bg-muted" />

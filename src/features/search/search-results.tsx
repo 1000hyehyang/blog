@@ -1,5 +1,6 @@
 import type { Post } from "@/domain/post";
-import { EmptyState, PostGrid } from "@/features/post/post-card";
+import { EmptyState } from "@/features/post/empty-state";
+import { PostGrid } from "@/features/post/post-grid";
 import { filterPosts } from "@/features/search/filter-posts";
 
 export function SearchResults({

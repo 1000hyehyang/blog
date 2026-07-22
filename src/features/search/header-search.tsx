@@ -3,6 +3,8 @@
 import { Search, X } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { routes } from "@/lib/routes";
+
 export function HeaderSearch({
   variant = "desktop",
 }: {
@@ -20,7 +22,7 @@ export function HeaderSearch({
 
   return (
     <form
-      action="/search"
+      action={routes.search}
       method="get"
       role="search"
       className={
@@ -36,14 +38,14 @@ export function HeaderSearch({
             : "header-search-field relative flex h-9 items-center gap-2 rounded-full bg-muted px-3 text-xs text-tertiary"
         }
       >
-        <span className="sr-only">게시글 검색</span>
+        <span className="sr-only">포스트 검색</span>
         <Search size={14} className="shrink-0 text-tertiary" />
         <input
           ref={inputRef}
           type="search"
           name="q"
           role="searchbox"
-          placeholder="게시글 검색"
+          placeholder="포스트 검색"
           enterKeyHint="search"
           autoComplete="off"
           spellCheck={false}

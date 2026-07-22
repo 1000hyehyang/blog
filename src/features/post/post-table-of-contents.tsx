@@ -53,7 +53,7 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
   }
 
   return (
-    <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
+    <aside className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
       <nav aria-label="목차" className="py-2">
         <ul className="space-y-1">
           {headings.map((heading) => {

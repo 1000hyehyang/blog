@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="container-shell py-20">
+    <div className="page-shell">
       <div className="mx-auto max-w-[var(--content-width)]">
-        <p className="text-xs text-tertiary">ABOUT</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+        <p className="section-label">ABOUT</p>
+        <h1 className="page-title mt-4">
           {siteConfig.author.name}
         </h1>
         <p className="mt-3 text-secondary">{siteConfig.author.role}</p>

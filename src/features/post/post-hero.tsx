@@ -1,4 +1,4 @@
-import { PostCoverImage } from "@/components/post-cover-image";
+import { PostCoverImage } from "@/features/post/post-cover-image";
 import type { Post } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 

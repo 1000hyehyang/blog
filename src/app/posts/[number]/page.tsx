@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 import { GiscusComments } from "@/components/giscus-comments";
 import { MarkdownContent } from "@/components/markdown";
 import { siteConfig } from "@/config/site";
+import { PostDetailReveal } from "@/features/post/post-detail-reveal";
 import { PostHero } from "@/features/post/post-hero";
 import { PostTableOfContents } from "@/features/post/post-table-of-contents";
 import { RelatedPosts } from "@/features/post/related-posts";
 import { getPost, getPosts } from "@/infrastructure/github/github";
 import { extractHeadings } from "@/lib/content";
-import { getRelatedPosts } from "@/lib/posts";
+import { getRelatedPosts } from "@/features/post/post-queries";
 import { routes } from "@/lib/routes";
 import { buildPostJsonLd, serializeJsonLd } from "@/lib/seo";
 
@@ -69,7 +70,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const headings = extractHeadings(post.body);
 
   return (
-    <article className="container-shell py-10 sm:py-14">
+    <article className="page-shell page-shell--detail">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -77,40 +78,47 @@ export default async function PostPage({ params }: PostPageProps) {
         }}
       />
 
-      <div className="mx-auto grid max-w-[var(--container-width)] gap-10 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-20">
-        <div className="min-w-0">
-          <PostHero post={post} />
+      <PostDetailReveal>
+        <div className="mx-auto grid max-w-[var(--container-width)] lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-20">
+          <div className="min-w-0">
+            <div data-reveal="mount">
+              <PostHero post={post} />
+            </div>
 
-          <div className="mt-10">
-            {post.body ? (
-              <MarkdownContent source={post.body} />
-            ) : (
-              <p className="text-sm text-tertiary">
-                본문이 없습니다. GitHub Discussion에서 글을 작성해 주세요.
-              </p>
-            )}
+            <div data-reveal="scroll" className="mt-10">
+              {post.body ? (
+                <MarkdownContent source={post.body} />
+              ) : (
+                <p className="text-sm text-tertiary">
+                  본문이 없습니다. GitHub Discussion에서 포스트를 작성해 주세요.
+                </p>
+              )}
+            </div>
+
+            <section
+              data-reveal="scroll"
+              className="mt-16 border-t pt-12"
+              aria-labelledby="comments-title"
+            >
+              <h2
+                id="comments-title"
+                className="text-xl font-semibold tracking-tight sm:text-2xl"
+              >
+                Comments.
+              </h2>
+              <div className="mt-6">
+                <GiscusComments discussionNumber={post.number} />
+              </div>
+            </section>
+
+            <RelatedPosts posts={relatedPosts} embedded />
           </div>
 
-          <section
-            className="mt-16 border-t pt-12"
-            aria-labelledby="comments-title"
-          >
-            <h2
-              id="comments-title"
-              className="text-xl font-semibold tracking-tight sm:text-2xl"
-            >
-              Comments
-            </h2>
-            <div className="mt-6">
-              <GiscusComments discussionNumber={post.number} />
-            </div>
-          </section>
-
-          <RelatedPosts posts={relatedPosts} embedded />
+          <div data-reveal="mount">
+            <PostTableOfContents headings={headings} />
+          </div>
         </div>
-
-        <PostTableOfContents headings={headings} />
-      </div>
+      </PostDetailReveal>
     </article>
   );
 }

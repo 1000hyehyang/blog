@@ -10,7 +10,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { PostCoverImage } from "@/components/post-cover-image";
+import { PostCoverImage } from "@/features/post/post-cover-image";
 import type { Post } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 import { routes } from "@/lib/routes";
@@ -48,7 +48,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
       <div className="mb-5 flex items-center justify-between gap-4">
         <h2
           id="featured-title"
-          className="text-xs font-semibold uppercase tracking-widest text-tertiary"
+          className="section-label"
         >
           Featured
         </h2>
@@ -65,7 +65,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-[16/10] md:inset-0 md:aspect-auto">
             <button
               type="button"
-              aria-label="이전 featured 게시글"
+              aria-label="이전 featured 포스트"
               onClick={() => api?.scrollPrev()}
               className={cn(
                 navButtonClassName,
@@ -76,7 +76,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
             </button>
             <button
               type="button"
-              aria-label="다음 featured 게시글"
+              aria-label="다음 featured 포스트"
               onClick={() => api?.scrollNext()}
               className={cn(
                 navButtonClassName,
@@ -159,7 +159,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
               key={post.id}
               type="button"
               onClick={() => api?.scrollTo(index)}
-              aria-label={`${index + 1}번째 featured 게시글 보기`}
+                  aria-label={`${index + 1}번째 featured 포스트 보기`}
               aria-current={current === index ? "true" : undefined}
               className={cn(
                 "h-1.5 rounded-full transition-all outline-none focus:outline-none focus-visible:outline-none",

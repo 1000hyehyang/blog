@@ -14,7 +14,7 @@ describe("filterPosts", () => {
     },
   ];
 
-  it("제목과 태그로 게시글을 필터링한다", () => {
+  it("제목과 태그로 포스트를 필터링한다", () => {
     expect(filterPosts(posts, "next.js")).toHaveLength(1);
     expect(filterPosts(posts, "없는 검색어")).toHaveLength(0);
   });

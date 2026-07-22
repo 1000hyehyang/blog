@@ -14,6 +14,7 @@ const TEMPLATE_PLACEHOLDER_LINES = new Set([
   "공부 내용을 정리하세요.",
   "작업 과정과 생각을 작성하세요.",
   "글을 작성하세요.",
+  "포스트를 작성하세요.",
 ]);
 
 function isTemplatePlaceholderLine(line: string) {

@@ -7,7 +7,7 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   return (
-    <div className="container-shell grid min-h-[60vh] place-items-center text-center">
+    <div className="page-shell grid min-h-[60vh] place-items-center text-center">
       <div>
         <h1 className="text-2xl font-semibold">콘텐츠를 불러오지 못했습니다</h1>
         <p className="mt-2 text-sm text-secondary">

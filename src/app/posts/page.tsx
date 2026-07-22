@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { siteConfig } from "@/config/site";
-import { EmptyState, PostGrid } from "@/features/post/post-card";
+import { EmptyState } from "@/features/post/empty-state";
+import { PostGrid } from "@/features/post/post-grid";
 import { getPosts } from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = {
-  title: "모든 게시글",
+  title: "모든 포스트",
   description: `${siteConfig.name}의 모든 개발 기록`,
   alternates: { canonical: routes.posts },
 };
@@ -25,12 +26,12 @@ export default async function PostsPage({
       : result.posts;
 
   return (
-    <div className="container-shell py-16">
+    <div className="page-shell">
       <div className="mb-12 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">모든 게시글</h1>
+          <h1 className="page-title">모든 포스트</h1>
           <p className="mt-2 text-sm text-secondary">
-            배움과 시행착오를 기록한 글입니다.
+            배움과 시행착오를 기록한 포스트입니다.
           </p>
         </div>
         <div className="flex gap-3 text-xs">
@@ -56,8 +57,8 @@ export default async function PostsPage({
         <PostGrid posts={posts} />
       ) : (
         <EmptyState
-          title="게시글이 없습니다"
-          description="표시할 게시글을 찾지 못했습니다."
+          title="포스트가 없습니다"
+          description="표시할 포스트를 찾지 못했습니다."
         />
       )}
       {result.pageInfo.hasNextPage && result.pageInfo.endCursor && (
@@ -66,7 +67,7 @@ export default async function PostsPage({
             href={`${routes.posts}?cursor=${encodeURIComponent(result.pageInfo.endCursor)}`}
             className="inline-flex rounded-full border px-6 py-3 text-xs"
           >
-            다음 게시글
+            다음 포스트
           </Link>
         </div>
       )}

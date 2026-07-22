@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getCategoryNavigation, siteConfig } from "@/config/site";
-import { EmptyState, PostGrid } from "@/features/post/post-card";
+import { EmptyState } from "@/features/post/empty-state";
+import { PostGrid } from "@/features/post/post-grid";
 import { getPosts } from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 
@@ -41,8 +42,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const { posts } = await getPosts({ first: 50, category });
 
   return (
-    <div className="container-shell py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">
+    <div className="page-shell">
+      <h1 className="page-title">
         {navigation.label}
       </h1>
       <p className="mb-12 mt-2 text-sm text-secondary">{navigation.tagline}</p>
@@ -50,8 +51,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <PostGrid posts={posts} />
       ) : (
         <EmptyState
-          title="게시글이 없습니다"
-          description="이 카테고리에는 아직 공개된 글이 없습니다."
+          title="포스트가 없습니다"
+          description="이 카테고리에는 아직 공개된 포스트가 없습니다."
         />
       )}
     </div>

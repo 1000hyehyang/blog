@@ -17,7 +17,7 @@ body:
   - type: textarea
     id: post-body
     attributes:
-      label: 게시글 본문
+      label: 포스트 본문
       description: frontmatter 아래에 본문을 작성하세요
       value: |
         ---

@@ -29,7 +29,7 @@ test("다크 모드를 전환한다", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("존재하지 않는 게시글은 404를 표시한다", async ({ page }) => {
+test("존재하지 않는 포스트는 404를 표시한다", async ({ page }) => {
   await page.goto("/posts/not-a-number");
   await expect(
     page.getByRole("heading", { name: "페이지를 찾을 수 없습니다" }),

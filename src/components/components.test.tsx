@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Post } from "@/domain/post";
 import { FeaturedPosts } from "@/features/post/featured-posts";
-import { EmptyState, PostCard } from "@/features/post/post-card";
-import { HeaderSearch } from "@/components/header-search";
+import { EmptyState } from "@/features/post/empty-state";
+import { PostCard } from "@/features/post/post-card";
+import { HeaderSearch } from "@/features/search/header-search";
 import { SearchResults } from "@/features/search/search-results";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
@@ -13,9 +14,9 @@ const post: Post = {
   id: "D_1",
   number: 1,
   slug: "first-post",
-  title: "첫 번째 Next.js 게시글",
+  title: "첫 번째 Next.js 포스트",
   body: "서버 컴포넌트 본문",
-  excerpt: "첫 번째 게시글 요약",
+  excerpt: "첫 번째 포스트 요약",
   coverImage: "/og-default.png",
   featured: true,
   featuredOrder: 1,
@@ -32,8 +33,8 @@ const post: Post = {
 
 afterEach(() => cleanup());
 
-describe("게시글 UI", () => {
-  it("PostCard에 핵심 게시글 정보를 표시한다", () => {
+describe("포스트 UI", () => {
+  it("PostCard에 핵심 포스트 정보를 표시한다", () => {
     render(<PostCard post={post} />);
     expect(screen.getByRole("link")).toHaveAttribute("href", "/posts/1");
     expect(screen.getByText(post.title)).toBeVisible();
@@ -41,15 +42,15 @@ describe("게시글 UI", () => {
   });
 
   it("FeaturedPosts 캐러셀 UI를 표시한다", () => {
-    const second = { ...post, id: "D_2", number: 2, title: "두 번째 게시글" };
+    const second = { ...post, id: "D_2", number: 2, title: "두 번째 포스트" };
     render(<FeaturedPosts posts={[post, second]} />);
     expect(screen.getByText("Featured")).toBeVisible();
     expect(screen.getByText(post.title)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "다음 featured 게시글" }),
+      screen.getByRole("button", { name: "다음 featured 포스트" }),
     ).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "2번째 featured 게시글 보기" }),
+      screen.getByRole("button", { name: "2번째 featured 포스트 보기" }),
     ).toBeVisible();
   });
 
@@ -68,7 +69,7 @@ describe("검색과 테마 UI", () => {
     expect(screen.getByRole("searchbox")).toHaveAttribute("name", "q");
   });
 
-  it("SearchResults가 검색어에 맞는 게시글을 표시한다", () => {
+  it("SearchResults가 검색어에 맞는 포스트를 표시한다", () => {
     render(<SearchResults posts={[post]} query="Next.js" />);
     expect(screen.getByText(post.title)).toBeVisible();
     expect(screen.getByText(/검색 결과 1개/)).toBeVisible();

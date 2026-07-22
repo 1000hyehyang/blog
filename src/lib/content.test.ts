@@ -4,7 +4,7 @@ import { createExcerpt } from "./content/excerpt";
 import { formatDate, parsePostBody, toSlug } from "./content";
 import { resolveCoverImage } from "./content/metadata";
 
-describe("게시글 콘텐츠 유틸리티", () => {
+describe("포스트 콘텐츠 유틸리티", () => {
   it("frontmatter를 본문에서 제거하고 메타데이터를 검증한다", () => {
     const result = parsePostBody(`---
 excerpt: 테스트 요약
@@ -66,7 +66,7 @@ tags: invalid
   });
 
   it("GitHub Discussion form 헤더 뒤 frontmatter를 파싱한다", () => {
-    const result = parsePostBody(`### 게시글 본문
+    const result = parsePostBody(`### 포스트 본문
 
 ---
 published: true

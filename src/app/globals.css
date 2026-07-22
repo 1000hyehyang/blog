@@ -130,7 +130,6 @@ html.theme-circle-transition::view-transition-new(root) {
 }
 
 html {
-  scroll-behavior: smooth;
   /*
    * 세로 스크롤바를 항상 표시해 페이지별 콘텐츠 양(스크롤바 유무)에 따라
    * 가운데 정렬된 콘텐츠와 fixed 헤더가 좌우로 밀리는 현상을 방지한다.
@@ -276,6 +275,44 @@ button:not(:disabled):hover {
 .container-shell {
   width: min(calc(100% - 2rem), var(--container-width));
   margin-inline: auto;
+}
+.page-shell {
+  width: min(calc(100% - 2rem), var(--container-width));
+  margin-inline: auto;
+  padding-block: 4rem;
+}
+.page-shell--detail {
+  padding-block: 2.5rem;
+}
+.page-title {
+  font-size: 1.875rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.section-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ring);
+}
+.section-heading {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+  .page-shell {
+    padding-block: 5rem;
+  }
+  .page-shell--detail {
+    padding-block: 3.5rem;
+  }
+  .page-title {
+    font-size: 2.25rem;
+  }
 }
 .section-space {
   margin-top: var(--spacing-section);

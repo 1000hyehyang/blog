@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { HeaderSearch } from "@/components/header-search";
+import { HeaderSearch } from "@/features/search/header-search";
 import { MusicToggle } from "@/components/layout/music-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { siteConfig } from "@/config/site";

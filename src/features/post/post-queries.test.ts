@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { Post } from "@/domain/post";
-import { getFeaturedPosts, getRelatedPosts } from "./posts";
+
+import { getFeaturedPosts, getRelatedPosts } from "./post-queries";
 
 const basePost = (overrides: Partial<Post> & Pick<Post, "number" | "category">): Post => ({
   id: `D_${overrides.number}`,
   slug: `post-${overrides.number}`,
-  title: `게시글 ${overrides.number}`,
+  title: `포스트 ${overrides.number}`,
   body: "본문",
   excerpt: "요약",
   coverImage: "/og-default.png",
@@ -22,7 +23,7 @@ const basePost = (overrides: Partial<Post> & Pick<Post, "number" | "category">):
   ...overrides,
 });
 
-describe("featured 게시글 선택", () => {
+describe("featured 포스트 선택", () => {
   it("featuredOrder가 같으면 최근 수정 순으로 정렬한다", () => {
     const first = basePost({
       number: 1,
@@ -43,8 +44,8 @@ describe("featured 게시글 선택", () => {
   });
 });
 
-describe("관련 게시글 선택", () => {
-  it("현재 글을 제외하고 같은 카테고리를 우선한다", () => {
+describe("관련 포스트 선택", () => {
+  it("현재 포스트를 제외하고 같은 카테고리를 우선한다", () => {
     const current = basePost({
       number: 1,
       category: { id: "C_1", name: "Development", slug: "development" },

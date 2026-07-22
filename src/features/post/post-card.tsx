@@ -1,12 +1,21 @@
 import { Heart, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
-import { PostCoverImage } from "@/components/post-cover-image";
 import type { Post } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 import { routes } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
-export function PostCard({ post }: { post: Post }) {
+import { PostCoverImage } from "./post-cover-image";
+
+type PostCardProps = {
+  post: Post;
+  variant?: "default" | "compact";
+};
+
+export function PostCard({ post, variant = "default" }: PostCardProps) {
+  const isCompact = variant === "compact";
+
   return (
     <article className="group">
       <Link
@@ -19,57 +28,52 @@ export function PostCard({ post }: { post: Post }) {
             alt=""
             fill
             unoptimized
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes={
+              isCompact
+                ? "(max-width: 768px) 100vw, 33vw"
+                : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            }
             className="object-cover transition duration-300 group-hover:scale-[1.02]"
           />
         </div>
-        <div className="pt-4">
-          <h3 className="line-clamp-2 text-base font-semibold leading-7 tracking-tight group-hover:underline group-hover:underline-offset-4">
+        <div className={cn(!isCompact && "pt-4")}>
+          <h3
+            className={cn(
+              "line-clamp-2 font-semibold tracking-tight group-hover:underline group-hover:underline-offset-4",
+              isCompact
+                ? "mt-4 text-sm leading-6"
+                : "text-base leading-7",
+            )}
+          >
             {post.title}
           </h3>
-          <p className="line-clamp-2 mt-2 min-h-12 text-sm leading-6 text-secondary">
+          <p
+            className={cn(
+              "text-secondary",
+              isCompact
+                ? "mt-2 line-clamp-3 text-xs leading-5"
+                : "mt-2 line-clamp-2 min-h-12 text-sm leading-6",
+            )}
+          >
             {post.excerpt}
           </p>
-          <div className="mt-4 flex items-center gap-3 text-xs text-tertiary">
-            <span className="flex items-center gap-1">
-              <MessageCircle size={12} />
-              {post.commentsCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <Heart size={12} />
-              {post.reactionsCount}
-            </span>
-            <time className="ml-auto" dateTime={post.updatedAt}>
-              {formatDate(post.updatedAt)}
-            </time>
-          </div>
+          {!isCompact && (
+            <div className="mt-4 flex items-center gap-3 text-xs text-tertiary">
+              <span className="flex items-center gap-1">
+                <MessageCircle size={12} />
+                {post.commentsCount}
+              </span>
+              <span className="flex items-center gap-1">
+                <Heart size={12} />
+                {post.reactionsCount}
+              </span>
+              <time className="ml-auto" dateTime={post.updatedAt}>
+                {formatDate(post.updatedAt)}
+              </time>
+            </div>
+          )}
         </div>
       </Link>
     </article>
-  );
-}
-
-export function PostGrid({ posts }: { posts: Post[] }) {
-  return (
-    <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
-      ))}
-    </div>
-  );
-}
-
-export function EmptyState({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="py-10 text-center">
-      <h2 className="font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-secondary">{description}</p>
-    </div>
   );
 }
