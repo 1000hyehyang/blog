@@ -57,7 +57,7 @@ const DISCUSSION_FIELDS = `
 const LIST_QUERY = `
   query Posts($owner: String!, $repo: String!, $first: Int!, $after: String) {
     repository(owner: $owner, name: $repo) {
-      discussions(first: $first, after: $after, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      discussions(first: $first, after: $after, orderBy: {field: CREATED_AT, direction: DESC}) {
         pageInfo { hasNextPage endCursor }
         nodes { ${DISCUSSION_FIELDS} }
       }

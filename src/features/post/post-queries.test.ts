@@ -24,19 +24,19 @@ const basePost = (overrides: Partial<Post> & Pick<Post, "number" | "category">):
 });
 
 describe("featured 포스트 선택", () => {
-  it("featuredOrder가 같으면 최근 수정 순으로 정렬한다", () => {
+  it("featuredOrder가 같으면 최근 작성 순으로 정렬한다", () => {
     const first = basePost({
       number: 1,
       featured: true,
       featuredOrder: 1,
-      updatedAt: "2026-07-20T00:00:00Z",
+      createdAt: "2026-07-20T00:00:00Z",
       category: { id: "C_1", name: "Development", slug: "development" },
     });
     const second = basePost({
       number: 2,
       featured: true,
       featuredOrder: 1,
-      updatedAt: "2026-07-22T00:00:00Z",
+      createdAt: "2026-07-22T00:00:00Z",
       category: { id: "C_1", name: "Development", slug: "development" },
     });
 

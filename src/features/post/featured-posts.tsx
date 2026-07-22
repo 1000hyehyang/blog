@@ -131,8 +131,8 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                     {post.excerpt}
                   </p>
                   <div className="mt-5 flex items-center gap-3 text-[10px] text-tertiary">
-                    <time dateTime={post.updatedAt}>
-                      {formatDate(post.updatedAt)}
+                    <time dateTime={post.createdAt}>
+                      {formatDate(post.createdAt)}
                     </time>
                   </div>
                   <Link

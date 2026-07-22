@@ -67,8 +67,8 @@ export function PostCard({ post, variant = "default" }: PostCardProps) {
                 <Heart size={12} />
                 {post.reactionsCount}
               </span>
-              <time className="ml-auto" dateTime={post.updatedAt}>
-                {formatDate(post.updatedAt)}
+              <time className="ml-auto" dateTime={post.createdAt}>
+                {formatDate(post.createdAt)}
               </time>
             </div>
           )}

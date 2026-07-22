@@ -6,7 +6,7 @@ function sortFeaturedPosts(posts: Post[]) {
     if (orderDiff !== 0) return orderDiff;
 
     return (
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime() ||
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() ||
       a.number - b.number
     );
   });
