@@ -82,21 +82,6 @@ tags: [Development]
     expect(toSlug("Web Development")).toBe("web-development");
   });
 
-  it("Discussion 템플릿 placeholder를 본문과 요약에서 제거한다", () => {
-    const result = parsePostBody(`---
-published: true
----
-## 제목
-
-CS 개념과 정리를 작성하세요.
-
-## 실제 섹션
-
-내용입니다.`);
-    expect(result.body).toBe("## 실제 섹션\n\n내용입니다.");
-    expect(result.metadata.excerpt).toBe("실제 섹션 내용입니다.");
-  });
-
   it("본문에 남은 coverImage URL은 요약에서 제외한다", () => {
     const url =
       "https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg";

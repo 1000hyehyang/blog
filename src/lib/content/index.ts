@@ -1,16 +1,14 @@
 import { resolveExcerpt } from "./excerpt";
 import { normalizeDiscussionSource, splitFrontmatterBlock } from "./frontmatter";
 import { mergeMetadata, metadataSchema, resolveCoverImage } from "./metadata";
-import { stripFrontmatterArtifacts, stripTemplateBoilerplate } from "./sanitize";
+import { stripFrontmatterArtifacts } from "./sanitize";
 
 export function parsePostBody(source: string) {
   const normalizedSource = normalizeDiscussionSource(source);
   const { raw, body: rawBody } = splitFrontmatterBlock(normalizedSource);
   const metadata = mergeMetadata(raw);
   const coverImage = resolveCoverImage(metadata.coverImage);
-  const body = stripTemplateBoilerplate(
-    stripFrontmatterArtifacts(rawBody.trim(), coverImage),
-  );
+  const body = stripFrontmatterArtifacts(rawBody.trim(), coverImage);
   const valid = metadataSchema.safeParse(raw).success;
 
   return {

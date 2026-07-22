@@ -1,0 +1,27 @@
+name: Revalidate blog
+
+on:
+  workflow_dispatch:
+  discussion:
+    types:
+      - created
+      - edited
+      - deleted
+
+jobs:
+  revalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invalidate blog cache
+        env:
+          REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_URL" ] || [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_URL 또는 REVALIDATE_SECRET secret이 설정되지 않았습니다."
+            exit 1
+          fi
+
+          curl -sf -X POST "$REVALIDATE_URL" \
+            -H "Authorization: Bearer $REVALIDATE_SECRET" \
+            -H "Content-Type: application/json"
