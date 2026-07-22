@@ -137,7 +137,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                   </div>
                   <Link
                     href={routes.post(post.number)}
-                    className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-accent px-5 py-2.5 text-xs text-background"
+                    className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-foreground px-5 py-2.5 text-xs text-background transition-[filter] duration-200 hover:brightness-[1.06] dark:hover:brightness-[0.94]"
                   >
                     자세히 보기
                   </Link>
