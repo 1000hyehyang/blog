@@ -12,30 +12,25 @@ jobs:
   revalidate:
     runs-on: ubuntu-latest
     steps:
+      - name: Cloudflare WAF/Bot Fight 우회
+        uses: xiaotianxt/bypass-cloudflare-for-github-action@v2.1.0
+        with:
+          cf_account_id: ${{ secrets.CF_ACCOUNT_ID }}
+          cf_zone_id: ${{ secrets.CF_ZONE_ID }}
+          cf_api_token: ${{ secrets.CF_API_TOKEN }}
+          # Bot Fight Mode는 WAF Skip 규칙을 무시하므로 실행 중에만 잠시 끈다.
+          disable_bot_fight_mode: "true"
+
       - name: Invalidate blog cache
         env:
           REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
-          # secret 붙여넣기 시 끝 줄바꿈/공백이 들어가면 Authorization 불일치 → 401
           REVALIDATE_URL="$(printf '%s' "$REVALIDATE_URL" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
           REVALIDATE_SECRET="$(printf '%s' "$REVALIDATE_SECRET" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 
           if [ -z "$REVALIDATE_URL" ] || [ -z "$REVALIDATE_SECRET" ]; then
             echo "REVALIDATE_URL 또는 REVALIDATE_SECRET secret이 설정되지 않았습니다."
-            exit 1
-          fi
-
-          echo "REVALIDATE_URL host: $(printf '%s' "$REVALIDATE_URL" | sed -E 's#^https?://([^/]+).*#\1#')"
-          echo "REVALIDATE_SECRET length: ${#REVALIDATE_SECRET} (expected: 64 for openssl rand -hex 32)"
-
-          if printf '%s' "$REVALIDATE_URL" | grep -q 'revali\.1000hyehyang\.me'; then
-            echo "revali.1000hyehyang.me 는 Vercel 배포가 없습니다. REVALIDATE_URL을 blog.1000hyehyang.me/api/revalidate 로 바꾸세요."
-            exit 1
-          fi
-
-          if ! printf '%s' "$REVALIDATE_URL" | grep -Eq '/api/revalidate/?$'; then
-            echo "REVALIDATE_URL은 .../api/revalidate 로 끝나야 합니다."
             exit 1
           fi
 
@@ -48,11 +43,6 @@ jobs:
           if [ "$status" != "200" ]; then
             echo "revalidate 실패: HTTP $status"
             echo "$body"
-            case "$status" in
-              401) echo "→ GitHub REVALIDATE_SECRET 과 Vercel production REVALIDATE_SECRET 이 같은지 확인하세요." ;;
-              404) echo "→ REVALIDATE_URL 경로/도메인이 잘못됐습니다. blog.1000hyehyang.me/api/revalidate 를 사용하세요." ;;
-              403) echo "→ Vercel/Cloudflare가 GitHub Actions IP를 차단했을 수 있습니다." ;;
-            esac
             exit 1
           fi
 
