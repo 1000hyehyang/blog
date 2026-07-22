@@ -28,7 +28,6 @@ export function useMusicToggle() {
   const shouldReduceMotion = Boolean(useReducedMotion());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeAbortRef = useRef<AbortController | null>(null);
-  const wasPlayingBeforeHideRef = useRef(false);
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -92,36 +91,6 @@ export function useMusicToggle() {
       controller.abort();
     };
   }, [isMounted, isPlaying, shouldReduceMotion]);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const handleVisibilityChange = () => {
-      const audio = audioRef.current;
-      if (!audio) return;
-
-      if (document.hidden) {
-        wasPlayingBeforeHideRef.current = isPlaying && !audio.paused;
-        if (wasPlayingBeforeHideRef.current) {
-          fadeAbortRef.current?.abort();
-          audio.pause();
-        }
-        return;
-      }
-
-      if (wasPlayingBeforeHideRef.current && isPlaying) {
-        wasPlayingBeforeHideRef.current = false;
-        void playBackgroundAudio(audio).catch(() => {
-          setIsPlaying(false);
-        });
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isMounted, isPlaying]);
 
   const toggleMusic = useCallback(() => {
     setIsPlaying((value) => !value);
