@@ -12,15 +12,6 @@ jobs:
   revalidate:
     runs-on: ubuntu-latest
     steps:
-      - name: Cloudflare WAF/Bot Fight 우회
-        uses: xiaotianxt/bypass-cloudflare-for-github-action@v2.1.0
-        with:
-          cf_account_id: ${{ secrets.CF_ACCOUNT_ID }}
-          cf_zone_id: ${{ secrets.CF_ZONE_ID }}
-          cf_api_token: ${{ secrets.CF_API_TOKEN }}
-          # Bot Fight Mode는 WAF Skip 규칙을 무시하므로 실행 중에만 잠시 끈다.
-          disable_bot_fight_mode: "true"
-
       - name: Invalidate blog cache
         env:
           REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
