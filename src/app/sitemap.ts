@@ -8,7 +8,7 @@ import { absoluteUrl } from "@/lib/seo";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { posts } = await getPosts({ first: 50 });
 
-  const staticRoutes = [routes.home, routes.posts, routes.about].map(
+  const staticRoutes = [routes.home, routes.posts].map(
     (route) => ({
       url: absoluteUrl(route),
       lastModified: new Date(),

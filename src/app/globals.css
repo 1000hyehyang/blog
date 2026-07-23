@@ -43,6 +43,7 @@ html.theme-circle-transition::view-transition-new(root) {
   --card-foreground: oklch(0.145 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
+  --prose-foreground: oklch(0.30 0 0);
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --font-family: "Wanted Sans Variable", sans-serif;
@@ -77,6 +78,7 @@ html.theme-circle-transition::view-transition-new(root) {
   --card-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
+  --prose-foreground: oklch(0.88 0 0);
   --border: oklch(1 0 0 / 10%);
   --ring: oklch(0.556 0 0);
   --scrollbar-thumb: #fed7aa;
@@ -319,7 +321,7 @@ button:not(:disabled):hover {
 }
 
 .prose {
-  color: var(--muted-foreground);
+  color: var(--prose-foreground);
   font-size: 1rem;
   line-height: 1.7;
 }
@@ -371,7 +373,7 @@ button:not(:disabled):hover {
   margin-top: 0.5em;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--muted-foreground);
+  color: var(--prose-foreground);
 }
 .prose a {
   color: var(--foreground);
