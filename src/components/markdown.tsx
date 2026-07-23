@@ -95,7 +95,7 @@ export function MarkdownContent({ source }: { source: string }) {
             );
           },
           img: ({ src, alt }) => (
-            // Markdown 이미지는 원본 크기를 알 수 없어 native lazy loading을 사용합니다.
+            // Markdown 이미지는 원본 크기를 알 수 없어 native lazy loading을 사용한다.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={typeof src === "string" ? src : ""}

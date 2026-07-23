@@ -46,6 +46,8 @@ function PostCoverImageInner({
   alt,
   className,
   fill,
+  priority,
+  loading,
   ...props
 }: Omit<PostCoverImageProps, "src"> & { resolvedSrc: string }) {
   const [failed, setFailed] = useState(false);
@@ -61,6 +63,8 @@ function PostCoverImageInner({
       className={className}
       src={resolvedSrc}
       alt={alt}
+      priority={priority}
+      loading={priority ? "eager" : loading}
       onError={() => setFailed(true)}
     />
   );
