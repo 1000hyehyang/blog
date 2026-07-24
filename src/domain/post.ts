@@ -13,7 +13,7 @@ export interface Post {
   category: { id: string; name: string; slug: string };
   author: { login: string; avatarUrl: string; url: string };
   createdAt: string;
-  updatedAt: string;
+  lastEditedAt: string | null;
   commentsCount: number;
   reactionsCount: number;
   url: string;

@@ -1,6 +1,6 @@
 import { PostCoverImage } from "@/features/post/post-cover-image";
 import type { Post } from "@/domain/post";
-import { formatDate } from "@/lib/content";
+import { formatDate, formatDateTime, hasPostUpdate } from "@/lib/content";
 
 type PostHeroProps = {
   post: Post;
@@ -37,10 +37,16 @@ export function PostHero({ post }: PostHeroProps) {
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/75">
           <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
-          {post.updatedAt !== post.createdAt && (
+          {hasPostUpdate(post.createdAt, post.lastEditedAt) && (
             <>
               <span aria-hidden>·</span>
-              <span>수정 {formatDate(post.updatedAt)}</span>
+              <time
+                dateTime={post.lastEditedAt!}
+                className="inline-flex items-center gap-2"
+              >
+                <span>수정</span>
+                {formatDateTime(post.lastEditedAt!)}
+              </time>
             </>
           )}
         </div>

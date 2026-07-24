@@ -39,6 +39,32 @@ export function formatDate(value: string, locale = "ko-KR") {
   }).format(new Date(value));
 }
 
+export function formatDateTime(value: string, locale = "ko-KR") {
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  }).format(new Date(value));
+}
+
+/** 본문이 발행 시각 이후에 편집됐을 때만 true */
+export function hasPostUpdate(
+  createdAt: string,
+  modifiedAt: string | null | undefined,
+) {
+  if (!modifiedAt) return false;
+  return new Date(modifiedAt).getTime() > new Date(createdAt).getTime();
+}
+
+export function resolvePostModifiedAt(post: {
+  createdAt: string;
+  lastEditedAt: string | null;
+}) {
+  return post.lastEditedAt ?? post.createdAt;
+}
+
 export type PostHeading = {
   level: 1 | 2 | 3;
   text: string;

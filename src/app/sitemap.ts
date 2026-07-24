@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/config/site";
+import { resolvePostModifiedAt } from "@/lib/content";
 import { getPosts } from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
@@ -22,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const postRoutes = posts.map((post) => ({
     url: absoluteUrl(routes.post(post.number)),
-    lastModified: new Date(post.updatedAt),
+    lastModified: new Date(resolvePostModifiedAt(post)),
   }));
 
   return [...staticRoutes, ...categoryRoutes, ...postRoutes];

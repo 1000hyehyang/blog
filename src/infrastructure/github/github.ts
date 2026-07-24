@@ -27,7 +27,7 @@ type DiscussionNode = {
   body: string;
   url: string;
   createdAt: string;
-  updatedAt: string;
+  lastEditedAt: string | null;
   category: { id: string; name: string };
   author: Actor | null;
   comments: { totalCount: number };
@@ -48,7 +48,7 @@ type DiscussionDetailData = {
 };
 
 const DISCUSSION_FIELDS = `
-  id number title body url createdAt updatedAt
+  id number title body url createdAt lastEditedAt
   category { id name }
   author { login avatarUrl url }
   comments { totalCount }
@@ -138,7 +138,7 @@ function mapDiscussion(node: DiscussionNode): Post {
     },
     author: node.author ?? FALLBACK_AUTHOR,
     createdAt: node.createdAt,
-    updatedAt: node.updatedAt,
+    lastEditedAt: node.lastEditedAt,
     commentsCount: node.comments.totalCount,
     reactionsCount: countReactions(node.reactionGroups),
     url: node.url,

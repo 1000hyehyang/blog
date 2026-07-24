@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createExcerpt } from "./content/excerpt";
-import { formatDate, parsePostBody, toSlug } from "./content";
+import { formatDate, formatDateTime, hasPostUpdate, parsePostBody, toSlug } from "./content";
 import { resolveCoverImage } from "./content/metadata";
 
 describe("포스트 콘텐츠 유틸리티", () => {
@@ -136,5 +136,22 @@ Development
 
   it("날짜를 지정한 locale로 표현한다", () => {
     expect(formatDate("2026-07-22T00:00:00Z", "en-US")).toContain("2026");
+  });
+
+  it("본문이 발행 시각 이후에 편집됐을 때만 수정으로 본다", () => {
+    expect(
+      hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-22T00:00:00Z"),
+    ).toBe(true);
+    expect(
+      hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T06:30:00Z"),
+    ).toBe(true);
+    expect(
+      hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T00:00:00Z"),
+    ).toBe(false);
+    expect(hasPostUpdate("2026-07-20T00:00:00Z", null)).toBe(false);
+  });
+
+  it("수정일은 날짜와 시각을 함께 표시한다", () => {
+    expect(formatDateTime("2026-07-22T06:30:00Z", "en-US")).toContain("2026");
   });
 });

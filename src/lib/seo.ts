@@ -1,5 +1,6 @@
 import { siteConfig } from "@/config/site";
 import type { Post } from "@/domain/post";
+import { resolvePostModifiedAt } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 export function absoluteUrl(path: string) {
@@ -14,7 +15,7 @@ export function buildPostJsonLd(post: Post) {
     description: post.excerpt,
     image: post.coverImage || absoluteUrl(siteConfig.defaultImage),
     datePublished: post.createdAt,
-    dateModified: post.updatedAt,
+    dateModified: resolvePostModifiedAt(post),
     keywords: post.tags.join(", "),
     inLanguage: "ko-KR",
     author: {

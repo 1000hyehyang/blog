@@ -9,7 +9,7 @@ import { PostHero } from "@/features/post/post-hero";
 import { PostTableOfContents } from "@/features/post/post-table-of-contents";
 import { RelatedPosts } from "@/features/post/related-posts";
 import { getPost, getPosts } from "@/infrastructure/github/github";
-import { extractHeadings } from "@/lib/content";
+import { extractHeadings, resolvePostModifiedAt } from "@/lib/content";
 import { getRelatedPosts } from "@/features/post/post-queries";
 import { routes } from "@/lib/routes";
 import { buildPostJsonLd, serializeJsonLd } from "@/lib/seo";
@@ -45,7 +45,7 @@ export async function generateMetadata({
       url: routes.post(number),
       images,
       publishedTime: post.createdAt,
-      modifiedTime: post.updatedAt,
+      modifiedTime: resolvePostModifiedAt(post),
       authors: [siteConfig.author.name],
       tags: post.tags,
     },

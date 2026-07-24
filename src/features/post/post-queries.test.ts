@@ -16,7 +16,7 @@ const basePost = (overrides: Partial<Post> & Pick<Post, "number" | "category">):
   tags: [],
   author: { login: "author", avatarUrl: "", url: "https://github.com/author" },
   createdAt: "2026-07-20T00:00:00Z",
-  updatedAt: "2026-07-22T00:00:00Z",
+  lastEditedAt: null,
   commentsCount: 0,
   reactionsCount: 0,
   url: "https://github.com/example/discussions/1",
