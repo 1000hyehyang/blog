@@ -134,8 +134,11 @@ Development
     expect(result.metadata.tags).toEqual(["Development"]);
   });
 
-  it("날짜를 지정한 locale로 표현한다", () => {
-    expect(formatDate("2026-07-22T00:00:00Z", "en-US")).toContain("2026");
+  it("날짜를 Asia/Seoul 기준으로 표현한다", () => {
+    // UTC 자정은 한국 시간으로 같은 날 오전 9시
+    expect(formatDate("2026-07-22T00:00:00Z", "en-US")).toBe("Jul 22, 2026");
+    // UTC 15:00은 한국 시간으로 다음날 자정
+    expect(formatDate("2026-07-22T15:00:00Z", "en-US")).toBe("Jul 23, 2026");
   });
 
   it("본문이 발행 시각 이후에 편집됐을 때만 수정으로 본다", () => {
@@ -151,7 +154,11 @@ Development
     expect(hasPostUpdate("2026-07-20T00:00:00Z", null)).toBe(false);
   });
 
-  it("수정일은 날짜와 시각을 함께 표시한다", () => {
-    expect(formatDateTime("2026-07-22T06:30:00Z", "en-US")).toContain("2026");
+  it("수정일은 Asia/Seoul 기준 날짜와 시각을 함께 표시한다", () => {
+    // UTC 06:30 → KST 15:30
+    expect(formatDateTime("2026-07-22T06:30:00Z", "en-US")).toBe(
+      "Jul 22, 2026, 3:30 PM",
+    );
   });
 });
+

@@ -31,11 +31,14 @@ export function toSlug(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+const DISPLAY_TIME_ZONE = "Asia/Seoul";
+
 export function formatDate(value: string, locale = "ko-KR") {
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: DISPLAY_TIME_ZONE,
   }).format(new Date(value));
 }
 
@@ -46,6 +49,7 @@ export function formatDateTime(value: string, locale = "ko-KR") {
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
+    timeZone: DISPLAY_TIME_ZONE,
   }).format(new Date(value));
 }
 
