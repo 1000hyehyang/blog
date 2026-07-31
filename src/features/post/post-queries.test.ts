@@ -4,7 +4,9 @@ import type { Post } from "@/domain/post";
 
 import { getFeaturedPosts, getRelatedPosts } from "./post-queries";
 
-const basePost = (overrides: Partial<Post> & Pick<Post, "number" | "category">): Post => ({
+const basePost = (
+  overrides: Partial<Post> & Pick<Post, "number" | "category">,
+): Post => ({
   id: `D_${overrides.number}`,
   slug: `post-${overrides.number}`,
   title: `포스트 ${overrides.number}`,
@@ -45,45 +47,22 @@ describe("featured 포스트 선택", () => {
 });
 
 describe("관련 포스트 선택", () => {
-  it("현재 포스트를 제외하고 같은 카테고리를 우선한다", () => {
+  it("랭킹 정책에 limit을 전달한다", () => {
     const current = basePost({
       number: 1,
-      category: { id: "C_1", name: "Development", slug: "development" },
-    });
-    const sameCategory = basePost({
-      number: 2,
-      category: { id: "C_1", name: "Development", slug: "development" },
-    });
-    const otherCategory = basePost({
-      number: 3,
-      category: { id: "C_2", name: "Study", slug: "study" },
-    });
-
-    expect(
-      getRelatedPosts([current, sameCategory, otherCategory], current, 1),
-    ).toEqual([sameCategory]);
-  });
-
-  it("같은 카테고리가 부족하면 다른 카테고리로 채운다", () => {
-    const current = basePost({
-      number: 1,
-      category: { id: "C_1", name: "Development", slug: "development" },
-    });
-    const first = basePost({
-      number: 2,
       category: { id: "C_1", name: "Development", slug: "development" },
     });
     const second = basePost({
-      number: 3,
-      category: { id: "C_2", name: "Study", slug: "study" },
+      number: 2,
+      category: { id: "C_1", name: "Development", slug: "development" },
     });
     const third = basePost({
-      number: 4,
-      category: { id: "C_3", name: "CS", slug: "cs" },
+      number: 3,
+      category: { id: "C_1", name: "Development", slug: "development" },
     });
 
-    expect(
-      getRelatedPosts([current, first, second, third], current, 3),
-    ).toEqual([first, second, third]);
+    expect(getRelatedPosts([current, second, third], current, 1)).toHaveLength(
+      1,
+    );
   });
 });

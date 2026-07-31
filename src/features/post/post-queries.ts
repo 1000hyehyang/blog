@@ -1,5 +1,7 @@
 import type { Post } from "@/domain/post";
 
+import { rankRelatedPosts } from "./related-post-ranking";
+
 function sortFeaturedPosts(posts: Post[]) {
   return [...posts].sort((a, b) => {
     const orderDiff = (a.featuredOrder ?? 999) - (b.featuredOrder ?? 999);
@@ -21,13 +23,5 @@ export function getRelatedPosts(
   current: Post,
   limit = 3,
 ): Post[] {
-  const others = posts.filter((item) => item.number !== current.number);
-  const sameCategory = others.filter(
-    (item) => item.category.slug === current.category.slug,
-  );
-  const differentCategory = others.filter(
-    (item) => item.category.slug !== current.category.slug,
-  );
-
-  return [...sameCategory, ...differentCategory].slice(0, limit);
+  return rankRelatedPosts(posts, current, { limit });
 }

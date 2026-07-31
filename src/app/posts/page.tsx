@@ -8,8 +8,8 @@ import { getPosts } from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = {
-  title: "모든 포스트",
-  description: `${siteConfig.name}의 모든 개발 기록`,
+  title: "All Posts",
+  description: `${siteConfig.name}의 모든 포스트`,
   alternates: { canonical: routes.posts },
 };
 
@@ -29,9 +29,9 @@ export default async function PostsPage({
     <div className="page-shell">
       <div className="mb-12 flex items-end justify-between gap-4">
         <div>
-          <h1 className="page-title">모든 포스트</h1>
+          <h1 className="page-title">All Posts</h1>
           <p className="mt-2 text-sm text-secondary">
-            배움과 시행착오를 기록한 포스트입니다.
+            {posts.length}개의 포스트를 찾았습니다.
           </p>
         </div>
         <div className="flex gap-3 text-xs">
