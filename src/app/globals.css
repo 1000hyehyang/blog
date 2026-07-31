@@ -43,7 +43,7 @@ html.theme-circle-transition::view-transition-new(root) {
   --card-foreground: oklch(0.145 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --prose-foreground: oklch(0.30 0 0);
+  --prose-foreground: oklch(0.3 0 0);
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --font-family: "Wanted Sans Variable", sans-serif;
@@ -183,8 +183,17 @@ button:not(:disabled):hover {
   outline-offset: 3px;
 }
 
-.header-search :is(a, button, input, label, [role="listbox"], [role="option"]):focus,
-.header-search :is(a, button, input, label, [role="listbox"], [role="option"]):focus-visible {
+.header-search
+  :is(a, button, input, label, [role="listbox"], [role="option"]):focus,
+.header-search
+  :is(
+    a,
+    button,
+    input,
+    label,
+    [role="listbox"],
+    [role="option"]
+  ):focus-visible {
   outline: none !important;
   box-shadow: none !important;
 }
@@ -268,7 +277,9 @@ button:not(:disabled):hover {
   backdrop-filter: blur(var(--header-glass-blur)) saturate(140%);
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
   .site-header-glass {
     background: var(--background);
   }
@@ -379,6 +390,109 @@ button:not(:disabled):hover {
   color: var(--foreground);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.prose .notion-bookmark {
+  display: block;
+  min-height: 7.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: background-color 160ms var(--theme-transition-easing);
+}
+.prose .notion-bookmark--with-cover {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem;
+}
+.prose .notion-bookmark:hover {
+  background: color-mix(in oklab, var(--card) 88%, var(--muted) 12%);
+}
+.prose .notion-bookmark__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem 1.125rem;
+}
+.prose .notion-bookmark__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.prose .notion-bookmark__description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.prose .notion-bookmark__meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.prose .notion-bookmark__meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prose .notion-bookmark__meta svg,
+.prose .notion-bookmark__favicon {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+}
+.prose .notion-bookmark__favicon {
+  border-radius: 2px;
+  object-fit: contain;
+}
+.prose .notion-bookmark__cover {
+  overflow: hidden;
+  background: var(--muted);
+}
+.prose .notion-bookmark__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (max-width: 639px) {
+  .prose .notion-bookmark--with-cover {
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+  }
+  .prose .notion-bookmark {
+    min-height: 6.75rem;
+  }
+  .prose .notion-bookmark__content {
+    padding: 0.875rem;
+  }
+}
+.prose .youtube-player {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: #111111;
+  aspect-ratio: 16 / 9;
+}
+.prose .youtube-player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 .prose ul,
 .prose ol {

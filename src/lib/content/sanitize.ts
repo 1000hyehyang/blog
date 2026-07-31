@@ -23,7 +23,7 @@ function stripLeadingOrphanUrls(body: string, coverImage?: string) {
       continue;
     }
     if (trimmed.startsWith("#")) break;
-    if (isBareHttpUrl(trimmed) && (!coverImage || trimmed === coverImage)) {
+    if (coverImage && isBareHttpUrl(trimmed) && trimmed === coverImage) {
       filtered.shift();
       continue;
     }
@@ -50,7 +50,7 @@ export function stripFrontmatterArtifacts(body: string, coverImage?: string) {
       continue;
     }
 
-    if (isBareHttpUrl(trimmed) && (!coverImage || trimmed === coverImage)) {
+    if (coverImage && isBareHttpUrl(trimmed) && trimmed === coverImage) {
       continue;
     }
 
@@ -68,5 +68,8 @@ export function stripFrontmatterArtifacts(body: string, coverImage?: string) {
     filtered.push(line);
   }
 
-  return stripLeadingOrphanUrls(collapseBlankLines(filtered.join("\n")), coverImage);
+  return stripLeadingOrphanUrls(
+    collapseBlankLines(filtered.join("\n")),
+    coverImage,
+  );
 }

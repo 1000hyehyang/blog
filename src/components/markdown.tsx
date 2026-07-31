@@ -3,7 +3,12 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { CopyCodeButton } from "@/components/copy-code-button";
+import { ExternalLinkBookmark } from "@/features/post/external-link-bookmark";
+import { YouTubeEmbed } from "@/features/post/youtube-embed";
 import { toSlug } from "@/lib/content";
+import { parseExternalHttpUrl } from "@/lib/link-preview";
+import { getStandaloneExternalUrl } from "@/lib/markdown-link";
+import { parseYouTubeUrl } from "@/lib/youtube";
 
 function headingText(children: React.ReactNode) {
   return String(children ?? "")
@@ -22,6 +27,24 @@ function createHeading(level: 1 | 2 | 3 | 4 | 5 | 6) {
 function isBlockCode(className?: string, children?: React.ReactNode) {
   if (className?.startsWith("language-")) return true;
   return String(children ?? "").includes("\n");
+}
+
+function MarkdownParagraph({
+  node,
+  children,
+}: {
+  node?: unknown;
+  children?: React.ReactNode;
+}) {
+  const externalUrl = getStandaloneExternalUrl(node);
+  if (!externalUrl) return <p>{children}</p>;
+
+  const youtubeVideo = parseYouTubeUrl(externalUrl);
+  return youtubeVideo ? (
+    <YouTubeEmbed video={youtubeVideo} />
+  ) : (
+    <ExternalLinkBookmark href={externalUrl} />
+  );
 }
 
 async function HighlightedCode({
@@ -74,6 +97,7 @@ export function MarkdownContent({ source }: { source: string }) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          p: MarkdownParagraph,
           pre: ({ children }) => <>{children}</>,
           code: HighlightedCode,
           h1: createHeading(1),
@@ -83,7 +107,7 @@ export function MarkdownContent({ source }: { source: string }) {
           h5: createHeading(5),
           h6: createHeading(6),
           a: ({ href, children }) => {
-            const external = href?.startsWith("http");
+            const external = href ? Boolean(parseExternalHttpUrl(href)) : false;
             return (
               <a
                 href={href}

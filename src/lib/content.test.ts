@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { createExcerpt } from "./content/excerpt";
-import { formatDate, formatDateTime, hasPostUpdate, parsePostBody, toSlug } from "./content";
+import {
+  formatDate,
+  formatDateTime,
+  hasPostUpdate,
+  parsePostBody,
+  toSlug,
+} from "./content";
 import { resolveCoverImage } from "./content/metadata";
 
 describe("포스트 콘텐츠 유틸리티", () => {
@@ -116,8 +122,20 @@ featured: true
     expect(result.metadata.excerpt).toBe("실제 제목 내용입니다.");
   });
 
+  it("대표 이미지가 아닌 단독 URL은 본문에 유지한다", () => {
+    const result = parsePostBody(`---
+published: true
+---
+# 참고 링크
+
+https://example.com/docs`);
+
+    expect(result.body).toContain("https://example.com/docs");
+  });
+
   it("GitHub에서 줄바꿈이 깨진 frontmatter를 본문에서 제거한다", () => {
-    const result = parsePostBody(`slug: excerpt: coverImage:https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg featured: true featuredOrder: 2 published: true tags:
+    const result =
+      parsePostBody(`slug: excerpt: coverImage:https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg featured: true featuredOrder: 2 published: true tags:
 
 Development
 
@@ -142,15 +160,15 @@ Development
   });
 
   it("본문이 발행 시각 이후에 편집됐을 때만 수정으로 본다", () => {
-    expect(
-      hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-22T00:00:00Z"),
-    ).toBe(true);
-    expect(
-      hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T06:30:00Z"),
-    ).toBe(true);
-    expect(
-      hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T00:00:00Z"),
-    ).toBe(false);
+    expect(hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-22T00:00:00Z")).toBe(
+      true,
+    );
+    expect(hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T06:30:00Z")).toBe(
+      true,
+    );
+    expect(hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T00:00:00Z")).toBe(
+      false,
+    );
     expect(hasPostUpdate("2026-07-20T00:00:00Z", null)).toBe(false);
   });
 
@@ -161,4 +179,3 @@ Development
     );
   });
 });
-
