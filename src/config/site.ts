@@ -24,7 +24,7 @@ export const siteConfig = {
     {
       label: "Art",
       category: "art",
-      tagline: "3D 모델링은 나의 친구",
+      tagline: "일러스트와 블렌더. 2D도 하고 3D도 하고...",
     },
     {
       label: "Retrospective",
