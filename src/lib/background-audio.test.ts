@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createBackgroundAudio,
@@ -6,6 +6,10 @@ import {
 } from "./background-audio";
 
 const TARGET_VOLUME = 0.22;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("background-audio", () => {
   it("배경음악 오디오를 미리 로드하도록 생성한다", () => {
@@ -24,6 +28,14 @@ describe("background-audio", () => {
   });
 
   it("페이드 중 볼륨이 0~1 범위를 벗어나지 않는다", async () => {
+    let frameTime = 0;
+    vi.spyOn(performance, "now").mockReturnValue(0);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      frameTime += 50;
+      queueMicrotask(() => callback(frameTime));
+      return frameTime;
+    });
+
     const volumes: number[] = [];
     const audio = {
       get volume() {

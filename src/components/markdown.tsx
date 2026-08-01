@@ -1,4 +1,3 @@
-import { codeToHtml } from "shiki";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -7,6 +6,10 @@ import { ExternalLinkBookmark } from "@/features/post/external-link-bookmark";
 import { YouTubeEmbed } from "@/features/post/youtube-embed";
 import { toSlug } from "@/lib/content";
 import { parseExternalHttpUrl } from "@/lib/link-preview";
+import {
+  getMarkdownCodeLanguage,
+  highlightMarkdownCode,
+} from "@/lib/markdown-code";
 import { getStandaloneExternalUrl } from "@/lib/markdown-link";
 import { parseYouTubeUrl } from "@/lib/youtube";
 
@@ -60,33 +63,23 @@ async function HighlightedCode({
     return <code className="notion-inline-code">{children}</code>;
   }
 
-  const match = /language-([\w-]+)/.exec(className ?? "");
-  const language = match?.[1];
-
-  if (language) {
-    const html = await codeToHtml(code, {
-      lang: language,
-      themes: { light: "github-light", dark: "github-dark" },
-      defaultColor: false,
-    }).catch(() => "");
-
-    if (html) {
-      return (
-        <div className="notion-code-block notion-code-block--lang group">
-          <span className="notion-code-lang">{language}</span>
-          <CopyCodeButton code={code} />
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
-      );
-    }
-  }
+  const language = getMarkdownCodeLanguage(className);
+  const highlightedHtml = await highlightMarkdownCode(code, language);
 
   return (
-    <div className="notion-code-block group">
+    <div
+      className={`notion-code-block${language ? " notion-code-block--lang" : ""} group`}
+    >
+      {language && <span className="notion-code-lang">{language.label}</span>}
       <CopyCodeButton code={code} />
-      <pre>
-        <code>{code}</code>
-      </pre>
+      {highlightedHtml ? (
+        // Shiki escapes the source and emits markup only for highlighted tokens.
+        <div dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+      ) : (
+        <pre>
+          <code>{code}</code>
+        </pre>
+      )}
     </div>
   );
 }

@@ -19,12 +19,14 @@ export async function ExternalLinkBookmark({ href }: { href: string }) {
       data-external-bookmark
     >
       <span className="notion-bookmark__content">
-        <span className="notion-bookmark__title">{preview.title}</span>
-        {preview.description && (
-          <span className="notion-bookmark__description">
-            {preview.description}
-          </span>
-        )}
+        <span className="notion-bookmark__text">
+          <span className="notion-bookmark__title">{preview.title}</span>
+          {preview.description && (
+            <span className="notion-bookmark__description">
+              {preview.description}
+            </span>
+          )}
+        </span>
         <span className="notion-bookmark__meta">
           {preview.icon ? (
             // 외부 favicon은 크기와 형식을 미리 알 수 없어 native img를 사용한다.

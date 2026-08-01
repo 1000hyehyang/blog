@@ -3,7 +3,9 @@ import "@testing-library/jest-dom/vitest";
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
-    matches: false,
+    // jsdom cannot run scroll-driven reveal animations, so unit tests use the
+    // app's reduced-motion path and keep animated content visible.
+    matches: query === "(prefers-reduced-motion: reduce)",
     media: query,
     onchange: null,
     addListener: () => {},

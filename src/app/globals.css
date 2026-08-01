@@ -47,6 +47,9 @@ html.theme-circle-transition::view-transition-new(root) {
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --font-family: "Wanted Sans Variable", sans-serif;
+  --font-family-code:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Wanted Sans Variable", monospace;
   --container-width: 1120px;
   --content-width: 760px;
   --radius-sm: 6px;
@@ -334,13 +337,26 @@ button:not(:disabled):hover {
 .prose {
   color: var(--prose-foreground);
   font-size: 1rem;
-  line-height: 1.7;
+  line-height: 1.85;
 }
 .prose > * + * {
-  margin-top: 0.75em;
+  margin-top: 1.25em;
 }
 .prose > :first-child {
   margin-top: 0;
+}
+.prose > p:has(> img:only-child) {
+  margin-block: 2em;
+}
+.prose > p:has(> img:only-child):first-child {
+  margin-top: 0;
+}
+.prose > p:has(> img:only-child):last-child {
+  margin-bottom: 0;
+}
+.prose img {
+  display: block;
+  height: auto;
 }
 .prose h1,
 .prose h2,
@@ -392,8 +408,11 @@ button:not(:disabled):hover {
   text-underline-offset: 3px;
 }
 .prose .notion-bookmark {
+  --bookmark-height: 7.5rem;
+
   display: block;
-  min-height: 7.5rem;
+  height: var(--bookmark-height);
+  max-height: var(--bookmark-height);
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -412,16 +431,26 @@ button:not(:disabled):hover {
 .prose .notion-bookmark__content {
   display: flex;
   min-width: 0;
+  height: 100%;
+  min-height: 0;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 1rem 1.125rem;
+  overflow: hidden;
+  padding: 0.75rem 1rem;
+}
+.prose .notion-bookmark__text {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 .prose .notion-bookmark__title {
   display: -webkit-box;
   overflow: hidden;
+  flex: 0 1 auto;
   font-size: 0.95rem;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.4;
+  text-overflow: ellipsis;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -429,18 +458,22 @@ button:not(:disabled):hover {
   display: -webkit-box;
   overflow: hidden;
   margin-top: 0.35rem;
+  flex: 0 1 auto;
   color: var(--muted-foreground);
   font-size: 0.8rem;
-  line-height: 1.45;
+  line-height: 1.4;
+  text-overflow: ellipsis;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
 }
 .prose .notion-bookmark__meta {
   display: flex;
   min-width: 0;
   align-items: center;
+  flex: 0 0 auto;
   gap: 0.4rem;
-  margin-top: 0.85rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
   color: var(--muted-foreground);
   font-size: 0.75rem;
   line-height: 1rem;
@@ -474,10 +507,13 @@ button:not(:disabled):hover {
     grid-template-columns: minmax(0, 1fr) 6.5rem;
   }
   .prose .notion-bookmark {
-    min-height: 6.75rem;
+    --bookmark-height: 6.75rem;
   }
   .prose .notion-bookmark__content {
-    padding: 0.875rem;
+    padding: 0.75rem;
+  }
+  .prose .notion-bookmark__title {
+    -webkit-line-clamp: 1;
   }
 }
 .prose .youtube-player {
@@ -505,7 +541,7 @@ button:not(:disabled):hover {
   list-style: decimal;
 }
 .prose li + li {
-  margin-top: 0.25em;
+  margin-top: 0.4em;
 }
 .prose blockquote {
   border-left: 3px solid var(--border);
@@ -522,8 +558,8 @@ button:not(:disabled):hover {
   background: var(--code-inline-background);
   color: var(--code-inline-foreground);
   padding: 0.2em 0.4em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.85em;
+  font-family: inherit;
+  font-size: 0.9em;
   font-weight: 500;
   line-height: 1.4;
 }
@@ -540,7 +576,7 @@ button:not(:disabled):hover {
   padding: 1.25rem 1.1rem;
   background: transparent;
   color: var(--foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-family-code);
   font-size: 0.875rem;
   line-height: 1.6;
   tab-size: 2;
@@ -559,12 +595,20 @@ button:not(:disabled):hover {
   font-size: 0.875rem;
   line-height: 1.6;
 }
+.prose .notion-code-block .shiki,
+.prose .notion-code-block .shiki span {
+  color: var(--shiki-light, var(--code-block-foreground));
+}
+.dark .prose .notion-code-block .shiki,
+.dark .prose .notion-code-block .shiki span {
+  color: var(--shiki-dark, var(--code-block-foreground));
+}
 .prose .notion-code-block .notion-code-lang {
   position: absolute;
   left: 1rem;
   top: 0.65rem;
   z-index: 1;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-family-code);
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--ring);
