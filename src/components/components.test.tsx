@@ -5,6 +5,7 @@ import type { Post } from "@/domain/post";
 import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostCard } from "@/features/post/post-card";
+import { PostHero } from "@/features/post/post-hero";
 import { HeaderSearch } from "@/features/search/header-search";
 import { SearchResults } from "@/features/search/search-results";
 
@@ -34,6 +35,15 @@ const post: Post = {
 afterEach(() => cleanup());
 
 describe("포스트 UI", () => {
+  it("PostHero에는 발행일만 표시한다", () => {
+    const { container } = render(<PostHero post={post} />);
+    const times = container.querySelectorAll("time");
+
+    expect(times).toHaveLength(1);
+    expect(times[0]).toHaveAttribute("datetime", post.createdAt);
+    expect(container).not.toHaveTextContent("수정");
+  });
+
   it("PostCard에 핵심 포스트 정보를 표시한다", () => {
     render(<PostCard post={post} />);
     expect(screen.getByRole("link")).toHaveAttribute("href", "/posts/1");

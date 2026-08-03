@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import { createExcerpt } from "./content/excerpt";
 import {
   formatDate,
-  formatDateTime,
-  hasPostUpdate,
   parsePostBody,
   toSlug,
 } from "./content";
@@ -159,23 +157,4 @@ Development
     expect(formatDate("2026-07-22T15:00:00Z", "en-US")).toBe("Jul 23, 2026");
   });
 
-  it("본문이 발행 시각 이후에 편집됐을 때만 수정으로 본다", () => {
-    expect(hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-22T00:00:00Z")).toBe(
-      true,
-    );
-    expect(hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T06:30:00Z")).toBe(
-      true,
-    );
-    expect(hasPostUpdate("2026-07-20T00:00:00Z", "2026-07-20T00:00:00Z")).toBe(
-      false,
-    );
-    expect(hasPostUpdate("2026-07-20T00:00:00Z", null)).toBe(false);
-  });
-
-  it("수정일은 Asia/Seoul 기준 날짜와 시각을 함께 표시한다", () => {
-    // UTC 06:30 → KST 15:30
-    expect(formatDateTime("2026-07-22T06:30:00Z", "en-US")).toBe(
-      "Jul 22, 2026, 3:30 PM",
-    );
-  });
 });
