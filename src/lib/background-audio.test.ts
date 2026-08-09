@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  createBackgroundAudio,
-  fadeAudioVolume,
-} from "./background-audio";
+import { createBackgroundAudio, fadeAudioVolume } from "./background-audio";
 
 const TARGET_VOLUME = 0.22;
 

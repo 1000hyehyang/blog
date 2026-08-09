@@ -86,9 +86,8 @@ describe("검색과 테마 UI", () => {
   });
 
   it("ThemeToggle이 문서 테마를 변경한다", async () => {
-    const { ThemeProvider } = await import(
-      "@/components/layout/theme-provider"
-    );
+    const { ThemeProvider } =
+      await import("@/components/layout/theme-provider");
     const { SiteHeader } = await import("@/components/layout/site-header");
     render(
       <ThemeProvider>
@@ -101,9 +100,8 @@ describe("검색과 테마 UI", () => {
   });
 
   it("MusicToggle이 재생 상태를 전환한다", async () => {
-    const { ThemeProvider } = await import(
-      "@/components/layout/theme-provider"
-    );
+    const { ThemeProvider } =
+      await import("@/components/layout/theme-provider");
     const { SiteHeader } = await import("@/components/layout/site-header");
     render(
       <ThemeProvider>

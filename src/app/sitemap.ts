@@ -9,12 +9,10 @@ import { absoluteUrl } from "@/lib/seo";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { posts } = await getPosts({ first: 50 });
 
-  const staticRoutes = [routes.home, routes.posts].map(
-    (route) => ({
-      url: absoluteUrl(route),
-      lastModified: new Date(),
-    }),
-  );
+  const staticRoutes = [routes.home, routes.posts].map((route) => ({
+    url: absoluteUrl(route),
+    lastModified: new Date(),
+  }));
 
   const categoryRoutes = siteConfig.navigation.map((item) => ({
     url: absoluteUrl(routes.category(item.category)),

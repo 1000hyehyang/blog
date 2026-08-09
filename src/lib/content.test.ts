@@ -4,6 +4,7 @@ import { createExcerpt } from "./content/excerpt";
 import {
   formatDate,
   parsePostBody,
+  toBodyHeadingLevel,
   toSlug,
 } from "./content";
 import { resolveCoverImage } from "./content/metadata";
@@ -86,6 +87,12 @@ tags: [Development]
     expect(toSlug("Web Development")).toBe("web-development");
   });
 
+  it("본문 헤딩을 페이지 제목보다 한 단계 낮춰 렌더링한다", () => {
+    expect(toBodyHeadingLevel(1)).toBe(2);
+    expect(toBodyHeadingLevel(3)).toBe(4);
+    expect(toBodyHeadingLevel(6)).toBe(6);
+  });
+
   it("본문에 남은 coverImage URL은 요약에서 제외한다", () => {
     const url =
       "https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg";
@@ -156,5 +163,4 @@ Development
     // UTC 15:00은 한국 시간으로 다음날 자정
     expect(formatDate("2026-07-22T15:00:00Z", "en-US")).toBe("Jul 23, 2026");
   });
-
 });

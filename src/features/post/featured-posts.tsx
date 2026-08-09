@@ -46,10 +46,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
   return (
     <section aria-labelledby="featured-title">
       <div className="mb-5 flex items-center justify-between gap-4">
-        <h2
-          id="featured-title"
-          className="section-label"
-        >
+        <h2 id="featured-title" className="section-label">
           Featured
         </h2>
         {hasMultiple && (
@@ -96,57 +93,57 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
             align: "start",
           }}
         >
-        <CarouselContent className="-ml-0">
-          {posts.map((post, index) => (
-            <CarouselItem key={post.id} className="basis-full pl-0">
-              <article className="grid items-center gap-8 md:grid-cols-[1.2fr_1fr] md:gap-10">
-                <Link
-                  href={routes.post(post.number)}
-                  className="group relative block aspect-[16/10] overflow-hidden rounded-[var(--radius-lg)] bg-muted"
-                >
-                  <PostCoverImage
-                    src={post.coverImage}
-                    alt=""
-                    fill
-                    priority={index === 0}
-                    unoptimized
-                    sizes="(max-width: 768px) 100vw, 60vw"
-                    className="object-cover transition duration-300 group-hover:scale-[1.02]"
-                  />
-                </Link>
-
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-widest text-tertiary">
-                    {post.category.name}
-                  </p>
-                  <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
-                    <Link
-                      href={routes.post(post.number)}
-                      className="hover:underline hover:underline-offset-4"
-                    >
-                      {post.title}
-                    </Link>
-                  </h3>
-                  <p className="mt-4 line-clamp-3 text-sm leading-7 text-secondary">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-5 flex items-center gap-3 text-[10px] text-tertiary">
-                    <time dateTime={post.createdAt}>
-                      {formatDate(post.createdAt)}
-                    </time>
-                  </div>
+          <CarouselContent className="-ml-0">
+            {posts.map((post, index) => (
+              <CarouselItem key={post.id} className="basis-full pl-0">
+                <article className="grid items-center gap-8 md:grid-cols-[1.2fr_1fr] md:gap-10">
                   <Link
                     href={routes.post(post.number)}
-                    className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-foreground px-5 py-2.5 text-xs text-background transition-[filter] duration-200 hover:brightness-[1.06] dark:hover:brightness-[0.94]"
+                    className="group relative block aspect-[16/10] overflow-hidden rounded-[var(--radius-lg)] bg-muted"
                   >
-                    자세히 보기
+                    <PostCoverImage
+                      src={post.coverImage}
+                      alt=""
+                      fill
+                      priority={index === 0}
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 60vw"
+                      className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                    />
                   </Link>
-                </div>
-              </article>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-      </Carousel>
+
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest text-tertiary">
+                      {post.category.name}
+                    </p>
+                    <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                      <Link
+                        href={routes.post(post.number)}
+                        className="hover:underline hover:underline-offset-4"
+                      >
+                        {post.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-4 line-clamp-3 text-sm leading-7 text-secondary">
+                      {post.excerpt}
+                    </p>
+                    <div className="mt-5 flex items-center gap-3 text-[10px] text-tertiary">
+                      <time dateTime={post.createdAt}>
+                        {formatDate(post.createdAt)}
+                      </time>
+                    </div>
+                    <Link
+                      href={routes.post(post.number)}
+                      className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-foreground px-5 py-2.5 text-xs text-background transition-[filter] duration-200 hover:brightness-[1.06] dark:hover:brightness-[0.94]"
+                    >
+                      자세히 보기
+                    </Link>
+                  </div>
+                </article>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       </div>
 
       {hasMultiple && (
@@ -159,7 +156,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
               key={post.id}
               type="button"
               onClick={() => api?.scrollTo(index)}
-                  aria-label={`${index + 1}번째 featured 포스트 보기`}
+              aria-label={`${index + 1}번째 featured 포스트 보기`}
               aria-current={current === index ? "true" : undefined}
               className={cn(
                 "h-1.5 rounded-full transition-all outline-none focus:outline-none focus-visible:outline-none",

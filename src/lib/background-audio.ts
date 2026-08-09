@@ -82,7 +82,12 @@ export async function pauseBackgroundAudio(
 ) {
   if (options.signal?.aborted) return;
 
-  await fadeAudioVolume(audio, 0, options.duration ?? FADE_DURATION_MS, options);
+  await fadeAudioVolume(
+    audio,
+    0,
+    options.duration ?? FADE_DURATION_MS,
+    options,
+  );
 
   if (!options.signal?.aborted) {
     audio.pause();

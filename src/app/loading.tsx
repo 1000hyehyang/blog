@@ -28,7 +28,10 @@ export default function Loading() {
               </div>
               <div className="mt-4 space-y-2">
                 {EXCERPT_LINE_WIDTHS.map((width, index) => (
-                  <div key={index} className={`h-4 rounded bg-muted ${width}`} />
+                  <div
+                    key={index}
+                    className={`h-4 rounded bg-muted ${width}`}
+                  />
                 ))}
               </div>
               <div className="mt-5 h-3 w-24 rounded bg-muted" />

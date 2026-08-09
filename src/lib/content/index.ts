@@ -1,5 +1,8 @@
 import { resolveExcerpt } from "./excerpt";
-import { normalizeDiscussionSource, splitFrontmatterBlock } from "./frontmatter";
+import {
+  normalizeDiscussionSource,
+  splitFrontmatterBlock,
+} from "./frontmatter";
 import { mergeMetadata, metadataSchema, resolveCoverImage } from "./metadata";
 import { stripFrontmatterArtifacts } from "./sanitize";
 
@@ -47,6 +50,14 @@ export function resolvePostModifiedAt(post: {
   lastEditedAt: string | null;
 }) {
   return post.lastEditedAt ?? post.createdAt;
+}
+
+export type MarkdownHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+export function toBodyHeadingLevel(
+  level: MarkdownHeadingLevel,
+): MarkdownHeadingLevel {
+  return Math.min(level + 1, 6) as MarkdownHeadingLevel;
 }
 
 export type PostHeading = {

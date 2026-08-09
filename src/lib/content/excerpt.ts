@@ -2,7 +2,10 @@ import { isBareHttpUrl, looksLikeFrontmatterFragment } from "./text";
 
 const DEFAULT_EXCERPT_LENGTH = 150;
 
-export function createExcerpt(markdown: string, length = DEFAULT_EXCERPT_LENGTH) {
+export function createExcerpt(
+  markdown: string,
+  length = DEFAULT_EXCERPT_LENGTH,
+) {
   const plainText = markdown
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/!\[[^\]]*]\([^)]*\)/g, " ")

@@ -19,7 +19,8 @@ export function HomeHero({ title, description }: HomeHeroProps) {
     if (!root) return;
 
     const wordElements = root.querySelectorAll<HTMLElement>("[data-hero-word]");
-    const descriptionElement = root.querySelector<HTMLElement>("[data-hero-desc]");
+    const descriptionElement =
+      root.querySelector<HTMLElement>("[data-hero-desc]");
 
     if (!wordElements.length || !descriptionElement) return;
 

@@ -1,23 +1,34 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function getVisibleSearchbox(page: Page) {
+  const menuButton = page.getByRole("button", { name: "메뉴 열기" });
+  if (await menuButton.isVisible()) {
+    await menuButton.click();
+  }
+
+  const searchbox = page.getByRole("searchbox").last();
+  await expect(searchbox).toBeVisible();
+  return searchbox;
+}
 
 test("홈과 주요 탐색 UI를 표시한다", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Dev Blog",
   );
-  if (await page.getByRole("button", { name: "메뉴 열기" }).isVisible()) {
-    await page.getByRole("button", { name: "메뉴 열기" }).click();
-  }
-  await expect(page.getByRole("searchbox").first()).toBeVisible();
+  await getVisibleSearchbox(page);
 });
 
 test("헤더 검색창에서 엔터 시 검색 페이지로 이동한다", async ({ page }) => {
   await page.goto("/");
-  const searchbox = page.getByRole("searchbox").first();
-  await searchbox.fill("test");
+  const query = "e2e-no-results";
+  const searchbox = await getVisibleSearchbox(page);
+  await searchbox.fill(query);
   await searchbox.press("Enter");
-  await expect(page).toHaveURL(/\/search(\?q=test|\/\?q=test)/);
-  await expect(page.getByText(/test/)).toBeVisible();
+  await expect(page).toHaveURL(`/search?q=${query}`);
+  await expect(
+    page.getByRole("heading", { name: "검색 결과가 없습니다" }),
+  ).toBeVisible();
 });
 
 test("다크 모드를 전환한다", async ({ page }) => {
@@ -38,7 +49,10 @@ test("포스트 상세 제목이 히어로 패딩 안에서 줄바꿈된다", as
   const href = await postLink.getAttribute("href");
   await page.goto(href!);
 
-  const title = page.getByRole("heading", { level: 1 });
+  const article = page.locator("article.page-shell--detail");
+  await expect(article.getByRole("heading", { level: 1 })).toHaveCount(1);
+
+  const title = article.locator("header").getByRole("heading", { level: 1 });
   await expect(title).toBeVisible();
 
   const box = await title.evaluate((heading) => {

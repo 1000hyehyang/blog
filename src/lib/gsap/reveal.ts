@@ -74,14 +74,18 @@ export function setupDetailPageReveal(root: HTMLElement) {
     return;
   }
 
-  const mountElements = root.querySelectorAll<HTMLElement>("[data-reveal='mount']");
+  const mountElements = root.querySelectorAll<HTMLElement>(
+    "[data-reveal='mount']",
+  );
   if (mountElements.length) {
     revealOnMount(mountElements);
   }
 
-  root.querySelectorAll<HTMLElement>("[data-reveal='scroll']").forEach((element) => {
-    revealOnScroll(element, element, { stagger: 0 });
-  });
+  root
+    .querySelectorAll<HTMLElement>("[data-reveal='scroll']")
+    .forEach((element) => {
+      revealOnScroll(element, element, { stagger: 0 });
+    });
 
   root.querySelectorAll<HTMLElement>("[data-reveal-cards]").forEach((grid) => {
     setupCardGridReveal(grid);

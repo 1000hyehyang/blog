@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.shortName}`,
   },
   description: siteConfig.description,
-  authors: [{ name: siteConfig.author.name, url: siteConfig.socialLinks.github }],
+  authors: [
+    { name: siteConfig.author.name, url: siteConfig.socialLinks.github },
+  ],
   creator: siteConfig.author.name,
   alternates: {
     types: {
-      "application/rss+xml": [
-        { url: routes.feed, title: siteConfig.name },
-      ],
+      "application/rss+xml": [{ url: routes.feed, title: siteConfig.name }],
     },
   },
   openGraph: {

@@ -151,7 +151,9 @@ export function SiteHeader() {
                         <li key={item.category}>
                           <Link
                             href={href}
-                            aria-current={pathname === href ? "page" : undefined}
+                            aria-current={
+                              pathname === href ? "page" : undefined
+                            }
                             onClick={() => setMenuOpen(false)}
                             className="block rounded-[var(--radius-sm)] px-3 py-2.5 text-sm text-secondary transition-colors hover:bg-muted hover:text-foreground aria-[current=page]:font-semibold aria-[current=page]:text-foreground"
                           >

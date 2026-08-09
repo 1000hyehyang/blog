@@ -40,9 +40,7 @@ export function PostCard({ post, variant = "default" }: PostCardProps) {
           <h3
             className={cn(
               "line-clamp-2 wrap-break-word font-semibold tracking-tight group-hover:underline group-hover:underline-offset-4",
-              isCompact
-                ? "mt-4 text-sm leading-6"
-                : "text-base leading-7",
+              isCompact ? "mt-4 text-sm leading-6" : "text-base leading-7",
             )}
           >
             {post.title}

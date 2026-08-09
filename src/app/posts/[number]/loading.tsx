@@ -1,4 +1,12 @@
-const BODY_LINE_WIDTHS = ["w-full", "w-11/12", "w-10/12", "w-full", "w-9/12", "w-full", "w-8/12"];
+const BODY_LINE_WIDTHS = [
+  "w-full",
+  "w-11/12",
+  "w-10/12",
+  "w-full",
+  "w-9/12",
+  "w-full",
+  "w-8/12",
+];
 const TOC_LINE_WIDTHS = ["w-24", "w-32", "w-28", "w-36", "w-20"];
 
 export default function PostDetailLoading() {

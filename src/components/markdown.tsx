@@ -4,7 +4,11 @@ import remarkGfm from "remark-gfm";
 import { CopyCodeButton } from "@/components/copy-code-button";
 import { ExternalLinkBookmark } from "@/features/post/external-link-bookmark";
 import { YouTubeEmbed } from "@/features/post/youtube-embed";
-import { toSlug } from "@/lib/content";
+import {
+  type MarkdownHeadingLevel,
+  toBodyHeadingLevel,
+  toSlug,
+} from "@/lib/content";
 import { parseExternalHttpUrl } from "@/lib/link-preview";
 import {
   getMarkdownCodeLanguage,
@@ -19,9 +23,9 @@ function headingText(children: React.ReactNode) {
     .trim();
 }
 
-function createHeading(level: 1 | 2 | 3 | 4 | 5 | 6) {
+function createHeading(level: MarkdownHeadingLevel) {
   return function Heading({ children }: { children?: React.ReactNode }) {
-    const Tag = `h${level}` as const;
+    const Tag = `h${toBodyHeadingLevel(level)}` as const;
     const id = level <= 3 ? toSlug(headingText(children)) : undefined;
     return <Tag id={id}>{children}</Tag>;
   };

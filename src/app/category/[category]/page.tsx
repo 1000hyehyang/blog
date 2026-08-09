@@ -43,9 +43,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="page-shell">
-      <h1 className="page-title">
-        {navigation.label}
-      </h1>
+      <h1 className="page-title">{navigation.label}</h1>
       <p className="mb-12 mt-2 text-sm text-secondary">{navigation.tagline}</p>
       {posts.length ? (
         <PostGrid posts={posts} />

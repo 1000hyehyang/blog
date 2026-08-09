@@ -29,10 +29,7 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildBlogJsonLd()) }}
       />
 
-      <HomeHero
-        title={siteConfig.title}
-        description={siteConfig.description}
-      />
+      <HomeHero title={siteConfig.title} description={siteConfig.description} />
 
       {featured.length > 0 && (
         <div className="section-space">
