@@ -20,14 +20,14 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const shouldReduceMotion = Boolean(useReducedMotion());
 
-  // portal은 클라이언트 마운트 이후에만 렌더링한다.
+  // document.body를 쓰는 포털은 클라이언트 마운트 이후에만 생성한다.
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false,
   );
 
-  // 페이지 이동 시 열려 있던 모바일 메뉴를 닫는다.
+  // 경로가 바뀐 렌더에서 메뉴 상태를 함께 재설정해 열린 프레임을 남기지 않는다.
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);

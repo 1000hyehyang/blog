@@ -2,6 +2,7 @@ import { ExternalLink, Globe2 } from "lucide-react";
 
 import { getLinkPreview } from "@/infrastructure/link-preview/link-preview";
 
+// 프리뷰 이미지 호스트는 콘텐츠마다 달라 next/image 허용 목록으로 제한할 수 없다.
 export async function ExternalLinkBookmark({ href }: { href: string }) {
   const preview = await getLinkPreview(href);
   if (!preview) return null;
@@ -29,7 +30,6 @@ export async function ExternalLinkBookmark({ href }: { href: string }) {
         </span>
         <span className="notion-bookmark__meta">
           {preview.icon ? (
-            // 외부 favicon은 크기와 형식을 미리 알 수 없어 native img를 사용한다.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className="notion-bookmark__favicon"
@@ -48,7 +48,6 @@ export async function ExternalLinkBookmark({ href }: { href: string }) {
 
       {preview.image && (
         <span className="notion-bookmark__cover" aria-hidden="true">
-          {/* 외부 OG 이미지는 크기를 미리 알 수 없어 native img를 사용한다. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview.image}

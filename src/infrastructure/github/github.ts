@@ -6,7 +6,7 @@ import type { Post, PostPage } from "@/domain/post";
 import { parsePostBody, toSlug } from "@/lib/content";
 
 const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
-// Discussion 변경은 /api/revalidate 웹훅이 즉시 무효화하므로 주기는 안전망이다.
+// 웹훅 누락에 대비해 주기적 재검증도 유지한다.
 const REVALIDATE_SECONDS = 3600;
 const MAX_PAGE_SIZE = 50;
 

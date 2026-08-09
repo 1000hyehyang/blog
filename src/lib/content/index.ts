@@ -55,7 +55,6 @@ export type PostHeading = {
   id: string;
 };
 
-/** 마크다운 본문에서 목차용 h1~h3 헤딩을 추출한다. */
 export function extractHeadings(markdown: string): PostHeading[] {
   return [...markdown.matchAll(/^(#{1,3})\s+(.+)$/gm)].map((match) => ({
     level: match[1].length as 1 | 2 | 3,

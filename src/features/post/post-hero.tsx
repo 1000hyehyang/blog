@@ -7,11 +7,8 @@ type PostHeroProps = {
 };
 
 /**
- * 커버 이미지 위에 제목을 얹는 히어로. 제목이 길면 세로로 늘어난다.
- *
- * aspect-ratio와 min-height가 같은 요소에 있으면 min-height가 비율을 타고
- * min-width로 전이되어 좁은 화면에서 뷰포트를 넘치므로, 비율(sizer)·최소
- * 높이(헤더)·이미지 레이어를 분리해 둔다.
+ * aspect-ratio와 min-height를 한 요소에 두면 좁은 화면에서 계산된 min-width가
+ * 뷰포트를 넘으므로 비율, 최소 높이, 이미지 레이어를 분리한다.
  */
 export function PostHero({ post }: PostHeroProps) {
   return (

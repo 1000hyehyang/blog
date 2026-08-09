@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     revalidatePath(`/posts/${number}`, "page");
   }
 
-  // revalidateTag만으로는 상세 페이지 Full Route / Router Cache가 남을 수 있다.
+  // Route Handler의 태그 무효화와 별도로 페이지 경로도 다음 방문 시 재검증한다.
   revalidatePath("/", "page");
   revalidatePath("/posts", "page");
   revalidatePath("/posts/[number]", "page");

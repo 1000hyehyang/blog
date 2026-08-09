@@ -103,7 +103,7 @@ function scorePost(
   const relevanceScore = calculateRelevanceScore(current, candidate);
   const createdAtTimestamp = parseTimestamp(candidate.createdAt);
 
-  // Unrelated posts are only fallback candidates, ordered by their publication date.
+  // 관련도 없는 글은 최신순으로 빈 자리만 채운다.
   const recencyScore =
     relevanceScore > 0
       ? calculateRecencyScore(createdAtTimestamp, nowTimestamp)

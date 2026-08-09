@@ -73,7 +73,7 @@ async function HighlightedCode({
       {language && <span className="notion-code-lang">{language.label}</span>}
       <CopyCodeButton code={code} />
       {highlightedHtml ? (
-        // Shiki escapes the source and emits markup only for highlighted tokens.
+        // Shiki가 원문을 이스케이프한 뒤 생성한 토큰 마크업만 삽입한다.
         <div dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
       ) : (
         <pre>
@@ -112,9 +112,10 @@ export function MarkdownContent({ source }: { source: string }) {
             );
           },
           img: ({ src, alt }) => (
-            // Markdown 이미지는 원본 크기를 알 수 없어 native lazy loading을 사용한다.
+            // 마크다운 이미지의 임의 호스트를 next/image 허용 목록에 열지 않는다.
             // eslint-disable-next-line @next/next/no-img-element
             <img
+              className="markdown-image"
               src={typeof src === "string" ? src : ""}
               alt={alt ?? ""}
               loading="lazy"

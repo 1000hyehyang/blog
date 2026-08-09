@@ -3,9 +3,8 @@ import matter from "gray-matter";
 import { isBareHttpUrl, looksLikeFrontmatterFragment } from "./text";
 
 /**
- * GitHub Discussion 본문은 Discussion form 헤더, 줄바꿈이 깨진 frontmatter 등
- * 정상적인 YAML frontmatter가 아닌 형태로 저장될 수 있다.
- * 이 모듈은 그런 원본에서 frontmatter 블록과 본문을 분리한다.
+ * Discussion form은 헤더가 앞에 붙거나 frontmatter 줄바꿈이 유실된 본문을
+ * 만들 수 있으므로 정상 YAML과 손상된 형식을 모두 분리한다.
  */
 
 export type FrontmatterSplit = {

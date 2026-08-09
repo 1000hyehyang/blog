@@ -135,11 +135,7 @@ html.theme-circle-transition::view-transition-new(root) {
 }
 
 html {
-  /*
-   * 세로 스크롤바를 항상 표시해 페이지별 콘텐츠 양(스크롤바 유무)에 따라
-   * 가운데 정렬된 콘텐츠와 fixed 헤더가 좌우로 밀리는 현상을 방지한다.
-   * 트랙이 투명해서 스크롤이 불필요한 페이지에서는 시각적으로 드러나지 않는다.
-   */
+  /* 페이지별 스크롤바 유무에 따른 중앙 콘텐츠의 가로 이동을 막는다. */
   overflow-y: scroll;
 }
 body {
@@ -150,10 +146,7 @@ body {
 }
 
 @media (max-width: 767px) {
-  /*
-   * 모바일 브라우저 UI(주소창) 표시/숨김과 가로 overflow가 겹치면
-   * fixed 헤더·본문 너비가 스크롤 방향마다 미세하게 달라진다.
-   */
+  /* 모바일 주소창 변화와 가로 overflow가 겹칠 때 생기는 레이아웃 흔들림을 막는다. */
   html {
     overflow-x: clip;
     overflow-y: auto;
@@ -206,7 +199,6 @@ button:not(:disabled):hover {
   -webkit-appearance: none;
 }
 
-/* 브라우저 기본 검색 지우기(X) 버튼을 숨기고 커스텀 아이콘 버튼을 사용한다. */
 .header-search input::-webkit-search-cancel-button,
 .header-search input::-webkit-search-decoration {
   -webkit-appearance: none;
@@ -357,6 +349,10 @@ button:not(:disabled):hover {
 .prose img {
   display: block;
   height: auto;
+}
+.prose .markdown-image {
+  max-width: 100%;
+  margin-inline: auto;
 }
 .prose h1,
 .prose h2,

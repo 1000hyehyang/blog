@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   experimental: {
     staleTimes: {
-      // Link prefetch로 캐시된 상세 페이지 RSC가 오래 남지 않도록
+      // 웹훅 무효화 이후에도 남을 수 있는 프리패치 RSC의 수명을 제한한다.
       static: 30,
     },
   },
