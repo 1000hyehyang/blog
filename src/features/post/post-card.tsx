@@ -11,9 +11,14 @@ import { PostCoverImage } from "./post-cover-image";
 type PostCardProps = {
   post: Post;
   variant?: "default" | "compact";
+  imageLoading?: "eager" | "lazy";
 };
 
-export function PostCard({ post, variant = "default" }: PostCardProps) {
+export function PostCard({
+  post,
+  variant = "default",
+  imageLoading,
+}: PostCardProps) {
   const isCompact = variant === "compact";
 
   return (
@@ -24,10 +29,10 @@ export function PostCard({ post, variant = "default" }: PostCardProps) {
       >
         <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius-md)] bg-muted">
           <PostCoverImage
-            src={post.coverImage}
+            image={post.coverImage}
             alt=""
             fill
-            unoptimized
+            loading={imageLoading}
             sizes={
               isCompact
                 ? "(max-width: 768px) 100vw, 33vw"

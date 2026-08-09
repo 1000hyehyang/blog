@@ -1,15 +1,12 @@
-import { isBareHttpUrl } from "./text";
+import { isBareHttpUrl, isFrontmatterFieldLine } from "./text";
 
 /** 손상된 frontmatter를 복구한 뒤 본문에 남은 메타데이터 조각을 제거한다. */
-
-const FRONTMATTER_FIELD_LINE =
-  /^(?:---|slug:|excerpt:|coverImage:|featured:|featuredOrder:|published:|tags:)/;
 
 function collapseBlankLines(value: string) {
   return value.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-function stripLeadingOrphanUrls(body: string, coverImage?: string) {
+function stripLeadingOrphanUrls(body: string, imageSources: string[]) {
   const lines = body.split("\n");
   const filtered = [...lines];
 
@@ -20,7 +17,7 @@ function stripLeadingOrphanUrls(body: string, coverImage?: string) {
       continue;
     }
     if (trimmed.startsWith("#")) break;
-    if (coverImage && isBareHttpUrl(trimmed) && trimmed === coverImage) {
+    if (isBareHttpUrl(trimmed) && imageSources.includes(trimmed)) {
       filtered.shift();
       continue;
     }
@@ -30,7 +27,10 @@ function stripLeadingOrphanUrls(body: string, coverImage?: string) {
   return filtered.join("\n");
 }
 
-export function stripFrontmatterArtifacts(body: string, coverImage?: string) {
+export function stripFrontmatterArtifacts(
+  body: string,
+  imageSources: string[] = [],
+) {
   const lines = body.split("\n");
   const filtered: string[] = [];
   let skippingTagLine = false;
@@ -38,16 +38,16 @@ export function stripFrontmatterArtifacts(body: string, coverImage?: string) {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    if (trimmed === "---" || FRONTMATTER_FIELD_LINE.test(trimmed)) {
+    if (isFrontmatterFieldLine(trimmed)) {
       skippingTagLine = trimmed === "tags:" || trimmed.endsWith("tags:");
       continue;
     }
 
-    if (/coverImage:\s*\S+/.test(trimmed)) {
+    if (/(?:coverImage|galleryImage):\s*\S+/.test(trimmed)) {
       continue;
     }
 
-    if (coverImage && isBareHttpUrl(trimmed) && trimmed === coverImage) {
+    if (isBareHttpUrl(trimmed) && imageSources.includes(trimmed)) {
       continue;
     }
 
@@ -67,6 +67,6 @@ export function stripFrontmatterArtifacts(body: string, coverImage?: string) {
 
   return stripLeadingOrphanUrls(
     collapseBlankLines(filtered.join("\n")),
-    coverImage,
+    imageSources,
   );
 }

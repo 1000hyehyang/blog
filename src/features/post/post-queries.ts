@@ -1,4 +1,4 @@
-import type { Post } from "@/domain/post";
+import type { Post, PostPreview } from "@/domain/post";
 
 import { rankRelatedPosts } from "./related-post-ranking";
 
@@ -16,6 +16,32 @@ function sortFeaturedPosts(posts: Post[]) {
 
 export function getFeaturedPosts(posts: Post[]) {
   return sortFeaturedPosts(posts.filter((post) => post.featured));
+}
+
+export function toPostPreview(post: Post): PostPreview {
+  return {
+    id: post.id,
+    number: post.number,
+    title: post.title,
+    excerpt: post.excerpt,
+    coverImage: post.coverImage,
+    category: post.category,
+    createdAt: post.createdAt,
+  };
+}
+
+export function getRecentPosts(
+  posts: Post[],
+  limit: number,
+  excludedCategory = "art",
+) {
+  return posts
+    .filter((post) => post.category.slug !== excludedCategory)
+    .slice(0, limit);
+}
+
+export function getRecentArtPosts(posts: Post[], limit: number) {
+  return posts.filter((post) => post.category.slug === "art").slice(0, limit);
 }
 
 export function getRelatedPosts(

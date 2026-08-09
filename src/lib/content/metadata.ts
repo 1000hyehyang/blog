@@ -15,6 +15,7 @@ export const metadataSchema = z.object({
   slug: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   excerpt: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   coverImage: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  galleryImage: z.preprocess(emptyToUndefined, z.string().url().optional()),
   featured: z.preprocess(coerceBoolean, z.boolean().default(false)),
   featuredOrder: z.preprocess(
     emptyToUndefined,
@@ -42,6 +43,7 @@ export function mergeMetadata(raw: Record<string, unknown>): PostMetadata {
     slug: emptyToUndefined(raw.slug),
     excerpt: emptyToUndefined(raw.excerpt),
     coverImage: emptyToUndefined(raw.coverImage),
+    galleryImage: emptyToUndefined(raw.galleryImage),
     tags: Array.isArray(raw.tags)
       ? raw.tags.filter((tag): tag is string => typeof tag === "string")
       : fallback.tags,

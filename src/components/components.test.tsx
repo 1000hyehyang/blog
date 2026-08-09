@@ -1,7 +1,15 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Post } from "@/domain/post";
+import { ArtGallery } from "@/features/post/art-gallery";
+import { ArtworkFrame } from "@/features/post/artwork-frame";
 import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostCard } from "@/features/post/post-card";
@@ -18,7 +26,9 @@ const post: Post = {
   title: "첫 번째 Next.js 포스트",
   body: "서버 컴포넌트 본문",
   excerpt: "첫 번째 포스트 요약",
-  coverImage: "/og-default.png",
+  coverImage: {
+    src: "/og-default.png",
+  },
   featured: true,
   featuredOrder: 1,
   published: true,
@@ -33,6 +43,52 @@ const post: Post = {
 };
 
 afterEach(() => cleanup());
+
+describe("ArtworkFrame", () => {
+  it("uses the image's natural aspect ratio after it loads", async () => {
+    const { container } = render(
+      <ArtworkFrame image={{ src: "/og-default.png" }} sizes="100vw">
+        <span>overlay</span>
+      </ArtworkFrame>,
+    );
+    const image = container.querySelector("img");
+
+    expect(container.firstElementChild).toHaveStyle({ aspectRatio: "0.8" });
+    expect(image).not.toBeNull();
+
+    Object.defineProperties(image, {
+      naturalWidth: { configurable: true, value: 2400 },
+      naturalHeight: { configurable: true, value: 1000 },
+    });
+    fireEvent.load(image!);
+
+    await waitFor(() => {
+      const aspectRatio = (container.firstElementChild as HTMLElement).style
+        .aspectRatio;
+      expect(Number.parseFloat(aspectRatio)).toBe(2.4);
+    });
+  });
+});
+
+describe("ArtGallery", () => {
+  it("prefers the gallery image over the thumbnail", () => {
+    const galleryImage = "https://example.com/artwork.jpg";
+    const { container } = render(
+      <ArtGallery
+        posts={[
+          {
+            ...post,
+            galleryImage: { src: galleryImage },
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector("img")?.getAttribute("src")).toContain(
+      encodeURIComponent(galleryImage),
+    );
+  });
+});
 
 describe("포스트 UI", () => {
   it("PostHero에는 발행일만 표시한다", () => {

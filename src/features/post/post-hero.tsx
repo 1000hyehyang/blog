@@ -17,11 +17,11 @@ export function PostHero({ post }: PostHeroProps) {
 
       <div aria-hidden className="relative col-start-1 row-start-1">
         <PostCoverImage
-          src={post.coverImage}
+          image={post.coverImage}
           alt=""
           fill
-          priority
-          unoptimized
+          loading="eager"
+          fetchPriority="high"
           sizes="(max-width: 1024px) 100vw, 760px"
           className="object-cover"
         />

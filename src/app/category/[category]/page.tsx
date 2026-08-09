@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getCategoryNavigation, siteConfig } from "@/config/site";
+import { ArtGallery } from "@/features/post/art-gallery";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostGrid } from "@/features/post/post-grid";
 import { getPosts } from "@/infrastructure/github/github";
@@ -40,13 +41,24 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   if (!navigation) notFound();
 
   const { posts } = await getPosts({ first: 50, category });
+  const firstGalleryImageSource =
+    posts[0]?.galleryImage?.src ?? posts[0]?.coverImage.src;
 
   return (
     <div className="page-shell">
       <h1 className="page-title">{navigation.label}</h1>
       <p className="mb-12 mt-2 text-sm text-secondary">{navigation.tagline}</p>
       {posts.length ? (
-        <PostGrid posts={posts} />
+        category === "art" ? (
+          <ArtGallery
+            posts={posts}
+            eagerImageSources={
+              firstGalleryImageSource ? [firstGalleryImageSource] : []
+            }
+          />
+        ) : (
+          <PostGrid posts={posts} />
+        )
       ) : (
         <EmptyState
           title="포스트가 없습니다"

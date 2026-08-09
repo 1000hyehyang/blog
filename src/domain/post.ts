@@ -1,3 +1,7 @@
+export interface PostImage {
+  src: string;
+}
+
 export interface Post {
   id: string;
   number: number;
@@ -5,7 +9,8 @@ export interface Post {
   title: string;
   body: string;
   excerpt: string;
-  coverImage: string;
+  coverImage: PostImage;
+  galleryImage?: PostImage;
   featured: boolean;
   featuredOrder?: number;
   published: boolean;
@@ -18,6 +23,17 @@ export interface Post {
   reactionsCount: number;
   url: string;
 }
+
+export type PostPreview = Pick<
+  Post,
+  | "id"
+  | "number"
+  | "title"
+  | "excerpt"
+  | "coverImage"
+  | "category"
+  | "createdAt"
+>;
 
 export interface PostPage {
   posts: Post[];

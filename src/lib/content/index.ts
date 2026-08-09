@@ -11,7 +11,11 @@ export function parsePostBody(source: string) {
   const { raw, body: rawBody } = splitFrontmatterBlock(normalizedSource);
   const metadata = mergeMetadata(raw);
   const coverImage = resolveCoverImage(metadata.coverImage);
-  const body = stripFrontmatterArtifacts(rawBody.trim(), coverImage);
+  const galleryImage = resolveCoverImage(metadata.galleryImage);
+  const body = stripFrontmatterArtifacts(rawBody.trim(), [
+    coverImage,
+    galleryImage,
+  ]);
   const valid = metadataSchema.safeParse(raw).success;
 
   return {
@@ -20,6 +24,7 @@ export function parsePostBody(source: string) {
       ...metadata,
       excerpt: resolveExcerpt(metadata.excerpt, body, coverImage),
       coverImage,
+      galleryImage,
     },
     valid,
   };

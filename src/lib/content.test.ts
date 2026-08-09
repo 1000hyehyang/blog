@@ -64,6 +64,23 @@ tags: invalid
     );
   });
 
+  it("parses a separate gallery image URL", () => {
+    const result = parsePostBody(`---
+coverImage: https://example.com/thumbnail.jpg
+galleryImage: https://example.com/artwork.jpg
+published: true
+---
+# Artwork`);
+
+    expect(result.metadata.coverImage).toBe(
+      "https://example.com/thumbnail.jpg",
+    );
+    expect(result.metadata.galleryImage).toBe(
+      "https://example.com/artwork.jpg",
+    );
+    expect(result.body).toBe("# Artwork");
+  });
+
   it("마크다운 문법을 제외한 요약을 생성한다", () => {
     expect(createExcerpt("## 제목\n[링크](https://example.com) **내용**")).toBe(
       "제목 링크 내용",

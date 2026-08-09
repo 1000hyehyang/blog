@@ -20,7 +20,9 @@ function createPost(overrides: Partial<Post> & Pick<Post, "number">): Post {
     title: `고유 제목 ${number}`,
     body: "본문",
     excerpt: "요약",
-    coverImage: "/og-default.png",
+    coverImage: {
+      src: "/og-default.png",
+    },
     featured: false,
     published: true,
     tags: [],

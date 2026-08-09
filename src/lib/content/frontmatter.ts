@@ -1,6 +1,10 @@
 import matter from "gray-matter";
 
-import { isBareHttpUrl, looksLikeFrontmatterFragment } from "./text";
+import {
+  isBareHttpUrl,
+  isFrontmatterFieldLine,
+  looksLikeFrontmatterFragment,
+} from "./text";
 
 /**
  * Discussion form은 헤더가 앞에 붙거나 frontmatter 줄바꿈이 유실된 본문을
@@ -25,8 +29,7 @@ export function normalizeDiscussionSource(source: string) {
 function looksLikeFrontmatterLine(line: string) {
   const trimmed = line.trim();
   return (
-    trimmed === "---" ||
-    trimmed.startsWith("slug:") ||
+    isFrontmatterFieldLine(trimmed) ||
     /coverImage:\s*\S+/.test(trimmed) ||
     /featured:\s*(true|false)/i.test(trimmed)
   );
@@ -41,6 +44,9 @@ export function extractMetadataFromRawText(
   const coverImage = text.match(/coverImage:\s*(\S+)/)?.[1];
   if (coverImage) raw.coverImage = coverImage;
 
+  const galleryImage = text.match(/galleryImage:\s*(\S+)/)?.[1];
+  if (galleryImage) raw.galleryImage = galleryImage;
+
   const featured = text.match(/featured:\s*(true|false)/i)?.[1];
   if (featured) raw.featured = featured;
 
@@ -52,13 +58,15 @@ export function extractMetadataFromRawText(
 
   const slug = text
     .match(
-      /slug:\s*([^\n]+?)(?=\s*excerpt:|\s*coverImage:|\s*featured:|\s*$)/,
+      /slug:\s*([^\n]+?)(?=\s*(?:excerpt|coverImage|galleryImage|featured|published|tags):|\s*$)/,
     )?.[1]
     ?.trim();
   if (slug) raw.slug = slug;
 
   const excerpt = text
-    .match(/excerpt:\s*([^\n]+?)(?=\s*coverImage:|\s*featured:|\s*$)/)?.[1]
+    .match(
+      /excerpt:\s*([^\n]+?)(?=\s*(?:coverImage|galleryImage|featured|published|tags):|\s*$)/,
+    )?.[1]
     ?.trim();
   if (
     excerpt &&

@@ -31,7 +31,7 @@ export async function generateMetadata({
   const post = await getPost(number);
   if (!post) return {};
 
-  const images = [post.coverImage || siteConfig.defaultImage];
+  const images = [post.coverImage.src || siteConfig.defaultImage];
 
   return {
     title: post.title,

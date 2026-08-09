@@ -119,6 +119,7 @@ const FALLBACK_AUTHOR: Actor = {
 
 function mapDiscussion(node: DiscussionNode): Post {
   const { body, metadata } = parsePostBody(node.body);
+
   return {
     id: node.id,
     number: node.number,
@@ -126,7 +127,12 @@ function mapDiscussion(node: DiscussionNode): Post {
     title: node.title,
     body,
     excerpt: metadata.excerpt,
-    coverImage: metadata.coverImage,
+    coverImage: {
+      src: metadata.coverImage,
+    },
+    galleryImage: metadata.galleryImage
+      ? { src: metadata.galleryImage }
+      : undefined,
     featured: metadata.featured,
     featuredOrder: metadata.featuredOrder,
     published: metadata.published,

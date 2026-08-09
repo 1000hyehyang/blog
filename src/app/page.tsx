@@ -3,15 +3,22 @@ import Link from "next/link";
 
 import { siteConfig } from "@/config/site";
 import { HomeHero } from "@/features/home/home-hero";
+import { ArtGallery } from "@/features/post/art-gallery";
 import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostGrid } from "@/features/post/post-grid";
-import { getFeaturedPosts } from "@/features/post/post-queries";
+import {
+  getFeaturedPosts,
+  getRecentArtPosts,
+  getRecentPosts,
+  toPostPreview,
+} from "@/features/post/post-queries";
 import { getPosts, isGitHubConfigured } from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 import { buildBlogJsonLd, serializeJsonLd } from "@/lib/seo";
 
 const RECENT_POSTS_COUNT = 9;
+const RECENT_ART_COUNT = 8;
 
 export const metadata: Metadata = {
   alternates: { canonical: routes.home },
@@ -19,8 +26,15 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const { posts } = await getPosts({ first: 50 });
-  const featured = getFeaturedPosts(posts);
-  const recent = posts.slice(0, RECENT_POSTS_COUNT);
+  const featured = getFeaturedPosts(posts).map(toPostPreview);
+  const recent = getRecentPosts(posts, RECENT_POSTS_COUNT);
+  const recentArt = getRecentArtPosts(posts, RECENT_ART_COUNT);
+  const lcpImageSource =
+    featured[0]?.coverImage.src ??
+    recent[0]?.coverImage.src ??
+    recentArt[0]?.galleryImage?.src ??
+    recentArt[0]?.coverImage.src;
+  const eagerImageSources = lcpImageSource ? [lcpImageSource] : [];
 
   return (
     <div className="page-shell">
@@ -50,7 +64,7 @@ export default async function Home() {
           </Link>
         </div>
         {recent.length ? (
-          <PostGrid posts={recent} />
+          <PostGrid posts={recent} eagerImageSources={eagerImageSources} />
         ) : (
           <EmptyState
             title={
@@ -66,6 +80,21 @@ export default async function Home() {
           />
         )}
       </section>
+
+      {recentArt.length > 0 && (
+        <section className="section-space" aria-label="최근 Art 갤러리">
+          <div className="mb-6 flex items-center justify-between">
+            <p className="section-label">Gallery</p>
+            <Link
+              href={routes.category("art")}
+              className="text-sm text-secondary hover:text-foreground"
+            >
+              View all →
+            </Link>
+          </div>
+          <ArtGallery posts={recentArt} eagerImageSources={eagerImageSources} />
+        </section>
+      )}
     </div>
   );
 }

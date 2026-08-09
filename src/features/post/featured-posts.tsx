@@ -11,13 +11,13 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { PostCoverImage } from "@/features/post/post-cover-image";
-import type { Post } from "@/domain/post";
+import type { PostPreview } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 type FeaturedPostsProps = {
-  posts: Post[];
+  posts: PostPreview[];
 };
 
 export function FeaturedPosts({ posts }: FeaturedPostsProps) {
@@ -39,6 +39,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
   if (!posts.length) return null;
 
   const hasMultiple = posts.length > 1;
+  const lcpImageSource = posts[0].coverImage.src;
 
   const navButtonClassName =
     "absolute top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-surface/90 shadow-[0_1px_3px_rgb(0_0_0/0.04)] outline-none backdrop-blur-sm transition hover:bg-muted focus:outline-none focus-visible:outline-none";
@@ -102,11 +103,15 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                     className="group relative block aspect-[16/10] overflow-hidden rounded-[var(--radius-lg)] bg-muted"
                   >
                     <PostCoverImage
-                      src={post.coverImage}
+                      image={post.coverImage}
                       alt=""
                       fill
-                      priority={index === 0}
-                      unoptimized
+                      loading={
+                        post.coverImage.src === lcpImageSource
+                          ? "eager"
+                          : undefined
+                      }
+                      fetchPriority={index === 0 ? "high" : undefined}
                       sizes="(max-width: 768px) 100vw, 60vw"
                       className="object-cover transition duration-300 group-hover:scale-[1.02]"
                     />

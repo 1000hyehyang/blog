@@ -13,7 +13,7 @@ export function buildPostJsonLd(post: Post) {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
-    image: post.coverImage || absoluteUrl(siteConfig.defaultImage),
+    image: post.coverImage.src || absoluteUrl(siteConfig.defaultImage),
     datePublished: post.createdAt,
     dateModified: resolvePostModifiedAt(post),
     keywords: post.tags.join(", "),

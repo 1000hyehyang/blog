@@ -1,4 +1,5 @@
 const RECENT_CARD_COUNT = 6;
+const ART_CARD_COUNT = 6;
 const EXCERPT_LINE_WIDTHS = ["w-full", "w-11/12", "w-10/12"];
 const FEATURED_DOT_COUNT = 3;
 
@@ -76,6 +77,22 @@ export default function Loading() {
                 </div>
               </div>
             </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-space" aria-hidden>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="h-3 w-14 rounded bg-muted" />
+          <div className="h-4 w-16 rounded bg-muted" />
+        </div>
+
+        <div className="columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4">
+          {Array.from({ length: ART_CARD_COUNT }, (_, index) => (
+            <div
+              key={index}
+              className="mb-3 aspect-[4/5] break-inside-avoid rounded-[var(--radius-md)] bg-muted sm:mb-4"
+            />
           ))}
         </div>
       </section>

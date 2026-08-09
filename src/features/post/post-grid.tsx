@@ -1,41 +1,31 @@
-"use client";
-
-import gsap from "gsap";
-import { useLayoutEffect, useRef } from "react";
-
 import type { Post } from "@/domain/post";
-import { setupCardGridReveal } from "@/lib/gsap/reveal";
 
 import { PostCard } from "./post-card";
+import { RevealGrid } from "./reveal-grid";
 
 type PostGridProps = {
   posts: Post[];
+  eagerImageSources?: string[];
 };
 
-export function PostGrid({ posts }: PostGridProps) {
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const grid = gridRef.current;
-    if (!grid) return;
-
-    const ctx = gsap.context(() => {
-      setupCardGridReveal(grid);
-    }, grid);
-
-    return () => ctx.revert();
-  }, [posts]);
-
+export function PostGrid({ posts, eagerImageSources = [] }: PostGridProps) {
   return (
-    <div
-      ref={gridRef}
+    <RevealGrid
+      animationKey={posts.map((post) => post.id).join(":")}
       className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
     >
       {posts.map((post) => (
         <div key={post.id} data-post-card>
-          <PostCard post={post} />
+          <PostCard
+            post={post}
+            imageLoading={
+              eagerImageSources.includes(post.coverImage.src)
+                ? "eager"
+                : undefined
+            }
+          />
         </div>
       ))}
-    </div>
+    </RevealGrid>
   );
 }
