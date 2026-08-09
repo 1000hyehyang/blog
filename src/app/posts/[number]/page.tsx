@@ -6,6 +6,7 @@ import { MarkdownContent } from "@/components/markdown";
 import { siteConfig } from "@/config/site";
 import { PostDetailReveal } from "@/features/post/post-detail-reveal";
 import { PostHero } from "@/features/post/post-hero";
+import { PostTags } from "@/features/post/post-tags";
 import { PostTableOfContents } from "@/features/post/post-table-of-contents";
 import { RelatedPosts } from "@/features/post/related-posts";
 import { getPost, getPosts } from "@/infrastructure/github/github";
@@ -93,6 +94,7 @@ export default async function PostPage({ params }: PostPageProps) {
                   본문이 없습니다. GitHub Discussion에서 포스트를 작성해 주세요.
                 </p>
               )}
+              <PostTags tags={post.tags} />
             </div>
 
             <section

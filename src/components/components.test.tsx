@@ -14,6 +14,7 @@ import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostCard } from "@/features/post/post-card";
 import { PostHero } from "@/features/post/post-hero";
+import { PostTags } from "@/features/post/post-tags";
 import { HeaderSearch } from "@/features/search/header-search";
 import { SearchResults } from "@/features/search/search-results";
 
@@ -87,6 +88,32 @@ describe("ArtGallery", () => {
     expect(container.querySelector("img")?.getAttribute("src")).toContain(
       encodeURIComponent(galleryImage),
     );
+  });
+});
+
+describe("PostTags", () => {
+  it("renders searchable hashtags", () => {
+    const { container } = render(<PostTags tags={["SpringBoot", "Java"]} />);
+
+    expect(screen.getByRole("link", { name: "#SpringBoot" })).toHaveAttribute(
+      "href",
+      "/search?q=SpringBoot",
+    );
+    expect(screen.getByRole("link", { name: "#Java" })).toHaveAttribute(
+      "href",
+      "/search?q=Java",
+    );
+    expect(screen.getByText("Tag")).toHaveClass("section-label");
+    expect(screen.getByRole("link", { name: "#SpringBoot" })).toHaveClass(
+      "rounded-full",
+    );
+    expect(container.querySelector("footer")).not.toHaveClass("border-t");
+  });
+
+  it("renders nothing when there are no tags", () => {
+    const { container } = render(<PostTags tags={[]} />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 });
 
