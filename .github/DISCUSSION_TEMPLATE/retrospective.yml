@@ -24,6 +24,7 @@ body:
         featuredOrder: 1
         published: true
         tags: []
+
         ---
 
     validations:

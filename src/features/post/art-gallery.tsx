@@ -39,7 +39,7 @@ export function ArtGallery({ posts, eagerImageSources = [] }: ArtGalleryProps) {
                 }
                 sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
               >
-                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/30 to-transparent px-3 pb-3 pt-12 text-white sm:px-4 sm:pb-4">
+                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/30 to-transparent px-3 pb-3 pt-12 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 sm:px-4 sm:pb-4">
                   <h3 className="line-clamp-2 text-xs font-semibold leading-5 sm:text-sm">
                     {post.title}
                   </h3>

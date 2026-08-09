@@ -88,6 +88,11 @@ describe("ArtGallery", () => {
     expect(container.querySelector("img")?.getAttribute("src")).toContain(
       encodeURIComponent(galleryImage),
     );
+    expect(screen.getByText(post.title).parentElement).toHaveClass(
+      "opacity-0",
+      "group-hover:opacity-100",
+      "group-focus-visible:opacity-100",
+    );
   });
 });
 
