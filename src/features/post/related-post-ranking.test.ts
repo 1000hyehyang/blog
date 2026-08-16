@@ -7,7 +7,7 @@ import { rankRelatedPosts } from "./related-post-ranking";
 const NOW = new Date("2026-08-01T00:00:00Z");
 
 function category(slug: string): Post["category"] {
-  return { id: `C_${slug}`, name: slug, slug };
+  return { name: slug, slug };
 }
 
 function createPost(overrides: Partial<Post> & Pick<Post, "number">): Post {
@@ -16,7 +16,6 @@ function createPost(overrides: Partial<Post> & Pick<Post, "number">): Post {
   return {
     id: `D_${number}`,
     number,
-    slug: `post-${number}`,
     title: `고유 제목 ${number}`,
     body: "본문",
     excerpt: "요약",
@@ -27,16 +26,10 @@ function createPost(overrides: Partial<Post> & Pick<Post, "number">): Post {
     published: true,
     tags: [],
     category: category("development"),
-    author: {
-      login: "author",
-      avatarUrl: "",
-      url: "https://github.com/author",
-    },
     createdAt: "2026-01-01T00:00:00Z",
     lastEditedAt: null,
     commentsCount: 0,
     reactionsCount: 0,
-    url: `https://github.com/example/discussions/${number}`,
     ...rest,
   };
 }

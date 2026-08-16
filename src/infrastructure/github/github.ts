@@ -18,18 +18,15 @@ const envSchema = z.object({
 
 type GitHubConfig = z.infer<typeof envSchema>;
 
-type Actor = { login: string; avatarUrl: string; url: string };
 type ReactionGroup = { users: { totalCount: number } };
 type DiscussionNode = {
   id: string;
   number: number;
   title: string;
   body: string;
-  url: string;
   createdAt: string;
   lastEditedAt: string | null;
-  category: { id: string; name: string };
-  author: Actor | null;
+  category: { name: string };
   comments: { totalCount: number };
   reactionGroups: ReactionGroup[];
 };
@@ -48,9 +45,8 @@ type DiscussionDetailData = {
 };
 
 const DISCUSSION_FIELDS = `
-  id number title body url createdAt lastEditedAt
-  category { id name }
-  author { login avatarUrl url }
+  id number title body createdAt lastEditedAt
+  category { name }
   comments { totalCount }
   reactionGroups { users { totalCount } }
 `;
@@ -111,19 +107,12 @@ function countReactions(groups: ReactionGroup[] = []) {
   return groups.reduce((total, group) => total + group.users.totalCount, 0);
 }
 
-const FALLBACK_AUTHOR: Actor = {
-  login: "unknown",
-  avatarUrl: "",
-  url: "https://github.com",
-};
-
 function mapDiscussion(node: DiscussionNode): Post {
   const { body, metadata } = parsePostBody(node.body);
 
   return {
     id: node.id,
     number: node.number,
-    slug: metadata.slug ?? toSlug(node.title),
     title: node.title,
     body,
     excerpt: metadata.excerpt,
@@ -138,16 +127,13 @@ function mapDiscussion(node: DiscussionNode): Post {
     published: metadata.published,
     tags: metadata.tags,
     category: {
-      id: node.category.id,
       name: node.category.name,
       slug: toSlug(node.category.name),
     },
-    author: node.author ?? FALLBACK_AUTHOR,
     createdAt: node.createdAt,
     lastEditedAt: node.lastEditedAt,
     commentsCount: node.comments.totalCount,
     reactionsCount: countReactions(node.reactionGroups),
-    url: node.url,
   };
 }
 

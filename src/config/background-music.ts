@@ -1,3 +1,1 @@
-export function getBackgroundMusicSrc() {
-  return "/voluntates-fati.mp3";
-}
+export const backgroundMusicSrc = "/voluntates-fati.mp3";

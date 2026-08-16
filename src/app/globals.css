@@ -354,46 +354,41 @@ button:not(:disabled):hover {
   max-width: 100%;
   margin-inline: auto;
 }
-.prose h1,
-.prose h2,
-.prose h3,
-.prose h4,
-.prose h5,
-.prose h6 {
+.prose .markdown-heading {
   color: var(--foreground);
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
-.prose h1 {
-  margin-top: 2em;
+.prose .markdown-heading--1 {
+  margin-top: 4rem;
   font-size: 1.875rem;
-  font-weight: 700;
+  font-weight: 600;
   scroll-margin-top: 6rem;
 }
-.prose h2 {
-  margin-top: 1.4em;
+.prose .markdown-heading--2 {
+  margin-top: 3.5rem;
   font-size: 1.5rem;
   font-weight: 600;
   scroll-margin-top: 6rem;
 }
-.prose h3 {
-  margin-top: 1em;
+.prose .markdown-heading--3 {
+  margin-top: 3rem;
   font-size: 1.25rem;
   font-weight: 600;
   scroll-margin-top: 6rem;
 }
-.prose h4 {
-  margin-top: 0.75em;
+.prose .markdown-heading--4 {
+  margin-top: 2.5rem;
   font-size: 1.125rem;
   font-weight: 600;
 }
-.prose h5 {
-  margin-top: 0.5em;
+.prose .markdown-heading--5 {
+  margin-top: 2rem;
   font-size: 1rem;
   font-weight: 600;
 }
-.prose h6 {
-  margin-top: 0.5em;
+.prose .markdown-heading--6 {
+  margin-top: 2rem;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--prose-foreground);
@@ -403,12 +398,12 @@ button:not(:disabled):hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.prose .notion-bookmark {
-  --bookmark-height: 7.5rem;
+.prose .link-preview-card {
+  --link-preview-height: 7.5rem;
 
   display: block;
-  height: var(--bookmark-height);
-  max-height: var(--bookmark-height);
+  height: var(--link-preview-height);
+  max-height: var(--link-preview-height);
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -417,14 +412,14 @@ button:not(:disabled):hover {
   text-decoration: none;
   transition: background-color 160ms var(--theme-transition-easing);
 }
-.prose .notion-bookmark--with-cover {
+.prose .link-preview-card--with-image {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 12rem;
 }
-.prose .notion-bookmark:hover {
+.prose .link-preview-card:hover {
   background: color-mix(in oklab, var(--card) 88%, var(--muted) 12%);
 }
-.prose .notion-bookmark__content {
+.prose .link-preview-card__content {
   display: flex;
   min-width: 0;
   height: 100%;
@@ -433,13 +428,13 @@ button:not(:disabled):hover {
   overflow: hidden;
   padding: 0.75rem 1rem;
 }
-.prose .notion-bookmark__text {
+.prose .link-preview-card__text {
   min-width: 0;
   min-height: 0;
   flex: 1 1 auto;
   overflow: hidden;
 }
-.prose .notion-bookmark__title {
+.prose .link-preview-card__title {
   display: -webkit-box;
   overflow: hidden;
   flex: 0 1 auto;
@@ -450,7 +445,7 @@ button:not(:disabled):hover {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.prose .notion-bookmark__description {
+.prose .link-preview-card__description {
   display: -webkit-box;
   overflow: hidden;
   margin-top: 0.35rem;
@@ -462,7 +457,7 @@ button:not(:disabled):hover {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
-.prose .notion-bookmark__meta {
+.prose .link-preview-card__meta {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -474,41 +469,41 @@ button:not(:disabled):hover {
   font-size: 0.75rem;
   line-height: 1rem;
 }
-.prose .notion-bookmark__meta span {
+.prose .link-preview-card__meta span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.prose .notion-bookmark__meta svg,
-.prose .notion-bookmark__favicon {
+.prose .link-preview-card__meta svg,
+.prose .link-preview-card__favicon {
   width: 0.9rem;
   height: 0.9rem;
   flex: 0 0 auto;
 }
-.prose .notion-bookmark__favicon {
+.prose .link-preview-card__favicon {
   border-radius: 2px;
   object-fit: contain;
 }
-.prose .notion-bookmark__cover {
+.prose .link-preview-card__image {
   overflow: hidden;
   background: var(--muted);
 }
-.prose .notion-bookmark__cover img {
+.prose .link-preview-card__image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 @media (max-width: 639px) {
-  .prose .notion-bookmark--with-cover {
+  .prose .link-preview-card--with-image {
     grid-template-columns: minmax(0, 1fr) 6.5rem;
   }
-  .prose .notion-bookmark {
-    --bookmark-height: 6.75rem;
+  .prose .link-preview-card {
+    --link-preview-height: 6.75rem;
   }
-  .prose .notion-bookmark__content {
+  .prose .link-preview-card__content {
     padding: 0.75rem;
   }
-  .prose .notion-bookmark__title {
+  .prose .link-preview-card__title {
     -webkit-line-clamp: 1;
   }
 }
@@ -549,7 +544,7 @@ button:not(:disabled):hover {
   border: 0;
   border-top: 1px solid var(--border);
 }
-.prose .notion-inline-code {
+.prose .markdown-inline-code {
   border-radius: 4px;
   background: var(--code-inline-background);
   color: var(--code-inline-foreground);
@@ -559,14 +554,14 @@ button:not(:disabled):hover {
   font-weight: 500;
   line-height: 1.4;
 }
-.prose .notion-code-block {
+.prose .markdown-code-block {
   position: relative;
   margin: 0.5em 0;
   overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--code-block-background);
 }
-.prose .notion-code-block pre {
+.prose .markdown-code-block pre {
   margin: 0;
   overflow-x: auto;
   padding: 1.25rem 1.1rem;
@@ -577,13 +572,13 @@ button:not(:disabled):hover {
   line-height: 1.6;
   tab-size: 2;
 }
-.prose .notion-code-block pre code {
+.prose .markdown-code-block pre code {
   background: transparent;
   color: inherit;
   padding: 0;
   font-size: inherit;
 }
-.prose .notion-code-block .shiki {
+.prose .markdown-code-block .shiki {
   margin: 0;
   padding: 1.25rem 1.1rem;
   overflow-x: auto;
@@ -591,15 +586,15 @@ button:not(:disabled):hover {
   font-size: 0.875rem;
   line-height: 1.6;
 }
-.prose .notion-code-block .shiki,
-.prose .notion-code-block .shiki span {
+.prose .markdown-code-block .shiki,
+.prose .markdown-code-block .shiki span {
   color: var(--shiki-light, var(--code-block-foreground));
 }
-.dark .prose .notion-code-block .shiki,
-.dark .prose .notion-code-block .shiki span {
+.dark .prose .markdown-code-block .shiki,
+.dark .prose .markdown-code-block .shiki span {
   color: var(--shiki-dark, var(--code-block-foreground));
 }
-.prose .notion-code-block .notion-code-lang {
+.prose .markdown-code-block .markdown-code-language {
   position: absolute;
   left: 1rem;
   top: 0.65rem;
@@ -610,8 +605,8 @@ button:not(:disabled):hover {
   color: var(--ring);
   text-transform: lowercase;
 }
-.prose .notion-code-block--lang pre,
-.prose .notion-code-block--lang .shiki {
+.prose .markdown-code-block--with-language pre,
+.prose .markdown-code-block--with-language .shiki {
   padding-top: 2.25rem;
 }
 .prose table {

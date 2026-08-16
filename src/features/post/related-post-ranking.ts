@@ -11,7 +11,7 @@ const SCORING_RULES = {
   recencyHalfLifeDays: 365,
 } as const;
 
-export type RelatedPostOptions = {
+type RelatedPostOptions = {
   limit?: number;
   now?: Date;
 };

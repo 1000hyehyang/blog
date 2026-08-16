@@ -11,7 +11,7 @@ import {
  * 만들 수 있으므로 정상 YAML과 손상된 형식을 모두 분리한다.
  */
 
-export type FrontmatterSplit = {
+type FrontmatterSplit = {
   raw: Record<string, unknown>;
   body: string;
 };
@@ -36,9 +36,7 @@ function looksLikeFrontmatterLine(line: string) {
 }
 
 /** 줄바꿈이 깨져 한 줄로 합쳐진 frontmatter 텍스트에서 필드 값을 추출한다. */
-export function extractMetadataFromRawText(
-  text: string,
-): Record<string, unknown> {
+function extractMetadataFromRawText(text: string): Record<string, unknown> {
   const raw: Record<string, unknown> = {};
 
   const coverImage = text.match(/coverImage:\s*(\S+)/)?.[1];
@@ -55,13 +53,6 @@ export function extractMetadataFromRawText(
 
   const published = text.match(/published:\s*(true|false)/i)?.[1];
   if (published) raw.published = published;
-
-  const slug = text
-    .match(
-      /slug:\s*([^\n]+?)(?=\s*(?:excerpt|coverImage|galleryImage|featured|published|tags):|\s*$)/,
-    )?.[1]
-    ?.trim();
-  if (slug) raw.slug = slug;
 
   const excerpt = text
     .match(

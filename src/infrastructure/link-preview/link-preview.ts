@@ -16,7 +16,7 @@ const FETCH_TIMEOUT_MS = 5_000;
 const MAX_HTML_BYTES = 512 * 1_024;
 const MAX_REDIRECTS = 3;
 
-export type LinkPreview = LinkPreviewMetadata & {
+type LinkPreview = LinkPreviewMetadata & {
   url: string;
   hostname: string;
 };

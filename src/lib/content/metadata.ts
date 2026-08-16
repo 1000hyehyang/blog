@@ -12,7 +12,6 @@ function coerceBoolean(value: unknown) {
 }
 
 export const metadataSchema = z.object({
-  slug: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   excerpt: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   coverImage: z.preprocess(emptyToUndefined, z.string().url().optional()),
   galleryImage: z.preprocess(emptyToUndefined, z.string().url().optional()),
@@ -28,7 +27,7 @@ export const metadataSchema = z.object({
   tags: z.array(z.string()).default([]),
 });
 
-export type PostMetadata = z.infer<typeof metadataSchema>;
+type PostMetadata = z.infer<typeof metadataSchema>;
 
 export function mergeMetadata(raw: Record<string, unknown>): PostMetadata {
   const result = metadataSchema.safeParse(raw);
@@ -40,7 +39,6 @@ export function mergeMetadata(raw: Record<string, unknown>): PostMetadata {
     featured: raw.featured ?? fallback.featured,
     featuredOrder: raw.featuredOrder ?? fallback.featuredOrder,
     published: raw.published ?? fallback.published,
-    slug: emptyToUndefined(raw.slug),
     excerpt: emptyToUndefined(raw.excerpt),
     coverImage: emptyToUndefined(raw.coverImage),
     galleryImage: emptyToUndefined(raw.galleryImage),

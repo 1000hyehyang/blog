@@ -4,7 +4,7 @@ const LANGUAGE_CLASS_PATTERN = /(?:^|\s)language-([^\s]+)(?:\s|$)/i;
 const MAX_LANGUAGE_LABEL_LENGTH = 32;
 const PLAIN_TEXT_LANGUAGES = new Set(["text", "txt", "plain", "plaintext"]);
 
-export type MarkdownCodeLanguage = {
+type MarkdownCodeLanguage = {
   label: string;
   shikiLanguage: BundledLanguage | null;
 };

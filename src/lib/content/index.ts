@@ -71,10 +71,25 @@ export type PostHeading = {
   id: string;
 };
 
+function stripInlineMarkdown(value: string) {
+  return value
+    .replace(/!\[([^\]]*)]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)]\([^)]*\)/g, "$1")
+    .replace(/<((?:https?:\/\/|mailto:)[^>]+)>/g, "$1")
+    .replace(/\\([\\`*{}[\]()#+\-.!_>~])/g, "$1")
+    .replace(/[*_~`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function extractHeadings(markdown: string): PostHeading[] {
-  return [...markdown.matchAll(/^(#{1,3})\s+(.+)$/gm)].map((match) => ({
-    level: match[1].length as 1 | 2 | 3,
-    text: match[2],
-    id: toSlug(match[2]),
-  }));
+  return [...markdown.matchAll(/^(#{1,3})\s+(.+)$/gm)].map((match) => {
+    const text = stripInlineMarkdown(match[2]);
+
+    return {
+      level: match[1].length as 1 | 2 | 3,
+      text,
+      id: toSlug(text),
+    };
+  });
 }

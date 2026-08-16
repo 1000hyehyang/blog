@@ -14,7 +14,7 @@ const oEmbedSchema = z.object({
   title: z.string(),
 });
 
-export type YouTubeMetadata = {
+type YouTubeMetadata = {
   title: string;
 };
 

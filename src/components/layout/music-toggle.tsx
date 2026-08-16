@@ -1,21 +1,16 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnimatedMusicIcon } from "@/components/layout/animated-music-icon";
-import { getBackgroundMusicSrc } from "@/config/background-music";
+import { backgroundMusicSrc } from "@/config/background-music";
 import {
   createBackgroundAudio,
   pauseBackgroundAudio,
   playBackgroundAudio,
 } from "@/lib/background-audio";
+import { useHydrated } from "@/lib/react/use-hydrated";
+import { usePrefersReducedMotion } from "@/lib/react/use-prefers-reduced-motion";
 
 const STORAGE_KEY = "blog-music-enabled";
 
@@ -24,25 +19,18 @@ function readStoredPreference() {
   return window.localStorage.getItem(STORAGE_KEY) === "true";
 }
 
-export function useMusicToggle() {
-  const shouldReduceMotion = Boolean(useReducedMotion());
+function useMusicToggle() {
+  const shouldReduceMotion = usePrefersReducedMotion();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeAbortRef = useRef<AbortController | null>(null);
-  const isMounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const isMounted = useHydrated();
   const [isPlaying, setIsPlaying] = useState(readStoredPreference);
 
   useEffect(() => {
     if (!isMounted) return;
 
-    const musicSrc = getBackgroundMusicSrc();
-    if (!musicSrc) return;
-
     if (!audioRef.current) {
-      audioRef.current = createBackgroundAudio(musicSrc);
+      audioRef.current = createBackgroundAudio(backgroundMusicSrc);
     }
 
     return () => {

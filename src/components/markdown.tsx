@@ -1,8 +1,9 @@
-import ReactMarkdown from "react-markdown";
+import type { ComponentProps, ReactNode } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { CopyCodeButton } from "@/components/copy-code-button";
-import { ExternalLinkBookmark } from "@/features/post/external-link-bookmark";
+import { ExternalLinkPreview } from "@/features/post/external-link-preview";
 import { YouTubeEmbed } from "@/features/post/youtube-embed";
 import {
   type MarkdownHeadingLevel,
@@ -15,25 +16,30 @@ import {
   highlightMarkdownCode,
 } from "@/lib/markdown-code";
 import { getStandaloneExternalUrl } from "@/lib/markdown-link";
+import { getReactNodeText } from "@/lib/react/get-node-text";
 import { parseYouTubeUrl } from "@/lib/youtube";
 
-function headingText(children: React.ReactNode) {
-  return String(children ?? "")
-    .replace(/\s+/g, " ")
-    .trim();
+function getHeadingText(children: ReactNode) {
+  return getReactNodeText(children).replace(/\s+/g, " ").trim();
 }
 
 function createHeading(level: MarkdownHeadingLevel) {
-  return function Heading({ children }: { children?: React.ReactNode }) {
+  return function MarkdownHeading({ children }: { children?: ReactNode }) {
     const Tag = `h${toBodyHeadingLevel(level)}` as const;
-    const id = level <= 3 ? toSlug(headingText(children)) : undefined;
-    return <Tag id={id}>{children}</Tag>;
+    const id = level <= 3 ? toSlug(getHeadingText(children)) : undefined;
+
+    return (
+      <Tag id={id} className={`markdown-heading markdown-heading--${level}`}>
+        {children}
+      </Tag>
+    );
   };
 }
 
-function isBlockCode(className?: string, children?: React.ReactNode) {
-  if (className?.startsWith("language-")) return true;
-  return String(children ?? "").includes("\n");
+function isBlockCode(className?: string, children?: ReactNode) {
+  return (
+    className?.startsWith("language-") || String(children ?? "").includes("\n")
+  );
 }
 
 function MarkdownParagraph({
@@ -41,7 +47,7 @@ function MarkdownParagraph({
   children,
 }: {
   node?: unknown;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   const externalUrl = getStandaloneExternalUrl(node);
   if (!externalUrl) return <p>{children}</p>;
@@ -50,7 +56,35 @@ function MarkdownParagraph({
   return youtubeVideo ? (
     <YouTubeEmbed video={youtubeVideo} />
   ) : (
-    <ExternalLinkBookmark href={externalUrl} />
+    <ExternalLinkPreview href={externalUrl} />
+  );
+}
+
+function MarkdownLink({ href, children }: ComponentProps<"a">) {
+  const external = href ? Boolean(parseExternalHttpUrl(href)) : false;
+
+  return (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+    >
+      {children}
+    </a>
+  );
+}
+
+function MarkdownImage({ src, alt }: ComponentProps<"img">) {
+  return (
+    // Markdown content may reference arbitrary hosts that should not be added
+    // to the global next/image allowlist.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className="markdown-image"
+      src={src ?? ""}
+      alt={alt ?? ""}
+      loading="lazy"
+    />
   );
 }
 
@@ -59,12 +93,12 @@ async function HighlightedCode({
   children,
 }: {
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   const code = String(children ?? "").replace(/\n$/, "");
 
   if (!isBlockCode(className, children)) {
-    return <code className="notion-inline-code">{children}</code>;
+    return <code className="markdown-inline-code">{children}</code>;
   }
 
   const language = getMarkdownCodeLanguage(className);
@@ -72,12 +106,14 @@ async function HighlightedCode({
 
   return (
     <div
-      className={`notion-code-block${language ? " notion-code-block--lang" : ""} group`}
+      className={`markdown-code-block${language ? " markdown-code-block--with-language" : ""} group`}
     >
-      {language && <span className="notion-code-lang">{language.label}</span>}
+      {language && (
+        <span className="markdown-code-language">{language.label}</span>
+      )}
       <CopyCodeButton code={code} />
       {highlightedHtml ? (
-        // Shiki가 원문을 이스케이프한 뒤 생성한 토큰 마크업만 삽입한다.
+        // Shiki escapes the source before producing this token markup.
         <div dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
       ) : (
         <pre>
@@ -88,44 +124,26 @@ async function HighlightedCode({
   );
 }
 
+const markdownComponents = {
+  p: MarkdownParagraph,
+  pre: ({ children }) => <>{children}</>,
+  code: HighlightedCode,
+  h1: createHeading(1),
+  h2: createHeading(2),
+  h3: createHeading(3),
+  h4: createHeading(4),
+  h5: createHeading(5),
+  h6: createHeading(6),
+  a: MarkdownLink,
+  img: MarkdownImage,
+} satisfies Components;
+
 export function MarkdownContent({ source }: { source: string }) {
   return (
     <div className="prose">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        components={{
-          p: MarkdownParagraph,
-          pre: ({ children }) => <>{children}</>,
-          code: HighlightedCode,
-          h1: createHeading(1),
-          h2: createHeading(2),
-          h3: createHeading(3),
-          h4: createHeading(4),
-          h5: createHeading(5),
-          h6: createHeading(6),
-          a: ({ href, children }) => {
-            const external = href ? Boolean(parseExternalHttpUrl(href)) : false;
-            return (
-              <a
-                href={href}
-                target={external ? "_blank" : undefined}
-                rel={external ? "noopener noreferrer" : undefined}
-              >
-                {children}
-              </a>
-            );
-          },
-          img: ({ src, alt }) => (
-            // 마크다운 이미지의 임의 호스트를 next/image 허용 목록에 열지 않는다.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              className="markdown-image"
-              src={typeof src === "string" ? src : ""}
-              alt={alt ?? ""}
-              loading="lazy"
-            />
-          ),
-        }}
+        components={markdownComponents}
       >
         {source}
       </ReactMarkdown>

@@ -54,7 +54,7 @@ export default async function PostsPage({
         </div>
       </div>
       {posts.length ? (
-        <PostGrid posts={posts} />
+        <PostGrid posts={posts} eagerFirstImage />
       ) : (
         <EmptyState
           title="포스트가 없습니다"

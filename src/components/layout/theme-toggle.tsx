@@ -1,16 +1,11 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
 import { AnimatedThemeIcon } from "@/components/layout/animated-theme-icon";
+import { useHydrated } from "@/lib/react/use-hydrated";
+import { usePrefersReducedMotion } from "@/lib/react/use-prefers-reduced-motion";
 
 const TRANSITION_CLASS_NAME = "theme-circle-transition";
 
@@ -20,15 +15,11 @@ type ViewTransitionDocument = Document & {
   };
 };
 
-export function useThemeCircleTransition() {
+function useThemeCircleTransition() {
   const { resolvedTheme, setTheme } = useTheme();
-  const shouldReduceMotion = Boolean(useReducedMotion());
+  const shouldReduceMotion = usePrefersReducedMotion();
   const transitionInProgressRef = useRef(false);
-  const isMounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const isMounted = useHydrated();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {

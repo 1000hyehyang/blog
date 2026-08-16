@@ -1,45 +1,35 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { HeaderSearch } from "@/features/search/header-search";
 import { MusicToggle } from "@/components/layout/music-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { siteConfig } from "@/config/site";
+import { useHydrated } from "@/lib/react/use-hydrated";
+import { usePrefersReducedMotion } from "@/lib/react/use-prefers-reduced-motion";
 import { routes } from "@/lib/routes";
-
-const emptySubscribe = () => () => {};
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const shouldReduceMotion = Boolean(useReducedMotion());
+  const [openMenuPath, setOpenMenuPath] = useState<string | null>(null);
+  const menuOpen = openMenuPath === pathname;
+  const shouldReduceMotion = usePrefersReducedMotion();
 
   // document.body를 쓰는 포털은 클라이언트 마운트 이후에만 생성한다.
-  const mounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  // 경로가 바뀐 렌더에서 메뉴 상태를 함께 재설정해 열린 프레임을 남기지 않는다.
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
-    setMenuOpen(false);
-  }
+  const mounted = useHydrated();
 
   useEffect(() => {
     if (!menuOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setMenuOpen(false);
+        setOpenMenuPath(null);
       }
     }
 
@@ -97,7 +87,11 @@ export function SiteHeader() {
             aria-label={menuOpen ? "메뉴 닫기" : "메뉴 열기"}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
-            onClick={() => setMenuOpen((value) => !value)}
+            onClick={() =>
+              setOpenMenuPath((current) =>
+                current === pathname ? null : pathname,
+              )
+            }
             className="grid size-9 place-items-center rounded-full bg-muted md:hidden"
           >
             {menuOpen ? <X size={16} /> : <Menu size={16} />}
@@ -117,7 +111,7 @@ export function SiteHeader() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={overlayTransition}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => setOpenMenuPath(null)}
                   className="fixed inset-0 z-[60] bg-black/40 md:hidden"
                 />
                 <motion.nav
@@ -137,7 +131,7 @@ export function SiteHeader() {
                     <button
                       type="button"
                       aria-label="메뉴 닫기"
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => setOpenMenuPath(null)}
                       className="grid size-9 place-items-center rounded-full bg-muted"
                     >
                       <X size={16} />
@@ -154,7 +148,7 @@ export function SiteHeader() {
                             aria-current={
                               pathname === href ? "page" : undefined
                             }
-                            onClick={() => setMenuOpen(false)}
+                            onClick={() => setOpenMenuPath(null)}
                             className="block rounded-[var(--radius-sm)] px-3 py-2.5 text-sm text-secondary transition-colors hover:bg-muted hover:text-foreground aria-[current=page]:font-semibold aria-[current=page]:text-foreground"
                           >
                             {item.label}

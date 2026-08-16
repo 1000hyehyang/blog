@@ -2,10 +2,14 @@ export interface PostImage {
   src: string;
 }
 
+export interface PostCategory {
+  name: string;
+  slug: string;
+}
+
 export interface Post {
   id: string;
   number: number;
-  slug: string;
   title: string;
   body: string;
   excerpt: string;
@@ -15,13 +19,11 @@ export interface Post {
   featuredOrder?: number;
   published: boolean;
   tags: string[];
-  category: { id: string; name: string; slug: string };
-  author: { login: string; avatarUrl: string; url: string };
+  category: PostCategory;
   createdAt: string;
   lastEditedAt: string | null;
   commentsCount: number;
   reactionsCount: number;
-  url: string;
 }
 
 export type PostPreview = Pick<

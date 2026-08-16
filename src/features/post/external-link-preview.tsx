@@ -2,37 +2,38 @@ import { ExternalLink, Globe2 } from "lucide-react";
 
 import { getLinkPreview } from "@/infrastructure/link-preview/link-preview";
 
-// 프리뷰 이미지 호스트는 콘텐츠마다 달라 next/image 허용 목록으로 제한할 수 없다.
-export async function ExternalLinkBookmark({ href }: { href: string }) {
+export async function ExternalLinkPreview({ href }: { href: string }) {
   const preview = await getLinkPreview(href);
   if (!preview) return null;
 
+  const className = preview.image
+    ? "link-preview-card link-preview-card--with-image"
+    : "link-preview-card";
+
   return (
     <a
-      className={
-        preview.image
-          ? "notion-bookmark notion-bookmark--with-cover"
-          : "notion-bookmark"
-      }
+      className={className}
       href={preview.url}
       target="_blank"
       rel="noopener noreferrer"
-      data-external-bookmark
+      data-link-preview
     >
-      <span className="notion-bookmark__content">
-        <span className="notion-bookmark__text">
-          <span className="notion-bookmark__title">{preview.title}</span>
+      <span className="link-preview-card__content">
+        <span className="link-preview-card__text">
+          <span className="link-preview-card__title">{preview.title}</span>
           {preview.description && (
-            <span className="notion-bookmark__description">
+            <span className="link-preview-card__description">
               {preview.description}
             </span>
           )}
         </span>
-        <span className="notion-bookmark__meta">
+        <span className="link-preview-card__meta">
           {preview.icon ? (
+            // Preview image hosts are dynamic and cannot be constrained by the
+            // global next/image allowlist.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              className="notion-bookmark__favicon"
+              className="link-preview-card__favicon"
               src={preview.icon}
               alt=""
               loading="lazy"
@@ -47,7 +48,7 @@ export async function ExternalLinkBookmark({ href }: { href: string }) {
       </span>
 
       {preview.image && (
-        <span className="notion-bookmark__cover" aria-hidden="true">
+        <span className="link-preview-card__image" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview.image}

@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import type { PostHeading } from "@/lib/content";
 
 const HEADER_OFFSET = 96;
+// Layout positions can land on fractional pixels while scrollY is rounded by the
+// browser. Keep the active boundary slightly past the scroll destination so a
+// heading at 96.x px is still considered reached.
+const ACTIVE_HEADING_OFFSET = HEADER_OFFSET + 1;
 
 type PostTableOfContentsProps = {
   headings: PostHeading[];
@@ -15,13 +19,17 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
 
   useEffect(() => {
     if (!headings.length) return;
+    let animationFrame: number | null = null;
 
     function updateActiveHeading() {
       let current = headings[0]?.id ?? "";
 
       for (const heading of headings) {
         const element = document.getElementById(heading.id);
-        if (element && element.getBoundingClientRect().top <= HEADER_OFFSET) {
+        if (
+          element &&
+          element.getBoundingClientRect().top <= ACTIVE_HEADING_OFFSET
+        ) {
           current = heading.id;
         }
       }
@@ -29,13 +37,27 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
       setActiveId(current);
     }
 
+    function scheduleActiveHeadingUpdate() {
+      if (animationFrame !== null) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = null;
+        updateActiveHeading();
+      });
+    }
+
     updateActiveHeading();
-    window.addEventListener("scroll", updateActiveHeading, { passive: true });
-    window.addEventListener("resize", updateActiveHeading);
+    window.addEventListener("scroll", scheduleActiveHeadingUpdate, {
+      passive: true,
+    });
+    window.addEventListener("resize", scheduleActiveHeadingUpdate);
 
     return () => {
-      window.removeEventListener("scroll", updateActiveHeading);
-      window.removeEventListener("resize", updateActiveHeading);
+      window.removeEventListener("scroll", scheduleActiveHeadingUpdate);
+      window.removeEventListener("resize", scheduleActiveHeadingUpdate);
+      if (animationFrame !== null) {
+        window.cancelAnimationFrame(animationFrame);
+      }
     };
   }, [headings]);
 

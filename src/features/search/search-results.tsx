@@ -25,7 +25,7 @@ export function SearchResults({
           <p className="mb-6 text-xs text-secondary">
             &lsquo;{normalizedQuery}&rsquo; 검색 결과 {results.length}개
           </p>
-          <PostGrid posts={results} />
+          <PostGrid posts={results} eagerFirstImage />
         </>
       ) : (
         <EmptyState

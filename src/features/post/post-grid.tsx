@@ -5,24 +5,20 @@ import { RevealGrid } from "./reveal-grid";
 
 type PostGridProps = {
   posts: Post[];
-  eagerImageSources?: string[];
+  eagerFirstImage?: boolean;
 };
 
-export function PostGrid({ posts, eagerImageSources = [] }: PostGridProps) {
+export function PostGrid({ posts, eagerFirstImage = false }: PostGridProps) {
   return (
     <RevealGrid
       animationKey={posts.map((post) => post.id).join(":")}
       className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
     >
-      {posts.map((post) => (
+      {posts.map((post, index) => (
         <div key={post.id} data-post-card>
           <PostCard
             post={post}
-            imageLoading={
-              eagerImageSources.includes(post.coverImage.src)
-                ? "eager"
-                : undefined
-            }
+            imageLoading={eagerFirstImage && index === 0 ? "eager" : undefined}
           />
         </div>
       ))}

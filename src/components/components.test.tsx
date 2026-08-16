@@ -23,7 +23,6 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 const post: Post = {
   id: "D_1",
   number: 1,
-  slug: "first-post",
   title: "첫 번째 Next.js 포스트",
   body: "서버 컴포넌트 본문",
   excerpt: "첫 번째 포스트 요약",
@@ -34,13 +33,11 @@ const post: Post = {
   featuredOrder: 1,
   published: true,
   tags: ["Next.js"],
-  category: { id: "C_1", name: "Development", slug: "development" },
-  author: { login: "author", avatarUrl: "", url: "https://github.com/author" },
+  category: { name: "Development", slug: "development" },
   createdAt: "2026-07-20T00:00:00Z",
   lastEditedAt: "2026-07-22T00:00:00Z",
   commentsCount: 2,
   reactionsCount: 3,
-  url: "https://github.com/example/discussions/1",
 };
 
 afterEach(() => cleanup());
@@ -141,9 +138,13 @@ describe("포스트 UI", () => {
 
   it("FeaturedPosts 캐러셀 UI를 표시한다", () => {
     const second = { ...post, id: "D_2", number: 2, title: "두 번째 포스트" };
-    render(<FeaturedPosts posts={[post, second]} />);
+    const { container } = render(<FeaturedPosts posts={[post, second]} />);
+    const images = container.querySelectorAll("img");
+
     expect(screen.getByText("Featured")).toBeVisible();
     expect(screen.getByText(post.title)).toBeInTheDocument();
+    expect(images[0]).toHaveAttribute("loading", "eager");
+    expect(images[1]).toHaveAttribute("loading", "lazy");
     expect(
       screen.getByRole("button", { name: "다음 featured 포스트" }),
     ).toBeVisible();

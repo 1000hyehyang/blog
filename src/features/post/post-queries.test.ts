@@ -14,7 +14,6 @@ const basePost = (
   overrides: Partial<Post> & Pick<Post, "number" | "category">,
 ): Post => ({
   id: `D_${overrides.number}`,
-  slug: `post-${overrides.number}`,
   title: `포스트 ${overrides.number}`,
   body: "본문",
   excerpt: "요약",
@@ -24,12 +23,10 @@ const basePost = (
   featured: false,
   published: true,
   tags: [],
-  author: { login: "author", avatarUrl: "", url: "https://github.com/author" },
   createdAt: "2026-07-20T00:00:00Z",
   lastEditedAt: null,
   commentsCount: 0,
   reactionsCount: 0,
-  url: "https://github.com/example/discussions/1",
   ...overrides,
 });
 
@@ -40,14 +37,14 @@ describe("featured 포스트 선택", () => {
       featured: true,
       featuredOrder: 1,
       createdAt: "2026-07-20T00:00:00Z",
-      category: { id: "C_1", name: "Development", slug: "development" },
+      category: { name: "Development", slug: "development" },
     });
     const second = basePost({
       number: 2,
       featured: true,
       featuredOrder: 1,
       createdAt: "2026-07-22T00:00:00Z",
-      category: { id: "C_1", name: "Development", slug: "development" },
+      category: { name: "Development", slug: "development" },
     });
 
     expect(getFeaturedPosts([first, second])).toEqual([second, first]);
@@ -56,7 +53,7 @@ describe("featured 포스트 선택", () => {
   it("클라이언트 캐러셀에는 본문을 제외한 미리보기 데이터만 전달한다", () => {
     const post = basePost({
       number: 1,
-      category: { id: "C_1", name: "Development", slug: "development" },
+      category: { name: "Development", slug: "development" },
     });
 
     expect(toPostPreview(post)).not.toHaveProperty("body");
@@ -69,8 +66,8 @@ describe("featured 포스트 선택", () => {
 });
 
 describe("홈 최근 포스트 선택", () => {
-  const development = { id: "C_1", name: "Development", slug: "development" };
-  const art = { id: "C_2", name: "Art", slug: "art" };
+  const development = { name: "Development", slug: "development" };
+  const art = { name: "Art", slug: "art" };
 
   it("Art를 제외한 뒤 요청한 개수만큼 최근 포스트를 채운다", () => {
     const posts = [
@@ -98,15 +95,15 @@ describe("관련 포스트 선택", () => {
   it("랭킹 정책에 limit을 전달한다", () => {
     const current = basePost({
       number: 1,
-      category: { id: "C_1", name: "Development", slug: "development" },
+      category: { name: "Development", slug: "development" },
     });
     const second = basePost({
       number: 2,
-      category: { id: "C_1", name: "Development", slug: "development" },
+      category: { name: "Development", slug: "development" },
     });
     const third = basePost({
       number: 3,
-      category: { id: "C_1", name: "Development", slug: "development" },
+      category: { name: "Development", slug: "development" },
     });
 
     expect(getRelatedPosts([current, second, third], current, 1)).toHaveLength(
