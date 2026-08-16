@@ -9,19 +9,16 @@ import { RevealGrid } from "./reveal-grid";
 
 type ArtGalleryProps = {
   posts: Post[];
-  eagerFirstImage?: boolean;
+  eagerImageSource?: string;
 };
 
-export function ArtGallery({
-  posts,
-  eagerFirstImage = false,
-}: ArtGalleryProps) {
+export function ArtGallery({ posts, eagerImageSource }: ArtGalleryProps) {
   return (
     <RevealGrid
       animationKey={posts.map((post) => post.id).join(":")}
       className="columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4"
     >
-      {posts.map((post, index) => {
+      {posts.map((post) => {
         const image = post.galleryImage ?? post.coverImage;
 
         return (
@@ -37,7 +34,7 @@ export function ArtGallery({
             >
               <ArtworkFrame
                 image={image}
-                loading={eagerFirstImage && index === 0 ? "eager" : undefined}
+                loading={image.src === eagerImageSource ? "eager" : undefined}
                 sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
               >
                 <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/30 to-transparent px-3 pb-3 pt-12 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 sm:px-4 sm:pb-4">

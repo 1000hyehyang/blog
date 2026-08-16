@@ -1,18 +1,17 @@
 import { ExternalLink, Globe2 } from "lucide-react";
 
 import { getLinkPreview } from "@/infrastructure/link-preview/link-preview";
+import { getLinkPreviewImagePath } from "@/lib/link-preview";
+
+import { LinkPreviewImage } from "./link-preview-image";
 
 export async function ExternalLinkPreview({ href }: { href: string }) {
   const preview = await getLinkPreview(href);
   if (!preview) return null;
 
-  const className = preview.image
-    ? "link-preview-card link-preview-card--with-image"
-    : "link-preview-card";
-
   return (
     <a
-      className={className}
+      className="link-preview-card"
       href={preview.url}
       target="_blank"
       rel="noopener noreferrer"
@@ -47,15 +46,7 @@ export async function ExternalLinkPreview({ href }: { href: string }) {
       </span>
 
       {preview.image && (
-        <span className="link-preview-card__image" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={preview.image}
-            alt=""
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
-        </span>
+        <LinkPreviewImage src={getLinkPreviewImagePath(preview.url)} />
       )}
     </a>
   );

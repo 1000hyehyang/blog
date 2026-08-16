@@ -5,9 +5,11 @@ import { PostCard } from "./post-card";
 export function RelatedPosts({
   posts,
   embedded = false,
+  eagerImageSource,
 }: {
   posts: Post[];
   embedded?: boolean;
+  eagerImageSource?: string;
 }) {
   if (!posts.length) return null;
 
@@ -29,7 +31,13 @@ export function RelatedPosts({
       >
         {posts.map((post) => (
           <div key={post.id} data-post-card>
-            <PostCard post={post} variant="compact" />
+            <PostCard
+              post={post}
+              variant="compact"
+              imageLoading={
+                post.coverImage.src === eagerImageSource ? "eager" : undefined
+              }
+            />
           </div>
         ))}
       </div>

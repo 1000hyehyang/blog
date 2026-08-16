@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getLinkPreviewImagePath,
   isBlockedHostname,
   isNonPublicIpAddress,
   parseExternalHttpUrl,
   parseLinkPreviewHtml,
 } from "./link-preview";
+
+describe("link preview image path", () => {
+  it("encodes the source page URL as a same-origin request", () => {
+    expect(
+      getLinkPreviewImagePath("https://example.com/article?id=1&lang=ko"),
+    ).toBe(
+      "/api/link-preview-image?url=https%3A%2F%2Fexample.com%2Farticle%3Fid%3D1%26lang%3Dko",
+    );
+  });
+});
 
 describe("외부 링크 URL 검증", () => {
   it("공개 HTTP와 HTTPS URL만 허용한다", () => {
@@ -83,5 +94,33 @@ describe("링크 미리보기 HTML 파싱", () => {
       icon: undefined,
       siteName: undefined,
     });
+  });
+});
+
+describe("link preview image metadata", () => {
+  it("prefers Open Graph images and skips unsafe image candidates", () => {
+    const html = `
+      <meta name="twitter:image" content="https://cdn.example.com/twitter.png">
+      <meta property="og:image:secure_url" content="http://127.0.0.1/private.png">
+      <meta property="og:image" content="/preferred.png">
+    `;
+
+    expect(
+      parseLinkPreviewHtml(html, new URL("https://example.com/article")),
+    ).toMatchObject({ image: "https://example.com/preferred.png" });
+  });
+
+  it("uses image_src and itemprop metadata as fallbacks", () => {
+    const linkedImage = parseLinkPreviewHtml(
+      '<link rel="image_src" href="/linked.png">',
+      new URL("https://example.com/article"),
+    );
+    const itempropImage = parseLinkPreviewHtml(
+      '<meta itemprop="image" content="/itemprop.png">',
+      new URL("https://example.com/article"),
+    );
+
+    expect(linkedImage.image).toBe("https://example.com/linked.png");
+    expect(itempropImage.image).toBe("https://example.com/itemprop.png");
   });
 });

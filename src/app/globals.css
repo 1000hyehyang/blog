@@ -412,7 +412,7 @@ button:not(:disabled):hover {
   text-decoration: none;
   transition: background-color 160ms var(--theme-transition-easing);
 }
-.prose .link-preview-card--with-image {
+.prose .link-preview-card:has(.link-preview-card__image) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 12rem;
 }
@@ -494,7 +494,7 @@ button:not(:disabled):hover {
   object-fit: cover;
 }
 @media (max-width: 639px) {
-  .prose .link-preview-card--with-image {
+  .prose .link-preview-card:has(.link-preview-card__image) {
     grid-template-columns: minmax(0, 1fr) 6.5rem;
   }
   .prose .link-preview-card {

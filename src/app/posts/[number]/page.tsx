@@ -113,7 +113,11 @@ export default async function PostPage({ params }: PostPageProps) {
               </div>
             </section>
 
-            <RelatedPosts posts={relatedPosts} embedded />
+            <RelatedPosts
+              posts={relatedPosts}
+              embedded
+              eagerImageSource={post.coverImage.src}
+            />
           </div>
 
           <div data-reveal="mount">

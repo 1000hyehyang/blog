@@ -14,7 +14,15 @@ import {
 const CACHE_SECONDS = 24 * 60 * 60;
 const FETCH_TIMEOUT_MS = 5_000;
 const MAX_HTML_BYTES = 512 * 1_024;
+const MAX_IMAGE_BYTES = 5 * 1_024 * 1_024;
 const MAX_REDIRECTS = 3;
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/avif",
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 type LinkPreview = LinkPreviewMetadata & {
   url: string;
@@ -38,9 +46,10 @@ async function assertPublicDestination(url: URL): Promise<void> {
   }
 }
 
-async function fetchPublicHtml(
+async function fetchPublicResponse(
   initialUrl: URL,
-): Promise<{ html: string; finalUrl: URL }> {
+  accept: string,
+): Promise<{ response: Response; finalUrl: URL }> {
   let currentUrl = initialUrl;
 
   for (
@@ -53,7 +62,7 @@ async function fetchPublicHtml(
     const response = await fetch(currentUrl, {
       cache: "no-store",
       headers: {
-        accept: "text/html,application/xhtml+xml",
+        accept,
         "user-agent": "ych-blog-link-preview/1.0",
       },
       redirect: "manual",
@@ -72,20 +81,32 @@ async function fetchPublicHtml(
       continue;
     }
 
-    if (!response.ok)
-      throw new Error(`Link preview returned ${response.status}`);
-
-    const contentType =
-      response.headers.get("content-type")?.toLowerCase() ?? "";
-    if (!contentType.includes("text/html") && !contentType.includes("xhtml")) {
+    if (!response.ok) {
       await response.body?.cancel();
-      throw new Error("Link preview response was not HTML");
+      throw new Error(`Link preview returned ${response.status}`);
     }
 
-    return { html: await readLimitedHtml(response), finalUrl: currentUrl };
+    return { response, finalUrl: currentUrl };
   }
 
   throw new Error("Link preview could not follow redirects");
+}
+
+async function fetchPublicHtml(
+  initialUrl: URL,
+): Promise<{ html: string; finalUrl: URL }> {
+  const { response, finalUrl } = await fetchPublicResponse(
+    initialUrl,
+    "text/html,application/xhtml+xml",
+  );
+
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  if (!contentType.includes("text/html") && !contentType.includes("xhtml")) {
+    await response.body?.cancel();
+    throw new Error("Link preview response was not HTML");
+  }
+
+  return { html: await readLimitedHtml(response), finalUrl };
 }
 
 async function readLimitedHtml(response: Response): Promise<string> {
@@ -122,6 +143,48 @@ async function readLimitedHtml(response: Response): Promise<string> {
   }
 }
 
+async function readLimitedBytes(
+  response: Response,
+  maximumBytes: number,
+): Promise<ArrayBuffer> {
+  const contentLength = Number(response.headers.get("content-length") ?? 0);
+  if (contentLength > maximumBytes) {
+    await response.body?.cancel();
+    throw new Error("Link preview image was too large");
+  }
+
+  if (!response.body) return new ArrayBuffer(0);
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let byteLength = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      byteLength += value.byteLength;
+      if (byteLength > maximumBytes) {
+        throw new Error("Link preview image was too large");
+      }
+
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+
+  const bytes = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return bytes.buffer;
+}
+
 async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
   const initialUrl = parseExternalHttpUrl(url);
   if (!initialUrl) return {};
@@ -132,7 +195,7 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
 
 const getCachedRemoteMetadata = unstable_cache(
   loadRemoteMetadata,
-  ["external-link-preview-v1"],
+  ["external-link-preview-v2"],
   { revalidate: CACHE_SECONDS },
 );
 
@@ -154,4 +217,32 @@ export async function getLinkPreview(
   } catch {
     return fallback;
   }
+}
+
+export async function fetchLinkPreviewImage(
+  value: string,
+): Promise<{ body: ArrayBuffer; contentType: string }> {
+  const url = parseExternalHttpUrl(value);
+  if (!url) throw new Error("Unsupported link preview image URL");
+
+  const { response } = await fetchPublicResponse(
+    url,
+    "image/avif,image/webp,image/png,image/jpeg,image/gif",
+  );
+  const contentType =
+    response.headers
+      .get("content-type")
+      ?.split(";", 1)[0]
+      .trim()
+      .toLowerCase() ?? "";
+
+  if (!ALLOWED_IMAGE_TYPES.has(contentType)) {
+    await response.body?.cancel();
+    throw new Error("Link preview returned an unsupported image type");
+  }
+
+  return {
+    body: await readLimitedBytes(response, MAX_IMAGE_BYTES),
+    contentType,
+  };
 }

@@ -41,6 +41,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   if (!navigation) notFound();
 
   const { posts } = await getPosts({ first: 50, category });
+  const eagerImageSource =
+    category === "art"
+      ? posts
+          .map((post) => post.galleryImage ?? post.coverImage)
+          .find((image) => image.src)?.src
+      : posts.find((post) => post.coverImage.src)?.coverImage.src;
 
   return (
     <div className="page-shell">
@@ -48,9 +54,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <p className="mb-12 mt-2 text-sm text-secondary">{navigation.tagline}</p>
       {posts.length ? (
         category === "art" ? (
-          <ArtGallery posts={posts} eagerFirstImage />
+          <ArtGallery posts={posts} eagerImageSource={eagerImageSource} />
         ) : (
-          <PostGrid posts={posts} eagerFirstImage />
+          <PostGrid posts={posts} eagerImageSource={eagerImageSource} />
         )
       ) : (
         <EmptyState

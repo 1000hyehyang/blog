@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils";
 
 type FeaturedPostsProps = {
   posts: PostPreview[];
+  eagerImageSource?: string;
 };
 
-export function FeaturedPosts({ posts }: FeaturedPostsProps) {
+export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
@@ -39,6 +40,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
   if (!posts.length) return null;
 
   const hasMultiple = posts.length > 1;
+  const resolvedEagerImageSource = eagerImageSource ?? posts[0]?.coverImage.src;
 
   const navButtonClassName =
     "absolute top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-surface/90 shadow-[0_1px_3px_rgb(0_0_0/0.04)] outline-none backdrop-blur-sm transition hover:bg-muted focus:outline-none focus-visible:outline-none";
@@ -105,8 +107,17 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                       image={post.coverImage}
                       alt=""
                       fill
-                      loading={index === 0 ? "eager" : undefined}
-                      fetchPriority={index === 0 ? "high" : undefined}
+                      loading={
+                        post.coverImage.src === resolvedEagerImageSource
+                          ? "eager"
+                          : undefined
+                      }
+                      fetchPriority={
+                        index === 0 &&
+                        post.coverImage.src === resolvedEagerImageSource
+                          ? "high"
+                          : undefined
+                      }
                       sizes="(max-width: 768px) 100vw, 60vw"
                       className="object-cover transition duration-300 group-hover:scale-[1.02]"
                     />

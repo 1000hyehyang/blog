@@ -29,11 +29,12 @@ export default async function Home() {
   const featured = getFeaturedPosts(posts).map(toPostPreview);
   const recent = getRecentPosts(posts, RECENT_POSTS_COUNT);
   const recentArt = getRecentArtPosts(posts, RECENT_ART_COUNT);
-  const hasFeaturedImage = Boolean(featured[0]?.coverImage.src);
-  const eagerRecentImage =
-    !hasFeaturedImage && Boolean(recent[0]?.coverImage.src);
-  const eagerGalleryImage =
-    !hasFeaturedImage && !eagerRecentImage && recentArt.length > 0;
+  const eagerImageSource =
+    featured[0]?.coverImage.src ||
+    recent.find((post) => post.coverImage.src)?.coverImage.src ||
+    recentArt
+      .map((post) => post.galleryImage ?? post.coverImage)
+      .find((image) => image.src)?.src;
 
   return (
     <div className="page-shell">
@@ -46,7 +47,7 @@ export default async function Home() {
 
       {featured.length > 0 && (
         <div className="section-space">
-          <FeaturedPosts posts={featured} />
+          <FeaturedPosts posts={featured} eagerImageSource={eagerImageSource} />
         </div>
       )}
 
@@ -63,7 +64,7 @@ export default async function Home() {
           </Link>
         </div>
         {recent.length ? (
-          <PostGrid posts={recent} eagerFirstImage={eagerRecentImage} />
+          <PostGrid posts={recent} eagerImageSource={eagerImageSource} />
         ) : (
           <EmptyState
             title={
@@ -91,7 +92,7 @@ export default async function Home() {
               View all →
             </Link>
           </div>
-          <ArtGallery posts={recentArt} eagerFirstImage={eagerGalleryImage} />
+          <ArtGallery posts={recentArt} eagerImageSource={eagerImageSource} />
         </section>
       )}
     </div>

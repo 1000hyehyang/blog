@@ -14,6 +14,11 @@ export type LinkPreviewMetadata = {
   siteName?: string;
 };
 
+export function getLinkPreviewImagePath(pageUrl: string): string {
+  const parameters = new URLSearchParams({ url: pageUrl });
+  return `/api/link-preview-image?${parameters}`;
+}
+
 type HtmlAttributes = Record<string, string>;
 
 function normalizeHostname(hostname: string): string {
@@ -157,16 +162,29 @@ function parseAttributes(tag: string): HtmlAttributes {
   return attributes;
 }
 
-function findMetaContent(html: string, names: string[]): string | undefined {
-  const wantedNames = new Set(names.map((name) => name.toLowerCase()));
-
-  for (const tag of html.match(/<meta\s+[^>]*>/gi) ?? []) {
+function findMetaContents(html: string, names: string[]): string[] {
+  const entries = (html.match(/<meta\s+[^>]*>/gi) ?? []).map((tag) => {
     const attributes = parseAttributes(tag);
-    const name = (attributes.property ?? attributes.name ?? "").toLowerCase();
-    if (wantedNames.has(name) && attributes.content) return attributes.content;
-  }
+    return {
+      name: (
+        attributes.property ??
+        attributes.name ??
+        attributes.itemprop ??
+        ""
+      ).toLowerCase(),
+      content: attributes.content,
+    };
+  });
 
-  return undefined;
+  return names.flatMap((name) =>
+    entries.flatMap((entry) =>
+      entry.name === name.toLowerCase() && entry.content ? [entry.content] : [],
+    ),
+  );
+}
+
+function findMetaContent(html: string, names: string[]): string | undefined {
+  return findMetaContents(html, names)[0];
 }
 
 function findDocumentTitle(html: string): string | undefined {
@@ -180,24 +198,42 @@ function resolveAssetUrl(
   if (!value) return undefined;
 
   try {
-    const resolved = new URL(decodeHtmlEntities(value), pageUrl);
+    const resolved = new URL(decodeHtmlEntities(value).trim(), pageUrl);
     return parseExternalHttpUrl(resolved.href)?.href;
   } catch {
     return undefined;
   }
 }
 
-function findIcon(html: string, pageUrl: URL): string | undefined {
+function resolveFirstAssetUrl(values: string[], pageUrl: URL) {
+  for (const value of values) {
+    const resolved = resolveAssetUrl(value, pageUrl);
+    if (resolved) return resolved;
+  }
+
+  return undefined;
+}
+
+function findLinkedAsset(
+  html: string,
+  pageUrl: URL,
+  relation: string,
+): string | undefined {
   for (const tag of html.match(/<link\s+[^>]*>/gi) ?? []) {
     const attributes = parseAttributes(tag);
     const relations = (attributes.rel ?? "").toLowerCase().split(/\s+/);
 
-    if (relations.includes("icon")) {
-      return resolveAssetUrl(attributes.href, pageUrl);
-    }
+    if (!relations.includes(relation)) continue;
+
+    const resolved = resolveAssetUrl(attributes.href, pageUrl);
+    if (resolved) return resolved;
   }
 
   return undefined;
+}
+
+function findIcon(html: string, pageUrl: URL): string | undefined {
+  return findLinkedAsset(html, pageUrl, "icon");
 }
 
 export function parseLinkPreviewHtml(
@@ -222,14 +258,18 @@ export function parseLinkPreviewHtml(
   return {
     title: title || undefined,
     description: description || undefined,
-    image: resolveAssetUrl(
-      findMetaContent(html, [
-        "og:image:secure_url",
-        "og:image",
-        "twitter:image",
-      ]),
-      pageUrl,
-    ),
+    image:
+      resolveFirstAssetUrl(
+        findMetaContents(html, [
+          "og:image:secure_url",
+          "og:image:url",
+          "og:image",
+          "twitter:image:src",
+          "twitter:image",
+          "image",
+        ]),
+        pageUrl,
+      ) ?? findLinkedAsset(html, pageUrl, "image_src"),
     icon: findIcon(html, pageUrl),
     siteName: siteName || undefined,
   };

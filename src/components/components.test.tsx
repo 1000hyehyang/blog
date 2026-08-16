@@ -13,6 +13,7 @@ import { ArtworkFrame } from "@/features/post/artwork-frame";
 import { FeaturedPosts } from "@/features/post/featured-posts";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostCard } from "@/features/post/post-card";
+import { PostGrid } from "@/features/post/post-grid";
 import { PostHero } from "@/features/post/post-hero";
 import { PostTags } from "@/features/post/post-tags";
 import { HeaderSearch } from "@/features/search/header-search";
@@ -41,6 +42,29 @@ const post: Post = {
 };
 
 afterEach(() => cleanup());
+
+describe("PostGrid image loading", () => {
+  it("loads every duplicate of the LCP image source eagerly", () => {
+    const duplicate = { ...post, id: "D_2", number: 2 };
+    const other = {
+      ...post,
+      id: "D_3",
+      number: 3,
+      coverImage: { src: "/other.png" },
+    };
+    const { container } = render(
+      <PostGrid
+        posts={[post, duplicate, other]}
+        eagerImageSource={post.coverImage.src}
+      />,
+    );
+    const images = container.querySelectorAll("img");
+
+    expect(images[0]).toHaveAttribute("loading", "eager");
+    expect(images[1]).toHaveAttribute("loading", "eager");
+    expect(images[2]).toHaveAttribute("loading", "lazy");
+  });
+});
 
 describe("ArtworkFrame", () => {
   it("uses the image's natural aspect ratio after it loads", async () => {
@@ -144,7 +168,7 @@ describe("포스트 UI", () => {
     expect(screen.getByText("Featured")).toBeVisible();
     expect(screen.getByText(post.title)).toBeInTheDocument();
     expect(images[0]).toHaveAttribute("loading", "eager");
-    expect(images[1]).toHaveAttribute("loading", "lazy");
+    expect(images[1]).toHaveAttribute("loading", "eager");
     expect(
       screen.getByRole("button", { name: "다음 featured 포스트" }),
     ).toBeVisible();

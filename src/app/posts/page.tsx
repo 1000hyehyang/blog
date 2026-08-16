@@ -54,7 +54,12 @@ export default async function PostsPage({
         </div>
       </div>
       {posts.length ? (
-        <PostGrid posts={posts} eagerFirstImage />
+        <PostGrid
+          posts={posts}
+          eagerImageSource={
+            posts.find((post) => post.coverImage.src)?.coverImage.src
+          }
+        />
       ) : (
         <EmptyState
           title="포스트가 없습니다"
