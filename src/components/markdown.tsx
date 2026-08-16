@@ -76,8 +76,7 @@ function MarkdownLink({ href, children }: ComponentProps<"a">) {
 
 function MarkdownImage({ src, alt }: ComponentProps<"img">) {
   return (
-    // Markdown content may reference arbitrary hosts that should not be added
-    // to the global next/image allowlist.
+    // Markdown 본문은 next/image 허용 목록에 추가할 수 없는 임의의 호스트를 참조할 수 있다.
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className="markdown-image"
@@ -113,7 +112,7 @@ async function HighlightedCode({
       )}
       <CopyCodeButton code={code} />
       {highlightedHtml ? (
-        // Shiki escapes the source before producing this token markup.
+        // Shiki는 토큰 마크업을 만들기 전에 원본 코드를 이스케이프한다.
         <div dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
       ) : (
         <pre>

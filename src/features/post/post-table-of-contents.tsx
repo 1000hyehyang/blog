@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import type { PostHeading } from "@/lib/content";
 
 const HEADER_OFFSET = 96;
-// Layout positions can land on fractional pixels while scrollY is rounded by the
-// browser. Keep the active boundary slightly past the scroll destination so a
-// heading at 96.x px is still considered reached.
+// 레이아웃 좌표와 스크롤 좌표 사이에서 발생하는 소수점 반올림 오차를 흡수한다.
 const ACTIVE_HEADING_OFFSET = HEADER_OFFSET + 1;
 
 type PostTableOfContentsProps = {

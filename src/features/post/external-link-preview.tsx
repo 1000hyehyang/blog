@@ -29,8 +29,7 @@ export async function ExternalLinkPreview({ href }: { href: string }) {
         </span>
         <span className="link-preview-card__meta">
           {preview.icon ? (
-            // Preview image hosts are dynamic and cannot be constrained by the
-            // global next/image allowlist.
+            // 미리보기 이미지 호스트는 동적으로 결정되어 next/image 허용 목록으로 제한할 수 없다.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className="link-preview-card__favicon"
