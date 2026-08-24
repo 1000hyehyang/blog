@@ -11,6 +11,11 @@ function coerceBoolean(value: unknown) {
   return value;
 }
 
+function emptyToTags(value: unknown) {
+  if (value === undefined || value === null || value === "") return [];
+  return value;
+}
+
 export const metadataSchema = z.object({
   excerpt: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   coverImage: z.preprocess(emptyToUndefined, z.string().url().optional()),
@@ -24,7 +29,7 @@ export const metadataSchema = z.object({
     (value) => (value === undefined ? true : coerceBoolean(value)),
     z.boolean().default(true),
   ),
-  tags: z.array(z.string()).default([]),
+  tags: z.preprocess(emptyToTags, z.array(z.string())),
 });
 
 type PostMetadata = z.infer<typeof metadataSchema>;

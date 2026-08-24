@@ -1,6 +1,13 @@
-import { isBareHttpUrl, looksLikeFrontmatterFragment } from "./text";
-
 const DEFAULT_EXCERPT_LENGTH = 150;
+
+function isBareHttpUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export function createExcerpt(
   markdown: string,
@@ -19,19 +26,14 @@ export function createExcerpt(
     : plainText;
 }
 
-/** frontmatter의 excerpt가 URL이거나 파싱 잔여물이면 본문에서 요약을 생성한다. */
+/** frontmatter의 excerpt가 URL이면 본문에서 요약을 생성한다. */
 export function resolveExcerpt(
   value: string | undefined,
   body: string,
   coverImage: string,
 ) {
   const candidate = value?.trim();
-  if (
-    candidate &&
-    !isBareHttpUrl(candidate) &&
-    candidate !== coverImage &&
-    !looksLikeFrontmatterFragment(candidate)
-  ) {
+  if (candidate && !isBareHttpUrl(candidate) && candidate !== coverImage) {
     return candidate;
   }
 

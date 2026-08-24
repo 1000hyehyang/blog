@@ -108,7 +108,13 @@ function countReactions(groups: ReactionGroup[] = []) {
 }
 
 function mapDiscussion(node: DiscussionNode): Post {
-  const { body, metadata } = parsePostBody(node.body);
+  const { body, metadata, valid } = parsePostBody(node.body);
+
+  if (!valid) {
+    console.warn(
+      `[content] Discussion #${node.number} has invalid frontmatter; using safe defaults.`,
+    );
+  }
 
   return {
     id: node.id,

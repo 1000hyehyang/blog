@@ -30,7 +30,6 @@ tags: [Next.js, Web]
 
   it("coverImage가 비어 있어도 featured 값을 유지한다", () => {
     const result = parsePostBody(`---
-slug:
 coverImage:
 featured: true
 featuredOrder: 2
@@ -40,6 +39,17 @@ tags:
 # 본문`);
     expect(result.metadata.featured).toBe(true);
     expect(result.metadata.featuredOrder).toBe(2);
+    expect(result.valid).toBe(true);
+  });
+
+  it("비어 있는 tags 필드를 빈 배열로 처리한다", () => {
+    const result = parsePostBody(`---
+published: true
+tags:
+---
+# 본문`);
+
+    expect(result.metadata.tags).toEqual([]);
     expect(result.valid).toBe(true);
   });
 
@@ -110,26 +120,6 @@ tags: [Development]
     expect(toBodyHeadingLevel(6)).toBe(6);
   });
 
-  it("본문에 남은 coverImage URL은 요약에서 제외한다", () => {
-    const url =
-      "https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg";
-    const result = parsePostBody(`---
-slug:
-excerpt:
-coverImage: ${url}
-featured: true
----
-${url}
-
-## 실제 제목
-
-본문 내용입니다.`);
-
-    expect(result.body).toBe("## 실제 제목\n\n본문 내용입니다.");
-    expect(result.metadata.excerpt).toBe("실제 제목 본문 내용입니다.");
-    expect(result.metadata.excerpt).not.toContain("pinimg.com");
-  });
-
   it("excerpt에 URL만 있으면 본문에서 요약을 생성한다", () => {
     const url = "https://example.com/cover.jpg";
     const result = parsePostBody(`---
@@ -155,23 +145,23 @@ https://example.com/docs`);
     expect(result.body).toContain("https://example.com/docs");
   });
 
-  it("GitHub에서 줄바꿈이 깨진 frontmatter를 본문에서 제거한다", () => {
-    const result =
-      parsePostBody(`slug: excerpt: coverImage:https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg featured: true featuredOrder: 2 published: true tags:
+  it("손상된 frontmatter는 본문을 보존하고 안전한 기본값을 사용한다", () => {
+    const result = parsePostBody(`### 포스트 본문
 
-Development
+---
+coverImage:https://example.com/cover.jpg
+featured: false
+---
 
 ## 실제 제목
 
 본문 내용입니다.`);
 
+    expect(result.valid).toBe(false);
     expect(result.body).toBe("## 실제 제목\n\n본문 내용입니다.");
-    expect(result.metadata.featured).toBe(true);
-    expect(result.metadata.featuredOrder).toBe(2);
-    expect(result.metadata.coverImage).toBe(
-      "https://i.pinimg.com/736x/46/e5/34/46e534d7e420371b1ef45b4b3d669cc7.jpg",
-    );
-    expect(result.metadata.tags).toEqual(["Development"]);
+    expect(result.metadata.coverImage).toBe("");
+    expect(result.metadata.featured).toBe(false);
+    expect(result.metadata.tags).toEqual([]);
   });
 
   it("날짜를 Asia/Seoul 기준으로 표현한다", () => {

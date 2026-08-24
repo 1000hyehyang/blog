@@ -1,175 +1,53 @@
 import matter from "gray-matter";
 
-import {
-  isBareHttpUrl,
-  isFrontmatterFieldLine,
-  looksLikeFrontmatterFragment,
-} from "./text";
-
-/**
- * Discussion form은 헤더가 앞에 붙거나 frontmatter 줄바꿈이 유실된 본문을
- * 만들 수 있으므로 정상 YAML과 손상된 형식을 모두 분리한다.
- */
-
 type FrontmatterSplit = {
   raw: Record<string, unknown>;
   body: string;
+  valid: boolean;
 };
 
-/** Discussion form 헤더 등 frontmatter 이전의 내용을 제거한다. */
+/** GitHub Discussion Form이 textarea 값 앞에 붙이는 제목을 제거한다. */
 export function normalizeDiscussionSource(source: string) {
   const lines = source.split("\n");
-  const frontmatterIndex = lines.findIndex((line) => line.trim() === "---");
-  if (frontmatterIndex > 0) {
-    return lines.slice(frontmatterIndex).join("\n");
+  const firstContentIndex = lines.findIndex((line) => line.trim());
+
+  if (!/^###\s+포스트 본문\s*$/.test(lines[firstContentIndex] ?? "")) {
+    return source;
   }
-  return source;
+
+  const frontmatterIndex = lines.findIndex(
+    (line, index) => index > firstContentIndex && line.trim() === "---",
+  );
+
+  return frontmatterIndex > firstContentIndex
+    ? lines.slice(frontmatterIndex).join("\n")
+    : source;
 }
 
-function looksLikeFrontmatterLine(line: string) {
-  const trimmed = line.trim();
-  return (
-    isFrontmatterFieldLine(trimmed) ||
-    /coverImage:\s*\S+/.test(trimmed) ||
-    /featured:\s*(true|false)/i.test(trimmed)
+function bodyAfterFrontmatter(source: string) {
+  const lines = source.split("\n");
+  if (lines[0]?.trim() !== "---") return source;
+
+  const closingIndex = lines.findIndex(
+    (line, index) => index > 0 && line.trim() === "---",
   );
-}
 
-/** 줄바꿈이 깨져 한 줄로 합쳐진 frontmatter 텍스트에서 필드 값을 추출한다. */
-function extractMetadataFromRawText(text: string): Record<string, unknown> {
-  const raw: Record<string, unknown> = {};
-
-  const coverImage = text.match(/coverImage:\s*(\S+)/)?.[1];
-  if (coverImage) raw.coverImage = coverImage;
-
-  const galleryImage = text.match(/galleryImage:\s*(\S+)/)?.[1];
-  if (galleryImage) raw.galleryImage = galleryImage;
-
-  const featured = text.match(/featured:\s*(true|false)/i)?.[1];
-  if (featured) raw.featured = featured;
-
-  const featuredOrder = text.match(/featuredOrder:\s*(\d+)/)?.[1];
-  if (featuredOrder) raw.featuredOrder = Number(featuredOrder);
-
-  const published = text.match(/published:\s*(true|false)/i)?.[1];
-  if (published) raw.published = published;
-
-  const excerpt = text
-    .match(
-      /excerpt:\s*([^\n]+?)(?=\s*(?:coverImage|galleryImage|featured|published|tags):|\s*$)/,
-    )?.[1]
-    ?.trim();
-  if (
-    excerpt &&
-    !isBareHttpUrl(excerpt) &&
-    !looksLikeFrontmatterFragment(excerpt)
-  ) {
-    raw.excerpt = excerpt;
-  }
-
-  const inlineTags = text.match(/tags:\s*(.+)$/m)?.[1]?.trim();
-  if (inlineTags && inlineTags !== "" && !inlineTags.startsWith("[")) {
-    raw.tags = inlineTags
-      .split(",")
-      .map((tag) => tag.replace(/^-\s*/, "").trim())
-      .filter(Boolean);
-  }
-
-  const listTags = [...text.matchAll(/^\s*-\s+(.+)$/gm)].map((match) =>
-    match[1].trim(),
-  );
-  if (listTags.length) raw.tags = listTags;
-
-  if (!raw.tags) {
-    const standaloneTag = text
-      .split("\n")
-      .map((line) => line.trim())
-      .find(
-        (line) =>
-          line &&
-          !line.startsWith("#") &&
-          !line.includes(":") &&
-          !line.startsWith("-"),
-      );
-    if (standaloneTag) raw.tags = [standaloneTag];
-  }
-
-  return raw;
+  return closingIndex > 0 ? lines.slice(closingIndex + 1).join("\n") : source;
 }
 
 export function splitFrontmatterBlock(source: string): FrontmatterSplit {
-  const fenced = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-  if (fenced) {
-    try {
-      const parsed = matter(`---\n${fenced[1]}\n---\n`);
-      return {
-        raw: {
-          ...extractMetadataFromRawText(fenced[1]),
-          ...(parsed.data as Record<string, unknown>),
-        },
-        body: fenced[2],
-      };
-    } catch {
-      return splitMangledFrontmatter(source);
-    }
-  }
-
-  if (looksLikeFrontmatterLine(source.split("\n")[0] ?? "")) {
-    return splitMangledFrontmatter(source);
-  }
-
   try {
     const parsed = matter(source);
-    if (looksLikeFrontmatterLine(parsed.content.split("\n")[0] ?? "")) {
-      return splitMangledFrontmatter(source);
-    }
-
     return {
       raw: parsed.data as Record<string, unknown>,
       body: parsed.content,
+      valid: true,
     };
   } catch {
-    return splitMangledFrontmatter(source);
+    return {
+      raw: {},
+      body: bodyAfterFrontmatter(source),
+      valid: false,
+    };
   }
-}
-
-function splitMangledFrontmatter(source: string): FrontmatterSplit {
-  const lines = source.split("\n");
-  const frontmatterLines: string[] = [];
-  let bodyStart = 0;
-
-  if (lines[0]?.trim() === "---") {
-    for (let i = 0; i < lines.length; i += 1) {
-      frontmatterLines.push(lines[i]);
-      bodyStart = i + 1;
-      if (i > 0 && lines[i]?.trim() === "---") break;
-    }
-  } else if (looksLikeFrontmatterLine(lines[0] ?? "")) {
-    frontmatterLines.push(lines[0]);
-    bodyStart = 1;
-
-    let index = 1;
-    while (index < lines.length && lines[index]?.trim() === "") {
-      index += 1;
-    }
-
-    const nextLine = lines[index]?.trim() ?? "";
-    const tagsOnlyLine =
-      nextLine &&
-      !nextLine.startsWith("#") &&
-      (nextLine.startsWith("- ") ||
-        (!nextLine.includes(":") && frontmatterLines[0]?.includes("tags:")));
-
-    if (tagsOnlyLine) {
-      frontmatterLines.push(lines[index]);
-      bodyStart = index + 1;
-    }
-  }
-
-  const frontmatterText = frontmatterLines.join("\n");
-
-  return {
-    raw: extractMetadataFromRawText(frontmatterText),
-    body: lines.slice(bodyStart).join("\n"),
-  };
 }

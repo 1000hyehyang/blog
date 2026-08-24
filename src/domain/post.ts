@@ -2,7 +2,7 @@ export interface PostImage {
   src: string;
 }
 
-export interface PostCategory {
+interface PostCategory {
   name: string;
   slug: string;
 }

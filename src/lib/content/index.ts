@@ -4,19 +4,19 @@ import {
   splitFrontmatterBlock,
 } from "./frontmatter";
 import { mergeMetadata, metadataSchema, resolveCoverImage } from "./metadata";
-import { stripFrontmatterArtifacts } from "./sanitize";
 
 export function parsePostBody(source: string) {
   const normalizedSource = normalizeDiscussionSource(source);
-  const { raw, body: rawBody } = splitFrontmatterBlock(normalizedSource);
+  const {
+    raw,
+    body: rawBody,
+    valid: validFrontmatter,
+  } = splitFrontmatterBlock(normalizedSource);
   const metadata = mergeMetadata(raw);
   const coverImage = resolveCoverImage(metadata.coverImage);
   const galleryImage = resolveCoverImage(metadata.galleryImage);
-  const body = stripFrontmatterArtifacts(rawBody.trim(), [
-    coverImage,
-    galleryImage,
-  ]);
-  const valid = metadataSchema.safeParse(raw).success;
+  const body = rawBody.trim();
+  const valid = validFrontmatter && metadataSchema.safeParse(raw).success;
 
   return {
     body,
