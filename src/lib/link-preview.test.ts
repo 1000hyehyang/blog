@@ -124,3 +124,23 @@ describe("link preview image metadata", () => {
     expect(itempropImage.image).toBe("https://example.com/itemprop.png");
   });
 });
+
+describe("link preview description fallback", () => {
+  it("uses the first meaningful paragraph when description metadata is absent", () => {
+    const html = `
+      <html>
+        <body>
+          <p>Short</p>
+          <p>For caching declaration, Spring&#8217;s caching abstraction provides annotations.</p>
+        </body>
+      </html>
+    `;
+
+    expect(
+      parseLinkPreviewHtml(html, new URL("https://example.com/docs")),
+    ).toMatchObject({
+      description:
+        "For caching declaration, Spring’s caching abstraction provides annotations.",
+    });
+  });
+});

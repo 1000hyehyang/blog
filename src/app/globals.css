@@ -399,9 +399,10 @@ button:not(:disabled):hover {
   text-underline-offset: 3px;
 }
 .prose .link-preview-card {
-  --link-preview-height: 7.5rem;
+  --link-preview-height: 11.5rem;
 
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(10rem, 32%) minmax(0, 1fr);
   height: var(--link-preview-height);
   max-height: var(--link-preview-height);
   overflow: hidden;
@@ -412,9 +413,16 @@ button:not(:disabled):hover {
   text-decoration: none;
   transition: background-color 160ms var(--theme-transition-easing);
 }
-.prose .link-preview-card:has(.link-preview-card__image) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 12rem;
+.prose .link-preview-card:not(:has(.link-preview-card__image)) {
+  grid-template-columns: minmax(0, 1fr);
+  height: auto;
+  max-height: none;
+}
+.prose
+  .link-preview-card:not(:has(.link-preview-card__image))
+  .link-preview-card__url {
+  margin-top: 0.75rem;
+  padding-top: 0;
 }
 .prose .link-preview-card:hover {
   background: color-mix(in oklab, var(--card) 88%, var(--muted) 12%);
@@ -426,21 +434,36 @@ button:not(:disabled):hover {
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.15rem;
+}
+.prose .link-preview-card__site {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+}
+.prose .link-preview-card__site span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .prose .link-preview-card__text {
   min-width: 0;
   min-height: 0;
-  flex: 1 1 auto;
+  margin-top: 0.8rem;
   overflow: hidden;
 }
 .prose .link-preview-card__title {
   display: -webkit-box;
   overflow: hidden;
   flex: 0 1 auto;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.45;
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -448,36 +471,30 @@ button:not(:disabled):hover {
 .prose .link-preview-card__description {
   display: -webkit-box;
   overflow: hidden;
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
   flex: 0 1 auto;
   color: var(--muted-foreground);
   font-size: 0.8rem;
   line-height: 1.4;
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
 }
-.prose .link-preview-card__meta {
-  display: flex;
+.prose .link-preview-card__url {
+  display: block;
   min-width: 0;
-  align-items: center;
-  flex: 0 0 auto;
-  gap: 0.4rem;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding-top: 0.65rem;
+  overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.75rem;
   line-height: 1rem;
-}
-.prose .link-preview-card__meta span {
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.prose .link-preview-card__meta svg,
 .prose .link-preview-card__favicon {
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 1rem;
+  height: 1rem;
   flex: 0 0 auto;
 }
 .prose .link-preview-card__favicon {
@@ -494,16 +511,18 @@ button:not(:disabled):hover {
   object-fit: cover;
 }
 @media (max-width: 639px) {
-  .prose .link-preview-card:has(.link-preview-card__image) {
-    grid-template-columns: minmax(0, 1fr) 6.5rem;
-  }
   .prose .link-preview-card {
-    --link-preview-height: 6.75rem;
+    --link-preview-height: 9.5rem;
+
+    grid-template-columns: 7.5rem minmax(0, 1fr);
   }
   .prose .link-preview-card__content {
     padding: 0.75rem;
   }
   .prose .link-preview-card__title {
+    -webkit-line-clamp: 1;
+  }
+  .prose .link-preview-card__description {
     -webkit-line-clamp: 1;
   }
 }

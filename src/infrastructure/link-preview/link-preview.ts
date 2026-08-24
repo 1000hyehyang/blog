@@ -10,6 +10,7 @@ import {
   parseLinkPreviewHtml,
   type LinkPreviewMetadata,
 } from "@/lib/link-preview";
+import { readLimitedResponseText } from "@/lib/limited-response";
 
 const CACHE_SECONDS = 24 * 60 * 60;
 const FETCH_TIMEOUT_MS = 5_000;
@@ -106,41 +107,10 @@ async function fetchPublicHtml(
     throw new Error("Link preview response was not HTML");
   }
 
-  return { html: await readLimitedHtml(response), finalUrl };
-}
-
-async function readLimitedHtml(response: Response): Promise<string> {
-  const contentLength = Number(response.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_HTML_BYTES) {
-    await response.body?.cancel();
-    throw new Error("Link preview response was too large");
-  }
-
-  if (!response.body) return "";
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let byteLength = 0;
-  let html = "";
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      byteLength += value.byteLength;
-      if (byteLength > MAX_HTML_BYTES) {
-        throw new Error("Link preview response was too large");
-      }
-
-      html += decoder.decode(value, { stream: true });
-      if (/<\/head\s*>/i.test(html)) break;
-    }
-
-    return html + decoder.decode();
-  } finally {
-    await reader.cancel().catch(() => undefined);
-  }
+  return {
+    html: await readLimitedResponseText(response, MAX_HTML_BYTES),
+    finalUrl,
+  };
 }
 
 async function readLimitedBytes(
@@ -195,7 +165,7 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
 
 const getCachedRemoteMetadata = unstable_cache(
   loadRemoteMetadata,
-  ["external-link-preview-v2"],
+  ["external-link-preview-v4"],
   { revalidate: CACHE_SECONDS },
 );
 

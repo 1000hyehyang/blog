@@ -191,6 +191,15 @@ function findDocumentTitle(html: string): string | undefined {
   return html.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)?.[1];
 }
 
+function findDocumentDescription(html: string): string | undefined {
+  for (const match of html.matchAll(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/gi)) {
+    const description = normalizeMetadataText(match[1], 280);
+    if (description.length >= 20) return description;
+  }
+
+  return undefined;
+}
+
 function resolveAssetUrl(
   value: string | undefined,
   pageUrl: URL,
@@ -243,11 +252,12 @@ export function parseLinkPreviewHtml(
   const rawTitle =
     findMetaContent(html, ["og:title", "twitter:title"]) ??
     findDocumentTitle(html);
-  const rawDescription = findMetaContent(html, [
-    "og:description",
-    "twitter:description",
-    "description",
-  ]);
+  const rawDescription =
+    findMetaContent(html, [
+      "og:description",
+      "twitter:description",
+      "description",
+    ]) ?? findDocumentDescription(html);
   const title = rawTitle ? normalizeMetadataText(rawTitle, 160) : "";
   const description = rawDescription
     ? normalizeMetadataText(rawDescription, 280)
