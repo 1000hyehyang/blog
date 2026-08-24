@@ -1,9 +1,13 @@
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
+
 export const siteConfig = {
   name: "1000hyehyang Dev Blog",
   shortName: "Dev Blog",
   title: "1000hyehyang's Dev Blog",
   description: "문제를 발견하고, 기술로 해결하며 얻은 경험을 기록합니다.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: siteUrl,
   author: { name: "1000hyehyang" },
   navigation: [
     {
