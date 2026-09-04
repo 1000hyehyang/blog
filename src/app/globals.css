@@ -219,12 +219,6 @@ button:not(:disabled):hover {
   max-width: 16rem;
 }
 
-.header-search label:has(input:focus-visible),
-.header-search-clear:focus-visible {
-  outline: 2px solid var(--foreground);
-  outline-offset: 2px;
-}
-
 .header-search-clear {
   transition:
     opacity 200ms var(--theme-transition-easing),
