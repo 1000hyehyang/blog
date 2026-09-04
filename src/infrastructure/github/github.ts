@@ -114,7 +114,7 @@ function mapDiscussion(node: DiscussionNode, owner: string): Post {
 
   if (!valid) {
     console.warn(
-      `[content] Discussion #${node.number} has invalid frontmatter; using safe defaults.`,
+      `[content] Discussion #${node.number} has an invalid post form; using safe defaults.`,
     );
   }
 

@@ -8,7 +8,19 @@ const discussion = {
   id: "discussion-1",
   number: 1,
   title: "Post",
-  body: "---\npublished: true\ntags: []\n---\nBody",
+  body: `### 포스트 본문
+
+Body
+
+---
+
+### 대표 이미지
+
+_No response_
+
+### 공개 상태
+
+공개`,
   author: { login: "owner" },
   createdAt: "2026-01-01T00:00:00Z",
   lastEditedAt: null,

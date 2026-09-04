@@ -26,7 +26,7 @@ export function createExcerpt(
     : plainText;
 }
 
-/** frontmatter의 excerpt가 URL이면 본문에서 요약을 생성한다. */
+/** 메타데이터의 excerpt가 URL이면 본문에서 요약을 생성한다. */
 export function resolveExcerpt(
   value: string | undefined,
   body: string,

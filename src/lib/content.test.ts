@@ -10,124 +10,28 @@ import {
 import { resolveCoverImage } from "./content/metadata";
 
 describe("포스트 콘텐츠 유틸리티", () => {
-  it("frontmatter를 본문에서 제거하고 메타데이터를 검증한다", () => {
-    const result = parsePostBody(`---
-excerpt: 테스트 요약
-featured: true
-featuredOrder: 2
-tags: [Next.js, Web]
----
-# 본문`);
-    expect(result.body).toBe("# 본문");
-    expect(result.metadata).toMatchObject({
-      excerpt: "테스트 요약",
-      featured: true,
-      featuredOrder: 2,
-      tags: ["Next.js", "Web"],
-    });
-    expect(result.valid).toBe(true);
-  });
-
-  it("coverImage가 비어 있어도 featured 값을 유지한다", () => {
-    const result = parsePostBody(`---
-coverImage:
-featured: true
-featuredOrder: 2
-tags:
-  - CS
----
-# 본문`);
-    expect(result.metadata.featured).toBe(true);
-    expect(result.metadata.featuredOrder).toBe(2);
-    expect(result.valid).toBe(true);
-  });
-
-  it("비어 있는 tags 필드를 빈 배열로 처리한다", () => {
-    const result = parsePostBody(`---
-published: true
-tags:
----
-# 본문`);
-
-    expect(result.metadata.tags).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  it("published를 명시하지 않은 글은 공개하지 않는다", () => {
-    const result = parsePostBody("---\ntags: []\n---\n# 비공개 글");
-
-    expect(result.metadata.published).toBe(false);
-  });
-
-  it("잘못된 메타데이터를 안전한 기본값으로 대체한다", () => {
-    const result = parsePostBody(`---
-coverImage: not-a-url
-tags: invalid
----
-안전한 본문`);
-    expect(result.valid).toBe(false);
-    expect(result.body).toBe("안전한 본문");
-    expect(result.metadata.tags).toEqual([]);
-    expect(result.metadata.coverImage).toBe("");
-  });
-
-  it("대표 이미지가 없거나 잘못되면 빈 값을 반환한다", () => {
-    expect(resolveCoverImage()).toBe("");
-    expect(resolveCoverImage("")).toBe("");
-    expect(resolveCoverImage("not-a-url")).toBe("");
-    expect(resolveCoverImage("https://example.com/cover.jpg")).toBe(
-      "https://example.com/cover.jpg",
-    );
-  });
-
-  it("parses a separate gallery image URL", () => {
-    const result = parsePostBody(`---
-coverImage: https://example.com/thumbnail.jpg
-galleryImage: https://example.com/artwork.jpg
-published: true
----
-# Artwork`);
-
-    expect(result.metadata.coverImage).toBe(
-      "https://example.com/thumbnail.jpg",
-    );
-    expect(result.metadata.galleryImage).toBe(
-      "https://example.com/artwork.jpg",
-    );
-    expect(result.body).toBe("# Artwork");
-  });
-
-  it("마크다운 문법을 제외한 요약을 생성한다", () => {
-    expect(createExcerpt("## 제목\n[링크](https://example.com) **내용**")).toBe(
-      "제목 링크 내용",
-    );
-  });
-
-  it("GitHub Discussion form 헤더 뒤 frontmatter를 파싱한다", () => {
+  it("Discussion form의 본문과 설정을 파싱한다", () => {
     const result = parsePostBody(`### 포스트 본문
 
----
-published: true
-tags: [Development]
+# Hello
+
+### 본문 소제목
+
+설명
+
 ---
 
-# Hello`);
-    expect(result.metadata.published).toBe(true);
-    expect(result.body).toBe("# Hello");
-  });
-
-  it("새 Discussion form의 입력값과 본문을 파싱한다", () => {
-    const result = parsePostBody(`### 대표 이미지
+### 대표 이미지
 
 ![cover](https://github.com/user-attachments/assets/cover-id)
 
 ### 갤러리 이미지
 
-_No response_
+https://example.com/artwork.jpg
 
 ### 태그
 
-Next.js, React
+Next.js, #React
 
 ### Featured
 
@@ -139,20 +43,14 @@ Next.js, React
 
 ### 공개 상태
 
-공개
-
-### 포스트 본문
-
-# Hello
-
-### 본문 소제목`);
+공개`);
 
     expect(result).toMatchObject({
-      body: "# Hello\n\n### 본문 소제목",
+      body: "# Hello\n\n### 본문 소제목\n\n설명",
       valid: true,
       metadata: {
         coverImage: "https://github.com/user-attachments/assets/cover-id",
-        galleryImage: "",
+        galleryImage: "https://example.com/artwork.jpg",
         featured: true,
         featuredOrder: 2,
         published: true,
@@ -161,18 +59,116 @@ Next.js, React
     });
   });
 
-  it("새 Discussion form은 비공개 상태를 처리한다", () => {
-    const result = parsePostBody(`### 공개 상태
+  it("비공개 상태와 비어 있는 응답을 처리한다", () => {
+    const result = parsePostBody(`### 포스트 본문
 
-비공개
+작성 중인 글
 
-### 포스트 본문
+### 대표 이미지
 
-작성 중인 글`);
+_No response_
 
-    expect(result.valid).toBe(true);
+### 태그
+
+_No response_
+
+### 공개 상태
+
+비공개`);
+
+    expect(result).toMatchObject({
+      body: "작성 중인 글",
+      valid: true,
+      metadata: {
+        coverImage: "",
+        published: false,
+        tags: [],
+      },
+    });
+  });
+
+  it("새 Form 형식이 아니면 공개하지 않는다", () => {
+    const result = parsePostBody(`---
+published: true
+---
+# 기존 글`);
+
+    expect(result.valid).toBe(false);
+    expect(result.body).toBe("");
     expect(result.metadata.published).toBe(false);
-    expect(result.body).toBe("작성 중인 글");
+  });
+
+  it("잘못된 Form 설정은 글을 공개하지 않는다", () => {
+    const result = parsePostBody(`### 포스트 본문
+
+본문 내용입니다.
+
+### 대표 이미지
+
+_No response_
+
+### Featured 순서
+
+first
+
+### 공개 상태
+
+공개`);
+
+    expect(result.valid).toBe(false);
+    expect(result.body).toBe("본문 내용입니다.");
+    expect(result.metadata.published).toBe(false);
+  });
+
+  it("대표 이미지가 없거나 잘못되면 빈 값을 반환한다", () => {
+    expect(resolveCoverImage()).toBe("");
+    expect(resolveCoverImage("")).toBe("");
+    expect(resolveCoverImage("not-a-url")).toBe("");
+    expect(resolveCoverImage("https://example.com/cover.jpg")).toBe(
+      "https://example.com/cover.jpg",
+    );
+  });
+
+  it("마크다운 문법을 제외한 요약을 생성한다", () => {
+    expect(createExcerpt("## 제목\n[링크](https://example.com) **내용**")).toBe(
+      "제목 링크 내용",
+    );
+  });
+
+  it("본문에서 요약을 생성한다", () => {
+    const result = parsePostBody(`### 포스트 본문
+
+## 실제 제목
+
+내용입니다.
+
+### 대표 이미지
+
+https://example.com/cover.jpg
+
+### 공개 상태
+
+공개`);
+
+    expect(result.metadata.excerpt).toBe("실제 제목 내용입니다.");
+  });
+
+  it("대표 이미지가 아닌 단독 URL은 본문에 유지한다", () => {
+    const result = parsePostBody(`### 포스트 본문
+
+# 참고 링크
+
+https://example.com/docs
+
+### 대표 이미지
+
+_No response_
+
+### 공개 상태
+
+공개`);
+
+    expect(result.body).toContain("https://example.com/docs");
   });
 
   it("카테고리 이름을 URL slug로 변환한다", () => {
@@ -185,54 +181,8 @@ Next.js, React
     expect(toBodyHeadingLevel(6)).toBe(6);
   });
 
-  it("excerpt에 URL만 있으면 본문에서 요약을 생성한다", () => {
-    const url = "https://example.com/cover.jpg";
-    const result = parsePostBody(`---
-excerpt: ${url}
-coverImage: ${url}
-featured: true
----
-## 실제 제목
-
-내용입니다.`);
-
-    expect(result.metadata.excerpt).toBe("실제 제목 내용입니다.");
-  });
-
-  it("대표 이미지가 아닌 단독 URL은 본문에 유지한다", () => {
-    const result = parsePostBody(`---
-published: true
----
-# 참고 링크
-
-https://example.com/docs`);
-
-    expect(result.body).toContain("https://example.com/docs");
-  });
-
-  it("손상된 frontmatter는 본문을 보존하고 안전한 기본값을 사용한다", () => {
-    const result = parsePostBody(`### 포스트 본문
-
----
-coverImage:https://example.com/cover.jpg
-featured: false
----
-
-## 실제 제목
-
-본문 내용입니다.`);
-
-    expect(result.valid).toBe(false);
-    expect(result.body).toBe("## 실제 제목\n\n본문 내용입니다.");
-    expect(result.metadata.coverImage).toBe("");
-    expect(result.metadata.featured).toBe(false);
-    expect(result.metadata.tags).toEqual([]);
-  });
-
   it("날짜를 Asia/Seoul 기준으로 표현한다", () => {
-    // UTC 자정은 한국 시간으로 같은 날 오전 9시
     expect(formatDate("2026-07-22T00:00:00Z", "en-US")).toBe("Jul 22, 2026");
-    // UTC 15:00은 한국 시간으로 다음날 자정
     expect(formatDate("2026-07-22T15:00:00Z", "en-US")).toBe("Jul 23, 2026");
   });
 });
