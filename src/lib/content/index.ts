@@ -1,15 +1,17 @@
 import { resolveExcerpt } from "./excerpt";
 import { splitDiscussionForm } from "./discussion-form";
-import { mergeMetadata, metadataSchema, resolveCoverImage } from "./metadata";
+import { metadataSchema, resolveCoverImage } from "./metadata";
 
 export function parsePostBody(source: string) {
   const form = splitDiscussionForm(source);
-  const raw = form?.raw ?? {};
-  const metadata = mergeMetadata(raw);
+  const metadataResult = metadataSchema.safeParse(form?.raw ?? {});
+  const metadata = metadataResult.success
+    ? metadataResult.data
+    : metadataSchema.parse({});
   const coverImage = resolveCoverImage(metadata.coverImage);
   const galleryImage = resolveCoverImage(metadata.galleryImage);
   const body = form?.body ?? "";
-  const valid = form !== null && metadataSchema.safeParse(raw).success;
+  const valid = form !== null && metadataResult.success;
 
   return {
     body,
