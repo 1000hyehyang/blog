@@ -25,10 +25,7 @@ export const metadataSchema = z.object({
     emptyToUndefined,
     z.coerce.number().int().nonnegative().optional(),
   ),
-  published: z.preprocess(
-    (value) => (value === undefined ? true : coerceBoolean(value)),
-    z.boolean().default(true),
-  ),
+  published: z.preprocess(coerceBoolean, z.boolean().default(false)),
   tags: z.preprocess(emptyToTags, z.array(z.string())),
 });
 

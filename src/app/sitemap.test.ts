@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Post } from "@/domain/post";
-import { getPosts } from "@/infrastructure/github/github";
+import { getAllPosts } from "@/infrastructure/github/github";
 
 import sitemap from "./sitemap";
 
-vi.mock("@/infrastructure/github/github", () => ({ getPosts: vi.fn() }));
+vi.mock("@/infrastructure/github/github", () => ({ getAllPosts: vi.fn() }));
 
 const post = (
   number: number,
@@ -31,39 +31,25 @@ const post = (
 
 describe("sitemap", () => {
   beforeEach(() => {
-    vi.mocked(getPosts).mockReset();
+    vi.mocked(getAllPosts).mockReset();
   });
 
   it("loads every post page and uses content modification dates", async () => {
-    vi.mocked(getPosts)
-      .mockResolvedValueOnce({
-        posts: [
-          post(1, "development", "2026-01-01T00:00:00.000Z"),
-          post(
-            2,
-            "development",
-            "2026-01-02T00:00:00.000Z",
-            "2026-01-04T00:00:00.000Z",
-          ),
-        ],
-        pageInfo: { hasNextPage: true, endCursor: "page-2" },
-      })
-      .mockResolvedValueOnce({
-        posts: [post(3, "art", "2026-01-03T00:00:00.000Z")],
-        pageInfo: { hasNextPage: false, endCursor: null },
-      });
+    vi.mocked(getAllPosts).mockResolvedValue([
+      post(1, "development", "2026-01-01T00:00:00.000Z"),
+      post(
+        2,
+        "development",
+        "2026-01-02T00:00:00.000Z",
+        "2026-01-04T00:00:00.000Z",
+      ),
+      post(3, "art", "2026-01-03T00:00:00.000Z"),
+    ]);
 
     const entries = await sitemap();
     const byUrl = new Map(entries.map((entry) => [entry.url, entry]));
 
-    expect(getPosts).toHaveBeenNthCalledWith(1, {
-      first: 50,
-      after: undefined,
-    });
-    expect(getPosts).toHaveBeenNthCalledWith(2, {
-      first: 50,
-      after: "page-2",
-    });
+    expect(getAllPosts).toHaveBeenCalledOnce();
     expect(byUrl.has("http://localhost:3000/posts/3")).toBe(true);
 
     expect(byUrl.get("http://localhost:3000")?.lastModified).toEqual(

@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   title: "All Posts",
   description: `${siteConfig.name}의 모든 포스트`,
   alternates: { canonical: routes.posts },
+  openGraph: {
+    type: "website",
+    title: "All Posts",
+    description: `${siteConfig.name}의 모든 포스트`,
+    url: routes.posts,
+    images: [siteConfig.defaultImage],
+    siteName: siteConfig.name,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "All Posts",
+    description: `${siteConfig.name}의 모든 포스트`,
+    images: [siteConfig.defaultImage],
+  },
 };
 
 export default async function PostsPage({
@@ -19,11 +33,9 @@ export default async function PostsPage({
   searchParams: Promise<{ cursor?: string; sort?: string }>;
 }) {
   const query = await searchParams;
-  const result = await getPosts({ first: 12, after: query.cursor });
-  const posts =
-    query.sort === "oldest"
-      ? [...result.posts].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-      : result.posts;
+  const sort = query.sort === "oldest" ? "oldest" : "latest";
+  const result = await getPosts({ first: 12, after: query.cursor, sort });
+  const posts = result.posts;
 
   return (
     <div className="page-shell">
@@ -69,7 +81,7 @@ export default async function PostsPage({
       {result.pageInfo.hasNextPage && result.pageInfo.endCursor && (
         <div className="mt-14 text-center">
           <Link
-            href={`${routes.posts}?cursor=${encodeURIComponent(result.pageInfo.endCursor)}`}
+            href={`${routes.posts}?cursor=${encodeURIComponent(result.pageInfo.endCursor)}&sort=${sort}`}
             className="inline-flex rounded-full border px-6 py-3 text-xs"
           >
             다음 포스트

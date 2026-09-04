@@ -3,6 +3,7 @@ import "server-only";
 import { lookup } from "node:dns/promises";
 
 import { unstable_cache } from "next/cache";
+import { Agent, fetch as undiciFetch } from "undici";
 
 import { siteConfig } from "@/config/site";
 import { getPost } from "@/infrastructure/github/github";
@@ -32,7 +33,7 @@ type LinkPreview = LinkPreviewMetadata & {
   hostname: string;
 };
 
-async function assertPublicDestination(url: URL): Promise<void> {
+async function resolvePublicDestination(url: URL) {
   const parsed = parseExternalHttpUrl(url.href);
   if (!parsed) throw new Error("Unsupported link preview URL");
 
@@ -47,12 +48,18 @@ async function assertPublicDestination(url: URL): Promise<void> {
   ) {
     throw new Error("Link preview resolved to a non-public address");
   }
+
+  return addresses[0];
 }
 
 async function fetchPublicResponse(
   initialUrl: URL,
   accept: string,
-): Promise<{ response: Response; finalUrl: URL }> {
+): Promise<{
+  response: Response;
+  finalUrl: URL;
+  close: () => Promise<void>;
+}> {
   let currentUrl = initialUrl;
 
   for (
@@ -60,21 +67,35 @@ async function fetchPublicResponse(
     redirectCount <= MAX_REDIRECTS;
     redirectCount += 1
   ) {
-    await assertPublicDestination(currentUrl);
-
-    const response = await fetch(currentUrl, {
-      cache: "no-store",
-      headers: {
-        accept,
-        "user-agent": "ych-blog-link-preview/1.0",
+    const destination = await resolvePublicDestination(currentUrl);
+    const dispatcher = new Agent({
+      connect: {
+        lookup(_hostname, _options, callback) {
+          callback(null, destination.address, destination.family);
+        },
       },
-      redirect: "manual",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
+    let response: Response;
+
+    try {
+      response = (await undiciFetch(currentUrl, {
+        headers: {
+          accept,
+          "user-agent": "ych-blog-link-preview/1.0",
+        },
+        redirect: "manual",
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        dispatcher,
+      })) as unknown as Response;
+    } catch (error) {
+      await dispatcher.close();
+      throw error;
+    }
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
+      await dispatcher.close();
 
       if (!location || redirectCount === MAX_REDIRECTS) {
         throw new Error("Link preview exceeded the redirect limit");
@@ -86,10 +107,15 @@ async function fetchPublicResponse(
 
     if (!response.ok) {
       await response.body?.cancel();
+      await dispatcher.close();
       throw new Error(`Link preview returned ${response.status}`);
     }
 
-    return { response, finalUrl: currentUrl };
+    return {
+      response,
+      finalUrl: currentUrl,
+      close: () => dispatcher.close(),
+    };
   }
 
   throw new Error("Link preview could not follow redirects");
@@ -98,21 +124,26 @@ async function fetchPublicResponse(
 async function fetchPublicHtml(
   initialUrl: URL,
 ): Promise<{ html: string; finalUrl: URL }> {
-  const { response, finalUrl } = await fetchPublicResponse(
+  const { response, finalUrl, close } = await fetchPublicResponse(
     initialUrl,
     "text/html,application/xhtml+xml",
   );
 
-  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
-  if (!contentType.includes("text/html") && !contentType.includes("xhtml")) {
-    await response.body?.cancel();
-    throw new Error("Link preview response was not HTML");
-  }
+  try {
+    const contentType =
+      response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (!contentType.includes("text/html") && !contentType.includes("xhtml")) {
+      await response.body?.cancel();
+      throw new Error("Link preview response was not HTML");
+    }
 
-  return {
-    html: await readLimitedResponseText(response, MAX_HTML_BYTES),
-    finalUrl,
-  };
+    return {
+      html: await readLimitedResponseText(response, MAX_HTML_BYTES),
+      finalUrl,
+    };
+  } finally {
+    await close();
+  }
 }
 
 async function readLimitedBytes(
@@ -201,7 +232,11 @@ export async function getLinkPreview(
   try {
     const metadata = await getCachedRemoteMetadata(url.href);
     return { ...fallback, ...metadata };
-  } catch {
+  } catch (error) {
+    console.warn(
+      `[link-preview] Failed to load metadata for ${url.hostname}.`,
+      error,
+    );
     return fallback;
   }
 }
@@ -212,24 +247,29 @@ export async function fetchLinkPreviewImage(
   const url = parseExternalHttpUrl(value);
   if (!url) throw new Error("Unsupported link preview image URL");
 
-  const { response } = await fetchPublicResponse(
+  const { response, close } = await fetchPublicResponse(
     url,
     "image/avif,image/webp,image/png,image/jpeg,image/gif",
   );
-  const contentType =
-    response.headers
-      .get("content-type")
-      ?.split(";", 1)[0]
-      .trim()
-      .toLowerCase() ?? "";
 
-  if (!ALLOWED_IMAGE_TYPES.has(contentType)) {
-    await response.body?.cancel();
-    throw new Error("Link preview returned an unsupported image type");
+  try {
+    const contentType =
+      response.headers
+        .get("content-type")
+        ?.split(";", 1)[0]
+        .trim()
+        .toLowerCase() ?? "";
+
+    if (!ALLOWED_IMAGE_TYPES.has(contentType)) {
+      await response.body?.cancel();
+      throw new Error("Link preview returned an unsupported image type");
+    }
+
+    return {
+      body: await readLimitedBytes(response, MAX_IMAGE_BYTES),
+      contentType,
+    };
+  } finally {
+    await close();
   }
-
-  return {
-    body: await readLimitedBytes(response, MAX_IMAGE_BYTES),
-    contentType,
-  };
 }

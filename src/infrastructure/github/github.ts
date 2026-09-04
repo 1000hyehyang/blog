@@ -24,6 +24,7 @@ type DiscussionNode = {
   number: number;
   title: string;
   body: string;
+  author: { login: string } | null;
   createdAt: string;
   lastEditedAt: string | null;
   category: { name: string };
@@ -46,15 +47,16 @@ type DiscussionDetailData = {
 
 const DISCUSSION_FIELDS = `
   id number title body createdAt lastEditedAt
+  author { login }
   category { name }
   comments { totalCount }
   reactionGroups { users { totalCount } }
 `;
 
 const LIST_QUERY = `
-  query Posts($owner: String!, $repo: String!, $first: Int!, $after: String) {
+  query Posts($owner: String!, $repo: String!, $first: Int!, $after: String, $direction: OrderDirection!) {
     repository(owner: $owner, name: $repo) {
-      discussions(first: $first, after: $after, orderBy: {field: CREATED_AT, direction: DESC}) {
+      discussions(first: $first, after: $after, orderBy: {field: CREATED_AT, direction: $direction}) {
         pageInfo { hasNextPage endCursor }
         nodes { ${DISCUSSION_FIELDS} }
       }
@@ -107,7 +109,7 @@ function countReactions(groups: ReactionGroup[] = []) {
   return groups.reduce((total, group) => total + group.users.totalCount, 0);
 }
 
-function mapDiscussion(node: DiscussionNode): Post {
+function mapDiscussion(node: DiscussionNode, owner: string): Post {
   const { body, metadata, valid } = parsePostBody(node.body);
 
   if (!valid) {
@@ -130,7 +132,10 @@ function mapDiscussion(node: DiscussionNode): Post {
       : undefined,
     featured: metadata.featured,
     featuredOrder: metadata.featuredOrder,
-    published: metadata.published,
+    published:
+      valid &&
+      node.author?.login.toLowerCase() === owner.toLowerCase() &&
+      metadata.published,
     tags: metadata.tags,
     category: {
       name: node.category.name,
@@ -148,6 +153,7 @@ export async function getPosts(
     first?: number;
     after?: string;
     category?: string;
+    sort?: "latest" | "oldest";
   } = {},
 ): Promise<PostPage> {
   const config = getConfig();
@@ -160,16 +166,44 @@ export async function getPosts(
     repo: config.GITHUB_REPO,
     first: Math.min(options.first ?? 12, MAX_PAGE_SIZE),
     after: options.after ?? null,
+    direction: options.sort === "oldest" ? "ASC" : "DESC",
   });
 
   const posts = data.repository.discussions.nodes
-    .map(mapDiscussion)
+    .map((node) => mapDiscussion(node, config.GITHUB_OWNER))
     .filter((post) => post.published)
     .filter(
       (post) => !options.category || post.category.slug === options.category,
     );
 
   return { posts, pageInfo: data.repository.discussions.pageInfo };
+}
+
+export async function getAllPosts(
+  options: { category?: string } = {},
+): Promise<Post[]> {
+  const posts: Post[] = [];
+  const seenCursors = new Set<string>();
+  let after: string | undefined;
+
+  while (true) {
+    const page = await getPosts({
+      first: MAX_PAGE_SIZE,
+      after,
+      category: options.category,
+    });
+    posts.push(...page.posts);
+
+    if (!page.pageInfo.hasNextPage) return posts;
+
+    const cursor = page.pageInfo.endCursor;
+    if (!cursor || seenCursors.has(cursor)) {
+      throw new Error("GitHub post pagination returned an invalid cursor.");
+    }
+
+    seenCursors.add(cursor);
+    after = cursor;
+  }
 }
 
 export async function getPost(number: number): Promise<Post | null> {
@@ -190,5 +224,5 @@ export async function getPost(number: number): Promise<Post | null> {
   );
 
   if (!data.repository.discussion) return null;
-  return mapDiscussion(data.repository.discussion);
+  return mapDiscussion(data.repository.discussion, config.GITHUB_OWNER);
 }

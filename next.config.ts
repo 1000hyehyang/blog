@@ -1,20 +1,11 @@
 import type { NextConfig } from "next";
 
+import { remoteImagePatterns } from "./src/config/images";
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "github.com",
-        pathname: "/user-attachments/**",
-      },
-    ],
+    remotePatterns: remoteImagePatterns,
   },
   experimental: {
     staleTimes: {

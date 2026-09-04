@@ -13,7 +13,10 @@ import {
   getRecentPosts,
   toPostPreview,
 } from "@/features/post/post-queries";
-import { getPosts, isGitHubConfigured } from "@/infrastructure/github/github";
+import {
+  getAllPosts,
+  isGitHubConfigured,
+} from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 import { buildBlogJsonLd, serializeJsonLd } from "@/lib/seo";
 
@@ -25,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const { posts } = await getPosts({ first: 50 });
+  const posts = await getAllPosts();
   const featured = getFeaturedPosts(posts).map(toPostPreview);
   const recent = getRecentPosts(posts, RECENT_POSTS_COUNT);
   const recentArt = getRecentArtPosts(posts, RECENT_ART_COUNT);

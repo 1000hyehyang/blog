@@ -92,7 +92,7 @@ export function ThemeToggle() {
       type="button"
       aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
       aria-pressed={isDark}
-      className="grid size-9 cursor-pointer place-items-center rounded-full bg-muted text-foreground transition-colors hover:text-secondary focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+      className="grid size-9 cursor-pointer place-items-center rounded-full bg-muted text-foreground transition-colors hover:text-secondary disabled:cursor-wait disabled:opacity-60"
       onClick={toggleTheme}
       disabled={isTransitioning}
     >

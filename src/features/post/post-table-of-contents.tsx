@@ -88,7 +88,7 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
                     scrollToHeading(heading.id);
                   }}
                   aria-current={isActive ? "location" : undefined}
-                  className={`relative block py-1.5 text-xs leading-5 transition-colors outline-none focus:outline-none focus-visible:outline-none ${
+                  className={`relative block py-1.5 text-xs leading-5 transition-colors ${
                     heading.level === 3
                       ? "pl-7"
                       : heading.level === 2

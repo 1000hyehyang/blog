@@ -49,7 +49,8 @@ async function loadYouTubeMetadata(
   let payload: unknown;
   try {
     payload = JSON.parse(source);
-  } catch {
+  } catch (error) {
+    console.warn(`[youtube] Failed to load metadata for ${videoId}.`, error);
     return null;
   }
 
@@ -71,7 +72,8 @@ export async function getYouTubeMetadata(
 ): Promise<YouTubeMetadata | null> {
   try {
     return await getCachedYouTubeMetadata(videoId);
-  } catch {
+  } catch (error) {
+    console.warn(`[youtube] Failed to load metadata for ${videoId}.`, error);
     return null;
   }
 }

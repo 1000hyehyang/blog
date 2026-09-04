@@ -1,5 +1,6 @@
 import Image, { type ImageProps } from "next/image";
 
+import { canOptimizeImage } from "@/config/images";
 import type { PostImage } from "@/domain/post";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ export function PostCoverImage({
       className={className}
       src={image.src}
       alt={alt}
+      unoptimized={props.unoptimized ?? !canOptimizeImage(image.src)}
     />
   );
 }

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { HeaderSearch } from "@/features/search/header-search";
@@ -20,6 +20,8 @@ export function SiteHeader() {
   const [openMenuPath, setOpenMenuPath] = useState<string | null>(null);
   const menuOpen = openMenuPath === pathname;
   const shouldReduceMotion = usePrefersReducedMotion();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   // document.body를 쓰는 포털은 클라이언트 마운트 이후에만 생성한다.
   const mounted = useHydrated();
@@ -30,16 +32,39 @@ export function SiteHeader() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpenMenuPath(null);
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const focusable = drawerRef.current?.querySelectorAll<HTMLElement>(
+        "a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex='-1'])",
+      );
+      if (!focusable?.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
 
     const previousOverflow = document.body.style.overflow;
+    const menuButton = menuButtonRef.current;
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
+    const frame = requestAnimationFrame(() =>
+      drawerRef.current?.querySelector<HTMLElement>("button")?.focus(),
+    );
 
     return () => {
+      cancelAnimationFrame(frame);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      menuButton?.focus();
     };
   }, [menuOpen]);
 
@@ -83,6 +108,7 @@ export function SiteHeader() {
           <MusicToggle />
           <ThemeToggle />
           <button
+            ref={menuButtonRef}
             type="button"
             aria-label={menuOpen ? "메뉴 닫기" : "메뉴 열기"}
             aria-expanded={menuOpen}
@@ -115,6 +141,7 @@ export function SiteHeader() {
                   className="fixed inset-0 z-[60] bg-black/40 md:hidden"
                 />
                 <motion.nav
+                  ref={drawerRef}
                   key="mobile-menu-drawer"
                   id="mobile-menu"
                   aria-label="모바일 메뉴"

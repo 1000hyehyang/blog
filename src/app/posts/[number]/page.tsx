@@ -9,7 +9,7 @@ import { PostHero } from "@/features/post/post-hero";
 import { PostTags } from "@/features/post/post-tags";
 import { PostTableOfContents } from "@/features/post/post-table-of-contents";
 import { RelatedPosts } from "@/features/post/related-posts";
-import { getPost, getPosts } from "@/infrastructure/github/github";
+import { getAllPosts, getPost } from "@/infrastructure/github/github";
 import { extractHeadings, resolvePostModifiedAt } from "@/lib/content";
 import { getRelatedPosts } from "@/features/post/post-queries";
 import { routes } from "@/lib/routes";
@@ -30,7 +30,7 @@ export async function generateMetadata({
   const number = parsePostNumber((await params).number);
   if (!number) return {};
   const post = await getPost(number);
-  if (!post) return {};
+  if (!post?.published) return {};
 
   const images = [post.coverImage.src || siteConfig.defaultImage];
 
@@ -66,7 +66,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const post = await getPost(number);
   if (!post || !post.published) notFound();
 
-  const { posts } = await getPosts({ first: 50 });
+  const posts = await getAllPosts();
   const relatedPosts = getRelatedPosts(posts, post);
   const headings = extractHeadings(post.body);
 

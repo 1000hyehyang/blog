@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { SearchResults } from "@/features/search/search-results";
-import { getPosts } from "@/infrastructure/github/github";
+import { getAllPosts } from "@/infrastructure/github/github";
 
 export const metadata: Metadata = {
   title: "검색",
@@ -15,10 +15,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  const [{ posts }, query] = await Promise.all([
-    getPosts({ first: 50 }),
-    searchParams,
-  ]);
+  const [posts, query] = await Promise.all([getAllPosts(), searchParams]);
   return (
     <div className="page-shell">
       <SearchResults posts={posts} query={query.q} />

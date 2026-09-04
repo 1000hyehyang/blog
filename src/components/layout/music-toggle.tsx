@@ -29,10 +29,6 @@ function useMusicToggle() {
   useEffect(() => {
     if (!isMounted) return;
 
-    if (!audioRef.current) {
-      audioRef.current = createBackgroundAudio(backgroundMusicSrc);
-    }
-
     return () => {
       fadeAbortRef.current?.abort();
       audioRef.current?.pause();
@@ -45,7 +41,11 @@ function useMusicToggle() {
 
     window.localStorage.setItem(STORAGE_KEY, String(isPlaying));
 
-    const audio = audioRef.current;
+    const audio =
+      audioRef.current ??
+      (isPlaying
+        ? (audioRef.current = createBackgroundAudio(backgroundMusicSrc))
+        : null);
     if (!audio) return;
 
     fadeAbortRef.current?.abort();
@@ -105,7 +105,7 @@ export function MusicToggle() {
       type="button"
       aria-label={isPlaying ? "음악 끄기" : "음악 켜기"}
       aria-pressed={isPlaying}
-      className="grid size-9 cursor-pointer place-items-center rounded-full bg-muted text-foreground transition-colors hover:text-secondary focus-visible:outline-none"
+      className="grid size-9 cursor-pointer place-items-center rounded-full bg-muted text-foreground transition-colors hover:text-secondary"
       onClick={toggleMusic}
     >
       <AnimatedMusicIcon

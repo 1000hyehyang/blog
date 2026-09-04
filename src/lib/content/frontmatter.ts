@@ -1,4 +1,4 @@
-import matter from "gray-matter";
+import { load } from "js-yaml";
 
 type FrontmatterSplit = {
   raw: Record<string, unknown>;
@@ -24,30 +24,32 @@ export function normalizeDiscussionSource(source: string) {
     : source;
 }
 
-function bodyAfterFrontmatter(source: string) {
+export function splitFrontmatterBlock(source: string): FrontmatterSplit {
   const lines = source.split("\n");
-  if (lines[0]?.trim() !== "---") return source;
+  if (lines[0]?.trim() !== "---") {
+    return { raw: {}, body: source, valid: true };
+  }
 
   const closingIndex = lines.findIndex(
     (line, index) => index > 0 && line.trim() === "---",
   );
+  if (closingIndex < 1) return { raw: {}, body: source, valid: false };
 
-  return closingIndex > 0 ? lines.slice(closingIndex + 1).join("\n") : source;
-}
+  const body = lines.slice(closingIndex + 1).join("\n");
 
-export function splitFrontmatterBlock(source: string): FrontmatterSplit {
   try {
-    const parsed = matter(source);
+    const parsed = load(lines.slice(1, closingIndex).join("\n"));
+    const raw = parsed ?? {};
+    if (typeof raw !== "object" || Array.isArray(raw)) {
+      return { raw: {}, body, valid: false };
+    }
+
     return {
-      raw: parsed.data as Record<string, unknown>,
-      body: parsed.content,
+      raw: raw as Record<string, unknown>,
+      body,
       valid: true,
     };
   } catch {
-    return {
-      raw: {},
-      body: bodyAfterFrontmatter(source),
-      valid: false,
-    };
+    return { raw: {}, body, valid: false };
   }
 }

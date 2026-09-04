@@ -43,7 +43,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
   const resolvedEagerImageSource = eagerImageSource ?? posts[0]?.coverImage.src;
 
   const navButtonClassName =
-    "absolute top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-surface/90 shadow-[0_1px_3px_rgb(0_0_0/0.04)] outline-none backdrop-blur-sm transition hover:bg-muted focus:outline-none focus-visible:outline-none";
+    "absolute top-1/2 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-surface/90 shadow-[0_1px_3px_rgb(0_0_0/0.04)] backdrop-blur-sm transition hover:bg-muted";
 
   return (
     <section aria-labelledby="featured-title">
@@ -170,7 +170,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
               aria-label={`${index + 1}번째 featured 포스트 보기`}
               aria-current={current === index ? "true" : undefined}
               className={cn(
-                "h-1.5 rounded-full transition-all outline-none focus:outline-none focus-visible:outline-none",
+                "h-1.5 rounded-full transition-all",
                 current === index
                   ? "w-5 bg-foreground"
                   : "w-1.5 bg-border hover:bg-tertiary",

@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch {
+  } catch (error) {
+    console.warn("[link-preview] Failed to proxy a preview image.", error);
     return errorResponse(502);
   }
 }

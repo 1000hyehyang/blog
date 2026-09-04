@@ -53,6 +53,12 @@ tags:
     expect(result.valid).toBe(true);
   });
 
+  it("published를 명시하지 않은 글은 공개하지 않는다", () => {
+    const result = parsePostBody("---\ntags: []\n---\n# 초안");
+
+    expect(result.metadata.published).toBe(false);
+  });
+
   it("잘못된 메타데이터를 안전한 기본값으로 대체한다", () => {
     const result = parsePostBody(`---
 coverImage: not-a-url

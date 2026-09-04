@@ -93,7 +93,7 @@ describe("ArtworkFrame", () => {
 });
 
 describe("ArtGallery", () => {
-  it("prefers the gallery image over the thumbnail", () => {
+  it("renders an unconfigured gallery image without using the Next loader", () => {
     const galleryImage = "https://example.com/artwork.jpg";
     const { container } = render(
       <ArtGallery
@@ -106,9 +106,7 @@ describe("ArtGallery", () => {
       />,
     );
 
-    expect(container.querySelector("img")?.getAttribute("src")).toContain(
-      encodeURIComponent(galleryImage),
-    );
+    expect(container.querySelector("img")).toHaveAttribute("src", galleryImage);
     expect(screen.getByText(post.title).parentElement).toHaveClass(
       "opacity-0",
       "group-hover:opacity-100",

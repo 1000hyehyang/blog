@@ -2,32 +2,9 @@ import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/config/site";
 import { resolvePostModifiedAt } from "@/lib/content";
-import { getPosts } from "@/infrastructure/github/github";
+import { getAllPosts } from "@/infrastructure/github/github";
 import { routes } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
-
-const SITEMAP_PAGE_SIZE = 50;
-
-async function getAllPosts() {
-  const posts = [];
-  const seenCursors = new Set<string>();
-  let after: string | undefined;
-
-  while (true) {
-    const page = await getPosts({ first: SITEMAP_PAGE_SIZE, after });
-    posts.push(...page.posts);
-
-    if (!page.pageInfo.hasNextPage) return posts;
-
-    const cursor = page.pageInfo.endCursor;
-    if (!cursor || seenCursors.has(cursor)) {
-      throw new Error("GitHub post pagination returned an invalid cursor.");
-    }
-
-    seenCursors.add(cursor);
-    after = cursor;
-  }
-}
 
 function toModifiedDate(post: {
   createdAt: string;

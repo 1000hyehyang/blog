@@ -52,7 +52,7 @@ export async function fadeAudioVolume(
 export function createBackgroundAudio(src: string) {
   const audio = new Audio(src);
   audio.loop = true;
-  audio.preload = "auto";
+  audio.preload = "none";
   audio.volume = 0;
   return audio;
 }
