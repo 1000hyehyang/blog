@@ -2,30 +2,48 @@ body:
   - type: markdown
     attributes:
       value: |
-        📝 **Essay** 카테고리 · Category를 **Essay**로 선택했는지 확인하세요.
-
-        **frontmatter 안내**
-        - `coverImage` — 대표 이미지 URL, `https://` 필수 (비우면 기본 이미지)
-        - `featured` — `true`면 홈 Featured 후보
-        - `featuredOrder` — 고정글 순서, 작을수록 앞 (1 → 2 → 3)
-        - `published` — `true`면 블로그 공개, `false`면 숨김
-        - `tags` — 검색용 키워드 (카테고리와 별개)
-
-        보통은 `published: true`만 확인하고 frontmatter 아래에 본문을 작성하면 됩니다.
+        ✍️ **Essay 포스트**를 작성합니다.
+        공개하지 않을 글은 공개 상태를 **비공개**로 변경하세요.
+  - type: textarea
+    id: cover-image
+    attributes:
+      label: 대표 이미지
+      description: 이미지 파일을 드래그하거나 외부 이미지 URL을 붙여 넣으세요. 비워두면 기본 이미지가 사용됩니다.
+      placeholder: 이미지 또는 https:// URL
+  - type: input
+    id: tags
+    attributes:
+      label: 태그
+      description: 검색에 사용할 태그를 쉼표로 구분해 입력하세요.
+      placeholder: 생각, 일상, 경험
+  - type: dropdown
+    id: featured
+    attributes:
+      label: Featured
+      description: 홈 Featured 영역에 노출할지 선택하세요.
+      options: [아니요, 예]
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: featured-order
+    attributes:
+      label: Featured 순서
+      description: Featured일 때만 입력하세요. 숫자가 작을수록 앞에 표시됩니다.
+      placeholder: "1"
+  - type: dropdown
+    id: published
+    attributes:
+      label: 공개 상태
+      options: [비공개, 공개]
+      default: 1
+    validations:
+      required: true
   - type: textarea
     id: post-body
     attributes:
       label: 포스트 본문
-      description: frontmatter 아래에 본문을 작성하세요
-      value: |
-        ---
-        coverImage:
-        featured: false
-        featuredOrder: 1
-        published: true
-        tags: []
-
-        ---
-
+      description: Markdown으로 작성하세요. 이미지는 드래그해서 첨부할 수 있습니다.
+      placeholder: "# 제목\n\n본문을 작성하세요."
     validations:
       required: true

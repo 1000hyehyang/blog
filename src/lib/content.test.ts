@@ -54,7 +54,7 @@ tags:
   });
 
   it("published를 명시하지 않은 글은 공개하지 않는다", () => {
-    const result = parsePostBody("---\ntags: []\n---\n# 초안");
+    const result = parsePostBody("---\ntags: []\n---\n# 비공개 글");
 
     expect(result.metadata.published).toBe(false);
   });
@@ -114,6 +114,65 @@ tags: [Development]
 # Hello`);
     expect(result.metadata.published).toBe(true);
     expect(result.body).toBe("# Hello");
+  });
+
+  it("새 Discussion form의 입력값과 본문을 파싱한다", () => {
+    const result = parsePostBody(`### 대표 이미지
+
+![cover](https://github.com/user-attachments/assets/cover-id)
+
+### 갤러리 이미지
+
+_No response_
+
+### 태그
+
+Next.js, React
+
+### Featured
+
+예
+
+### Featured 순서
+
+2
+
+### 공개 상태
+
+공개
+
+### 포스트 본문
+
+# Hello
+
+### 본문 소제목`);
+
+    expect(result).toMatchObject({
+      body: "# Hello\n\n### 본문 소제목",
+      valid: true,
+      metadata: {
+        coverImage: "https://github.com/user-attachments/assets/cover-id",
+        galleryImage: "",
+        featured: true,
+        featuredOrder: 2,
+        published: true,
+        tags: ["Next.js", "React"],
+      },
+    });
+  });
+
+  it("새 Discussion form은 비공개 상태를 처리한다", () => {
+    const result = parsePostBody(`### 공개 상태
+
+비공개
+
+### 포스트 본문
+
+작성 중인 글`);
+
+    expect(result.valid).toBe(true);
+    expect(result.metadata.published).toBe(false);
+    expect(result.body).toBe("작성 중인 글");
   });
 
   it("카테고리 이름을 URL slug로 변환한다", () => {

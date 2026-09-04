@@ -1,17 +1,18 @@
 import { resolveExcerpt } from "./excerpt";
 import {
   normalizeDiscussionSource,
+  splitDiscussionForm,
   splitFrontmatterBlock,
 } from "./frontmatter";
 import { mergeMetadata, metadataSchema, resolveCoverImage } from "./metadata";
 
 export function parsePostBody(source: string) {
-  const normalizedSource = normalizeDiscussionSource(source);
   const {
     raw,
     body: rawBody,
     valid: validFrontmatter,
-  } = splitFrontmatterBlock(normalizedSource);
+  } = splitDiscussionForm(source) ??
+  splitFrontmatterBlock(normalizeDiscussionSource(source));
   const metadata = mergeMetadata(raw);
   const coverImage = resolveCoverImage(metadata.coverImage);
   const galleryImage = resolveCoverImage(metadata.galleryImage);
