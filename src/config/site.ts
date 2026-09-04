@@ -46,7 +46,7 @@ export const siteConfig = {
     email: "ducogus12@gmail.com",
     portfolio: "https://www.1000hyehyang.me/",
   },
-  defaultImage: "/og-default.png",
+  defaultImage: "/og-blog.png",
 } as const;
 
 export function getCategoryNavigation(category: string) {

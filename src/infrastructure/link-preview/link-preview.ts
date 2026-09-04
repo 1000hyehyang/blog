@@ -4,6 +4,8 @@ import { lookup } from "node:dns/promises";
 
 import { unstable_cache } from "next/cache";
 
+import { siteConfig } from "@/config/site";
+import { getPost } from "@/infrastructure/github/github";
 import {
   isNonPublicIpAddress,
   parseExternalHttpUrl,
@@ -159,13 +161,28 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
   const initialUrl = parseExternalHttpUrl(url);
   if (!initialUrl) return {};
 
+  if (initialUrl.origin === new URL(siteConfig.url).origin) {
+    const match = initialUrl.pathname.match(/^\/posts\/(\d+)\/?$/);
+    const post = match ? await getPost(Number(match[1])) : null;
+
+    if (post?.published) {
+      return {
+        title: post.title,
+        description: post.excerpt,
+        image: post.coverImage.src || undefined,
+        icon: new URL("/favicon.ico", siteConfig.url).href,
+        siteName: siteConfig.name,
+      };
+    }
+  }
+
   const { html, finalUrl } = await fetchPublicHtml(initialUrl);
   return parseLinkPreviewHtml(html, finalUrl);
 }
 
 const getCachedRemoteMetadata = unstable_cache(
   loadRemoteMetadata,
-  ["external-link-preview-v4"],
+  ["external-link-preview-v5"],
   { revalidate: CACHE_SECONDS },
 );
 
