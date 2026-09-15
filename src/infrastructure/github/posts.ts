@@ -31,6 +31,12 @@ export class PostStoreError extends Error {
 export function usesGitHubStorage() {
   return process.env.CONTENT_SOURCE === "github";
 }
+function localPostsPath(...segments: string[]) {
+  return path.resolve(
+    process.env.LOCAL_CONTENT_PATH ?? "content/posts",
+    ...segments,
+  );
+}
 function config() {
   const { GITHUB_OWNER, GITHUB_REPO, GITHUB_CONTENT_BRANCH, GITHUB_TOKEN } =
     process.env;
@@ -85,10 +91,7 @@ export async function getStoredPost(
     try {
       return {
         post: parsePostFile(
-          await readFile(
-            path.join(process.cwd(), "content/posts", `${slug}.md`),
-            "utf8",
-          ),
+          await readFile(localPostsPath(`${slug}.md`), "utf8"),
           slug,
         ),
         sha: "local",
@@ -134,7 +137,7 @@ export async function getStoredPostsWithSha(
     if (!Array.isArray(files) || files.length >= 1000)
       throw new PostStoreError("콘텐츠 목록을 안전하게 읽을 수 없습니다.", 502);
     names = files.filter((f) => f.type === "file").map((f) => String(f.name));
-  } else names = await readdir(path.join(process.cwd(), "content/posts"));
+  } else names = await readdir(localPostsPath());
   const posts: { post: FilePost; sha: string }[] = [];
   // ponytail: small personal blog; batch reads by 8, use a generated index when the collection grows.
   const slugs = names
@@ -169,6 +172,7 @@ const publishedPosts = unstable_cache(
   [
     "markdown-posts-v1",
     process.env.CONTENT_SOURCE ?? "local",
+    process.env.LOCAL_CONTENT_PATH ?? "content/posts",
     process.env.GITHUB_OWNER ?? "",
     process.env.GITHUB_REPO ?? "",
     process.env.GITHUB_CONTENT_BRANCH ?? "",

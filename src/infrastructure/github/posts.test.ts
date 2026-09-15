@@ -60,9 +60,9 @@ describe("Markdown store", () => {
     expect(first.posts[0].createdAt <= first.posts[1].createdAt).toBe(true);
   });
   it("all committed Markdown parses without altering its body", async () => {
-    for (const name of await readdir("content/posts")) {
+    for (const name of await readdir("tests/fixtures/posts")) {
       if (!name.endsWith(".md")) continue;
-      const original = await readFile(`content/posts/${name}`, "utf8");
+      const original = await readFile(`tests/fixtures/posts/${name}`, "utf8");
       const parsed = parsePostFile(original, name.slice(0, -3));
       expect(parsePostFile(serializePostFile(parsed), parsed.slug).body).toBe(
         parsed.body,

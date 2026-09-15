@@ -30,8 +30,3 @@ export type PostPreview = Pick<
   Post,
   "id" | "slug" | "title" | "excerpt" | "coverImage" | "category" | "createdAt"
 >;
-
-export interface PostPage {
-  posts: Post[];
-  pageInfo: { hasNextPage: boolean; endCursor: string | null };
-}

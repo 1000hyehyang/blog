@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { postFileSchema, slugSchema } from "@/lib/content/post-file";
 const prefix = "blog:writer:draft:";
-export const draftSchema = z
+const draftSchema = z
   .object({
     post: postFileSchema,
     sha: z

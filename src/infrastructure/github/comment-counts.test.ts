@@ -10,7 +10,7 @@ afterEach(() => {
 });
 it("refreshes pathname counts without reading post bodies; outages preserve articles", async () => {
   const first = parsePostFile(
-    await readFile("content/posts/post-1.md", "utf8"),
+    await readFile("tests/fixtures/posts/post-1.md", "utf8"),
     "post-1",
   );
   const second = { ...first, id: "post-2", slug: "post-2" };

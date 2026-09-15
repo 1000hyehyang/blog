@@ -3,7 +3,7 @@ import "server-only";
 import { createHmac, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
-export const SESSION_SECONDS = 8 * 60 * 60;
+const SESSION_SECONDS = 8 * 60 * 60;
 export const SESSION_COOKIE =
   process.env.NODE_ENV === "production" ? "__Host-blog-writer" : "blog-writer";
 export const sessionCookieOptions = {

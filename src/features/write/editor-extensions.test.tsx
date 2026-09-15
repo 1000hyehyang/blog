@@ -35,10 +35,10 @@ describe("Tiptap Markdown preservation", () => {
     editor.destroy();
   });
   it("preserves migrated articles' visible text, code and links through visual editing", async () => {
-    for (const name of await readdir("content/posts")) {
+    for (const name of await readdir("tests/fixtures/posts")) {
       if (!name.endsWith(".md")) continue;
       const { body } = parsePostFile(
-        await readFile(`content/posts/${name}`, "utf8"),
+        await readFile(`tests/fixtures/posts/${name}`, "utf8"),
         name.slice(0, -3),
       );
       expect(hasUnsupportedHtml(body), name).toBe(false);

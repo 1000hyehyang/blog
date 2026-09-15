@@ -9,11 +9,11 @@ import { siteConfig } from "@/config/site";
 import { WriterSelect } from "./writer-controls";
 import styles from "./writer.module.css";
 
-export type ManagedPost = Pick<
+type ManagedPost = Pick<
   FilePost,
   "slug" | "title" | "category" | "published" | "createdAt" | "lastEditedAt"
 > & { localVersion?: string; sha?: string };
-export const MANAGE_PAGE_SIZE = 6;
+const MANAGE_PAGE_SIZE = 6;
 export function ManagePosts({
   posts,
   initialTab = "published",

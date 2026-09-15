@@ -1,5 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 
+process.env.LOCAL_CONTENT_PATH = "tests/fixtures/posts";
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({

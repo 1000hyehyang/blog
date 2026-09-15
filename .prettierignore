@@ -6,3 +6,4 @@ playwright-report
 package-lock.json
 .migration-backup
 content/posts
+tests/fixtures/posts

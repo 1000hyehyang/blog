@@ -12,6 +12,7 @@ export default defineConfig({
     env: {
       BLOG_E2E: "1",
       CONTENT_SOURCE: "local",
+      LOCAL_CONTENT_PATH: "tests/fixtures/posts",
       WRITE_PASSWORD_HASH: testHash,
       WRITE_SESSION_SECRET: testSessionSecret,
       WRITE_ORIGIN: "http://127.0.0.1:3100",
