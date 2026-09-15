@@ -1,0 +1,118 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { GiscusComments } from "@/components/giscus-comments";
+import { MarkdownContent } from "@/components/markdown";
+import { siteConfig } from "@/config/site";
+import { PostDetailReveal } from "@/features/post/post-detail-reveal";
+import { PostHero } from "@/features/post/post-hero";
+import { PostTags } from "@/features/post/post-tags";
+import { PostTableOfContents } from "@/features/post/post-table-of-contents";
+import { RelatedPosts } from "@/features/post/related-posts";
+import { getAllPosts, getPost } from "@/infrastructure/github/posts";
+import { extractHeadings, resolvePostModifiedAt } from "@/lib/content";
+import { getRelatedPosts } from "@/features/post/post-queries";
+import { routes } from "@/lib/routes";
+import { buildPostJsonLd, serializeJsonLd } from "@/lib/seo";
+
+type PostPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
+  const post = await getPost((await params).slug);
+  if (!post?.published) return {};
+
+  const images = [post.coverImage.src || siteConfig.defaultImage];
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    keywords: post.tags,
+    alternates: { canonical: routes.post(post.slug) },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.excerpt,
+      url: routes.post(post.slug),
+      images,
+      publishedTime: post.createdAt,
+      modifiedTime: resolvePostModifiedAt(post),
+      authors: [siteConfig.author.name],
+      tags: post.tags,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images,
+    },
+  };
+}
+
+export default async function PostPage({ params }: PostPageProps) {
+  const slug = (await params).slug;
+  const post = await getPost(slug);
+  if (!post || !post.published) notFound();
+  const posts = await getAllPosts();
+  const relatedPosts = getRelatedPosts(posts, post);
+  const headings = extractHeadings(post.body);
+
+  return (
+    <article className="page-shell page-shell--detail">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(buildPostJsonLd(post)),
+        }}
+      />
+
+      <PostDetailReveal>
+        <div className="mx-auto grid max-w-[var(--container-width)] lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-20">
+          <div className="min-w-0">
+            <div data-reveal="mount">
+              <PostHero post={post} />
+            </div>
+
+            <div data-reveal="scroll" className="mt-10">
+              {post.body ? (
+                <MarkdownContent source={post.body} />
+              ) : (
+                <p className="text-sm text-tertiary">본문이 없습니다.</p>
+              )}
+              <PostTags tags={post.tags} />
+            </div>
+
+            <section
+              data-reveal="scroll"
+              className="mt-16 border-t pt-12"
+              aria-labelledby="comments-title"
+            >
+              <h2
+                id="comments-title"
+                className="text-xl font-semibold tracking-tight sm:text-2xl"
+              >
+                Comments.
+              </h2>
+              <div className="mt-6">
+                <GiscusComments slug={post.slug} />
+              </div>
+            </section>
+
+            <RelatedPosts
+              posts={relatedPosts}
+              embedded
+              eagerImageSource={post.coverImage.src}
+            />
+          </div>
+
+          <div data-reveal="mount">
+            <PostTableOfContents headings={headings} />
+          </div>
+        </div>
+      </PostDetailReveal>
+    </article>
+  );
+}

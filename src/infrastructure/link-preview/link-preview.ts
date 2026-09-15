@@ -6,7 +6,7 @@ import { unstable_cache } from "next/cache";
 import { Agent, fetch as undiciFetch } from "undici";
 
 import { siteConfig } from "@/config/site";
-import { getPost } from "@/infrastructure/github/github";
+import { getPost } from "@/infrastructure/github/posts";
 import {
   isNonPublicIpAddress,
   parseExternalHttpUrl,
@@ -193,8 +193,8 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
   if (!initialUrl) return {};
 
   if (initialUrl.origin === new URL(siteConfig.url).origin) {
-    const match = initialUrl.pathname.match(/^\/posts\/(\d+)\/?$/);
-    const post = match ? await getPost(Number(match[1])) : null;
+    const match = initialUrl.pathname.match(/^\/posts\/([^/]+)\/?$/);
+    const post = match ? await getPost(decodeURIComponent(match[1])) : null;
 
     if (post?.published) {
       return {

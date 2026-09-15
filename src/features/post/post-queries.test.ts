@@ -11,24 +11,26 @@ import {
 } from "./post-queries";
 
 const basePost = (
-  overrides: Partial<Post> & Pick<Post, "number" | "category">,
-): Post => ({
-  id: `D_${overrides.number}`,
-  title: `포스트 ${overrides.number}`,
-  body: "본문",
-  excerpt: "요약",
-  coverImage: {
-    src: "/og-default.png",
-  },
-  featured: false,
-  published: true,
-  tags: [],
-  createdAt: "2026-07-20T00:00:00Z",
-  lastEditedAt: null,
-  commentsCount: 0,
-  reactionsCount: 0,
-  ...overrides,
-});
+  overrides: Partial<Post> & { number: number; category: Post["category"] },
+): Post => {
+  const { number, ...rest } = overrides;
+  return {
+    id: `post-${number}`,
+    slug: `post-${number}`,
+    title: `포스트 ${number}`,
+    body: "본문",
+    excerpt: "요약",
+    coverImage: { src: "/og-default.png" },
+    featured: false,
+    published: true,
+    tags: [],
+    createdAt: "2026-07-20T00:00:00Z",
+    lastEditedAt: null,
+    commentsCount: 0,
+    reactionsCount: 0,
+    ...rest,
+  };
+};
 
 describe("featured 포스트 선택", () => {
   it("featuredOrder가 같으면 최근 작성 순으로 정렬한다", () => {
@@ -77,7 +79,10 @@ describe("홈 최근 포스트 선택", () => {
       basePost({ number: 4, category: development }),
     ];
 
-    expect(getRecentPosts(posts, 2).map((post) => post.number)).toEqual([2, 4]);
+    expect(getRecentPosts(posts, 2).map((post) => post.slug)).toEqual([
+      "post-2",
+      "post-4",
+    ]);
   });
 
   it("최근 Art만 요청한 개수만큼 선택한다", () => {
@@ -87,7 +92,9 @@ describe("홈 최근 포스트 선택", () => {
       basePost({ number: 3, category: art }),
     ];
 
-    expect(getRecentArtPosts(posts, 1).map((post) => post.number)).toEqual([1]);
+    expect(getRecentArtPosts(posts, 1).map((post) => post.slug)).toEqual([
+      "post-1",
+    ]);
   });
 });
 

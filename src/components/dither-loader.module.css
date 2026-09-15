@@ -1,0 +1,29 @@
+.loader {
+  display: inline-grid;
+  grid-template-columns: repeat(4, 4px);
+  gap: 2px;
+  width: max-content;
+  vertical-align: middle;
+  color: var(--foreground);
+}
+.loader i {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  animation: dither 1.3s var(--delay) ease-in-out infinite;
+}
+@keyframes dither {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader i {
+    animation: none;
+    opacity: 0.5;
+  }
+}

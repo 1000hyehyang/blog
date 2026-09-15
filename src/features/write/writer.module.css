@@ -1,0 +1,1095 @@
+.writer {
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+}
+.writer input,
+.writer textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  caret-color: auto;
+}
+.writer input::placeholder,
+.writer textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+.writer input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+}
+.writer label {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+.writer button,
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.writer button[aria-pressed="true"] {
+  background: var(--muted);
+}
+.writer button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.writer .primary {
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: var(--header-height);
+  padding: 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.brand span {
+  color: var(--muted-foreground);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+.toolbarSlot {
+  min-width: 0;
+  margin-inline: auto;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0.65rem 0.15rem;
+}
+.toolbar button {
+  flex-shrink: 0;
+  min-width: 2.15rem;
+  height: 2.25rem;
+  border: 0;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+}
+.separator {
+  width: 1px;
+  height: 1.2rem;
+  background: var(--border);
+  flex-shrink: 0;
+  margin-inline: 0.6rem;
+}
+.fontLabel {
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  padding-inline: 0.5rem;
+}
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+.account > a {
+  white-space: nowrap;
+}
+.account > a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.account button {
+  border: 0;
+  padding: 0.5rem;
+}
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+}
+.canvas {
+  width: min(calc(100% - 3rem), var(--content-width));
+  margin: 3.75rem auto 0;
+  padding-bottom: 8rem;
+}
+.composition {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.category {
+  width: 12rem;
+  margin-bottom: 1.5rem;
+}
+.titleField {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.75rem;
+  margin-bottom: 1.75rem;
+}
+.titleField textarea {
+  field-sizing: content;
+  resize: none;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.04em;
+  overflow: hidden;
+}
+.titleField textarea:focus {
+  outline: none;
+}
+.editor {
+  min-width: 0;
+  flex: 1;
+}
+.editor :global(.tiptap),
+.editorPlaceholder {
+  min-height: max(12rem, calc(100dvh - 32rem));
+  color: var(--prose-foreground);
+  overflow-wrap: anywhere;
+  font-size: 1.0625rem;
+  line-height: 1.95;
+  caret-color: var(--foreground);
+}
+.editor :global(.tiptap):focus {
+  outline: none;
+}
+.editor
+  :global(.tiptap)
+  > p:first-child:last-child:has(> br:only-child)::before {
+  content: "이곳에 이야기를 적어보세요…";
+  float: left;
+  height: 0;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.editor :global(.tiptap) > * + * {
+  margin-top: 1.1em;
+}
+.editor :global(.tiptap) h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.editor :global(.tiptap) h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.editor :global(.tiptap) h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.editor :global(.tiptap) ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.editor :global(.tiptap) ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.editor :global(.tiptap) ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.editor :global(.tiptap) li[data-type="taskItem"] {
+  display: flex;
+  gap: 0.5rem;
+}
+.editor :global(.tiptap) li[data-type="taskItem"] > div {
+  flex: 1;
+  min-width: 0;
+}
+.editor :global(.tiptap) blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+}
+.editor :global(.tiptap) pre {
+  background: var(--code-block-background);
+  color: var(--code-block-foreground);
+  padding: 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-family-code);
+  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+}
+.editor :global(.tiptap) code {
+  background: var(--code-inline-background);
+  color: var(--code-inline-foreground);
+  padding: 0.1rem 0.25rem;
+  font-family: var(--font-family-code);
+}
+.editor :global(.tiptap) pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+.editor :global(.tiptap) a {
+  text-decoration: underline;
+}
+.editor :global(.tiptap) img {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+}
+.editor :global(.tiptap) hr {
+  border-top: 1px solid var(--border);
+}
+.editor :global(.tiptap) table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.editor :global(.tiptap) td,
+.editor :global(.tiptap) th {
+  border: 1px solid var(--border);
+  padding: 0.6rem;
+}
+.editor :global(.tiptap) th {
+  background: var(--muted);
+}
+.editor :global(.ProseMirror-selectednode) {
+  outline: 2px solid var(--ring);
+}
+.tags {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tags input {
+  flex: 1;
+  width: auto;
+  min-width: 8rem;
+  border: 0;
+  padding: 0.75rem 0;
+  font-size: 0.9rem;
+}
+.bottomBar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 5rem;
+  padding: 1rem 2.5rem calc(1rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--muted);
+}
+.bottomTools,
+.bottomActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.bottomTools button {
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.25rem;
+  color: var(--muted-foreground);
+}
+.bottomActions {
+  margin-left: auto;
+}
+.bottomActions button {
+  border-radius: 999px;
+  min-width: 7rem;
+  padding: 0.8rem 1.5rem;
+}
+.saveStatus {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.notice {
+  border: 1px solid var(--border);
+  background: var(--muted);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+.publishDialog {
+  position: fixed;
+  inset: 0;
+  width: min(56rem, calc(100vw - 4rem));
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  padding: 2.5rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: var(--shadow-md);
+}
+.publishDialog::backdrop {
+  background: color-mix(in srgb, var(--foreground) 25%, transparent);
+  backdrop-filter: blur(3px);
+}
+.publishDialog[open] {
+  animation: drawer-enter 0.3s var(--theme-transition-easing);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dialogBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.25rem 0.35rem 0.5rem;
+  margin-inline: -0.35rem;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.dialogBody::-webkit-scrollbar {
+  display: none;
+}
+.dialogStatus {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+.dialogStatus:not(:empty) {
+  padding-block: 0.75rem;
+}
+.dialogHeading {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+.dialogHeading h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.dialogHeading button {
+  border: 0;
+  padding: 0.5rem;
+}
+.helpText {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.7;
+}
+.dialogActions {
+  background: var(--background);
+  flex-shrink: 0;
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+.management {
+  max-width: var(--container-width);
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+.managementHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.managementHeading h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.6rem;
+}
+.managementHeading h1 span {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  margin-left: 0.4rem;
+}
+.managementHeading p:not(:first-child),
+.managementHint {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.postList {
+  border-top: 1px solid var(--border);
+}
+.postList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.postSummary {
+  min-width: 0;
+}
+.postMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.7rem;
+}
+.postMeta > span:first-child {
+  background: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+  color: var(--foreground);
+}
+.postTitle {
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.postTitle:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.postActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.writer .editAction {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  padding: 0;
+  transition:
+    background-color 180ms,
+    color 180ms,
+    transform 180ms var(--theme-transition-easing);
+}
+.managementHint {
+  margin-top: 1.5rem;
+}
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 5rem 0;
+  color: var(--muted-foreground);
+}
+.loginPage {
+  display: grid;
+  align-content: center;
+  padding: 6rem 1.5rem;
+}
+.loginBack {
+  position: absolute;
+  top: 2rem;
+  left: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+.login {
+  width: min(100%, 24rem);
+  margin: auto;
+}
+.loginMark {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  background: var(--muted);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+}
+.login h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.75rem;
+}
+.login form {
+  margin-top: 2rem;
+}
+.login form > button {
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+}
+.login [role="status"] {
+  min-height: 1.5rem;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+@media (max-width: 1500px) {
+  .identity {
+    display: none;
+  }
+  .topbar {
+    gap: 1rem;
+    padding-inline: 1.5rem;
+  }
+  .fontLabel {
+    display: none;
+  }
+}
+@media (max-width: 1100px) {
+  .topbar:has(.toolbarSlot) {
+    flex-wrap: wrap;
+    gap: 0;
+    padding-top: 0.9rem;
+  }
+  .toolbarSlot {
+    order: 3;
+    flex: 0 0 100%;
+    margin-top: 0.7rem;
+    border-top: 1px solid var(--border);
+  }
+  .toolbar {
+    padding-block: 0.5rem;
+  }
+  .canvas {
+    margin-top: 2.5rem;
+  }
+}
+@media (max-width: 640px) {
+  .topbar {
+    padding-inline: 1.25rem;
+  }
+  .canvas {
+    width: calc(100% - 2.5rem);
+    margin-top: 2rem;
+    padding-bottom: 9rem;
+  }
+  .category {
+    width: 10rem;
+  }
+  .editor :global(.tiptap),
+  .editorPlaceholder {
+    font-size: 1rem;
+    min-height: max(12rem, calc(100dvh - 36rem));
+  }
+  .bottomBar {
+    gap: 0.5rem;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    flex-wrap: wrap;
+  }
+  .saveStatus {
+    order: -1;
+    flex-basis: 100%;
+    font-size: 0.65rem;
+  }
+  .bottomActions button {
+    min-width: 4.5rem;
+    padding: 0.65rem 1rem;
+  }
+  .bottomTools .separator {
+    margin-inline: 0.2rem;
+  }
+  .bottomTools button {
+    font-size: 0.75rem;
+  }
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .publishDialog {
+    width: 100vw;
+    padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+  }
+  .management {
+    margin-top: 2.5rem;
+    padding-inline: 1.25rem;
+  }
+  .managementHeading {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .postList li {
+    gap: 1rem;
+    padding-block: 1.4rem;
+  }
+  .postTitle {
+    font-size: 1rem;
+  }
+  .postActions {
+    gap: 0.5rem;
+  }
+  .loginBack {
+    left: 1.5rem;
+  }
+}
+
+/* Writer controls share the public site's foreground/muted hover palette. */
+.writer button,
+.writer .primary,
+.selectMenu button {
+  cursor: pointer;
+  transition:
+    background-color 180ms,
+    color 180ms,
+    border-color 180ms,
+    filter 180ms,
+    transform 180ms var(--theme-transition-easing);
+}
+.writer button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.writer .selectTrigger {
+  justify-content: space-between;
+  min-width: 6rem;
+}
+.category .selectTrigger {
+  width: 100%;
+}
+.selectTrigger > span:last-child {
+  display: flex;
+}
+.selectMenu {
+  z-index: 80;
+  overflow-y: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  background: var(--background);
+  color: var(--foreground);
+  overscroll-behavior: contain;
+}
+.selectMenu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+}
+.selectMenu button[data-active="true"],
+.selectMenu button[aria-selected="true"] {
+  background: var(--muted);
+}
+.pinnedSection {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+.pinnedHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.pinnedHeading h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.writer .checkbox {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.writer .checkbox input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.checkboxBox {
+  display: grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  transition:
+    background-color 180ms,
+    border-color 180ms,
+    transform 180ms;
+}
+.checkboxBox svg {
+  width: 1rem;
+  height: 1rem;
+}
+.checkbox input:checked + .checkboxBox {
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+}
+.checkbox input:disabled ~ span {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.checkbox:active .checkboxBox {
+  transform: scale(0.92);
+}
+.pinnedList {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.pinnedCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
+}
+.pinnedThumbnail {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 3.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  overflow: hidden;
+}
+.pinnedThumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pinnedTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.writer .dragHandle {
+  border: 0;
+  padding: 0.6rem 0.35rem;
+  color: var(--muted-foreground);
+  touch-action: none;
+  cursor: grab;
+}
+.writer .dragHandle:active {
+  cursor: grabbing;
+  transform: none;
+}
+.writer .pinnedRemove {
+  flex-shrink: 0;
+  border: 0;
+  padding: 0.55rem;
+  color: var(--muted-foreground);
+}
+.pinnedEmpty {
+  padding: 1.5rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.fields > :only-child {
+  grid-column: 1 / -1;
+}
+@media (hover: hover) {
+  .writer button:not(:disabled):hover {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+  .writer .primary:not(:disabled):hover {
+    background: var(--foreground);
+    color: var(--background);
+    filter: brightness(1.06);
+  }
+  :global(.dark) .writer .primary:not(:disabled):hover {
+    filter: brightness(0.94);
+  }
+  .bottomTools button:not(:disabled):hover {
+    background: var(--background);
+  }
+  .editAction:hover {
+    background: var(--muted);
+  }
+  .checkbox:hover .checkboxBox {
+    border-color: var(--foreground);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .writer button,
+  .writer .primary,
+  .selectMenu button,
+  .checkboxBox {
+    transition: none;
+  }
+  .writer button:not(:disabled):active,
+  .checkbox:active .checkboxBox {
+    transform: none;
+  }
+}
+
+@keyframes drawer-enter {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.editor :global(.tiptap) li[data-type="taskItem"] {
+  align-items: flex-start;
+}
+.editor :global(.tiptap) li[data-type="taskItem"] > label {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding-top: 0.45rem;
+  margin: 0;
+}
+.editor :global(.tiptap) li[data-type="taskItem"] > label input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--foreground);
+}
+.editor :global(.tiptap) li[data-type="taskItem"] > div {
+  text-align: start;
+  margin: 0;
+}
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  border-radius: 999px;
+  background: var(--muted);
+}
+.writer .tagChip button {
+  border: 0;
+  background: transparent;
+  padding: 0.2rem;
+}
+.tooltip {
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 100;
+  border-radius: var(--radius-sm);
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.managementFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+.managementTabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-right: auto;
+}
+.writer .managementTabs button {
+  border: 0;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  font-size: 0.8rem;
+}
+.loginBrand {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  align-items: baseline;
+  font-size: 0.875rem !important;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.loginBrand span {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.login {
+  width: min(100%, 28rem);
+}
+.otp {
+  position: relative;
+}
+.writer .otp input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 1;
+  cursor: text;
+}
+.otpSlots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) 1.4rem minmax(0, 1fr);
+  gap: 0.4rem;
+}
+.otpSlots span {
+  display: grid;
+  place-items: center;
+  height: 3.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1.4rem;
+  background: var(--background);
+  transition: border-color 0.2s;
+}
+.otpSlots span:last-child {
+  grid-column: 8;
+}
+.otpSlots span[data-active="true"] {
+  border-color: var(--foreground);
+}
+.loginStatus {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 4rem;
+  text-align: center;
+  font-size: 0.8rem;
+}
+.skeleton {
+  display: block;
+  background: var(--muted);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+.skeletonLines {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .publishDialog[open],
+  .skeleton {
+    animation: none;
+  }
+  .otpSlots span {
+    transition: none;
+  }
+}
+@media (max-width: 640px) {
+  .managementTabs {
+    flex-basis: 100%;
+  }
+  .managementFilters > button {
+    flex: 1;
+  }
+  .otpSlots {
+    gap: 0.25rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) 0.5rem minmax(0, 1fr);
+  }
+  .otpSlots span {
+    height: 3rem;
+  }
+}

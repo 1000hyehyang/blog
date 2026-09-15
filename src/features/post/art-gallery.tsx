@@ -28,7 +28,7 @@ export function ArtGallery({ posts, eagerImageSource }: ArtGalleryProps) {
             className="mb-3 break-inside-avoid sm:mb-4"
           >
             <Link
-              href={routes.post(post.number)}
+              href={routes.post(post.slug)}
               aria-label={`${post.title} 작품 보기`}
               className="group relative block overflow-hidden rounded-[var(--radius-md)] bg-muted focus-visible:outline-offset-4"
             >

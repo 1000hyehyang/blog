@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Post } from "@/domain/post";
-import { getPost } from "@/infrastructure/github/github";
+import { getPost } from "@/infrastructure/github/posts";
 
 const remote = vi.hoisted(() => ({
   agents: [] as Array<{
@@ -21,7 +21,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({
   unstable_cache: (loader: unknown) => loader,
 }));
-vi.mock("@/infrastructure/github/github", () => ({ getPost: vi.fn() }));
+vi.mock("@/infrastructure/github/posts", () => ({ getPost: vi.fn() }));
 vi.mock("node:dns/promises", () => ({
   default: { lookup: remote.lookup },
   lookup: remote.lookup,
@@ -66,7 +66,7 @@ describe("self-hosted link preview", () => {
       image: "https://images.example.com/cover.png",
       siteName: "1000hyehyang Dev Blog",
     });
-    expect(getPost).toHaveBeenCalledWith(20);
+    expect(getPost).toHaveBeenCalledWith("20");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

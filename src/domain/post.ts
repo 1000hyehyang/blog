@@ -9,7 +9,7 @@ interface PostCategory {
 
 export interface Post {
   id: string;
-  number: number;
+  slug: string;
   title: string;
   body: string;
   excerpt: string;
@@ -28,13 +28,7 @@ export interface Post {
 
 export type PostPreview = Pick<
   Post,
-  | "id"
-  | "number"
-  | "title"
-  | "excerpt"
-  | "coverImage"
-  | "category"
-  | "createdAt"
+  "id" | "slug" | "title" | "excerpt" | "coverImage" | "category" | "createdAt"
 >;
 
 export interface PostPage {

@@ -26,7 +26,7 @@ export function buildPostJsonLd(post: Post) {
     publisher: { "@type": "Person", name: siteConfig.author.name },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": absoluteUrl(routes.post(post.number)),
+      "@id": absoluteUrl(routes.post(post.slug)),
     },
   };
 }

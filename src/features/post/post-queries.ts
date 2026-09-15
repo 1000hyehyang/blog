@@ -9,7 +9,7 @@ function sortFeaturedPosts(posts: Post[]) {
 
     return (
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() ||
-      a.number - b.number
+      a.slug.localeCompare(b.slug, "en", { numeric: true })
     );
   });
 }
@@ -21,7 +21,7 @@ export function getFeaturedPosts(posts: Post[]) {
 export function toPostPreview(post: Post): PostPreview {
   return {
     id: post.id,
-    number: post.number,
+    slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
     coverImage: post.coverImage,

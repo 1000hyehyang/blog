@@ -6,10 +6,10 @@ import { useTheme } from "next-themes";
 import { giscusConfig } from "@/config/giscus";
 
 type GiscusCommentsProps = {
-  discussionNumber: number;
+  slug: string;
 };
 
-export function GiscusComments({ discussionNumber }: GiscusCommentsProps) {
+export function GiscusComments({ slug }: GiscusCommentsProps) {
   const { resolvedTheme } = useTheme();
   const theme = resolvedTheme === "dark" ? "dark" : "light";
 
@@ -25,7 +25,7 @@ export function GiscusComments({ discussionNumber }: GiscusCommentsProps) {
 
   return (
     <Giscus
-      key={discussionNumber}
+      key={slug}
       repo={giscusConfig.repo}
       repoId={giscusConfig.repoId}
       {...(giscusConfig.category && giscusConfig.categoryId
@@ -34,8 +34,8 @@ export function GiscusComments({ discussionNumber }: GiscusCommentsProps) {
             categoryId: giscusConfig.categoryId,
           }
         : {})}
-      mapping="number"
-      term={String(discussionNumber)}
+      mapping="pathname"
+      strict="1"
       reactionsEnabled="1"
       emitMetadata="0"
       inputPosition="top"

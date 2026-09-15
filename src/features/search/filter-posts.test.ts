@@ -5,7 +5,7 @@ import { filterPosts } from "./filter-posts";
 describe("filterPosts", () => {
   const posts = [
     {
-      number: 1,
+      slug: "post-1",
       title: "Next.js App Router",
       excerpt: "라우팅 정리",
       body: "서버 컴포넌트 설명",

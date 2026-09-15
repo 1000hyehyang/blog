@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { SearchResults } from "@/features/search/search-results";
-import { getAllPosts } from "@/infrastructure/github/github";
+import { getAllPosts } from "@/infrastructure/github/posts";
 
 export const metadata: Metadata = {
   title: "검색",

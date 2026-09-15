@@ -23,7 +23,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 
 const post: Post = {
   id: "D_1",
-  number: 1,
+  slug: "post-1",
   title: "첫 번째 Next.js 포스트",
   body: "서버 컴포넌트 본문",
   excerpt: "첫 번째 포스트 요약",
@@ -45,11 +45,11 @@ afterEach(() => cleanup());
 
 describe("PostGrid image loading", () => {
   it("loads every duplicate of the LCP image source eagerly", () => {
-    const duplicate = { ...post, id: "D_2", number: 2 };
+    const duplicate = { ...post, id: "D_2", slug: "post-2" };
     const other = {
       ...post,
       id: "D_3",
-      number: 3,
+      slug: "post-3",
       coverImage: { src: "/other.png" },
     };
     const { container } = render(
@@ -153,13 +153,18 @@ describe("포스트 UI", () => {
 
   it("PostCard에 핵심 포스트 정보를 표시한다", () => {
     render(<PostCard post={post} />);
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/posts/1");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/posts/post-1");
     expect(screen.getByText(post.title)).toBeVisible();
     expect(screen.getByText(post.excerpt)).toBeVisible();
   });
 
   it("FeaturedPosts 캐러셀 UI를 표시한다", () => {
-    const second = { ...post, id: "D_2", number: 2, title: "두 번째 포스트" };
+    const second = {
+      ...post,
+      id: "D_2",
+      slug: "post-2",
+      title: "두 번째 포스트",
+    };
     const { container } = render(<FeaturedPosts posts={[post, second]} />);
     const images = container.querySelectorAll("img");
 

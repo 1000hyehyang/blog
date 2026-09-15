@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Post } from "@/domain/post";
-import { getAllPosts } from "@/infrastructure/github/github";
+import { getAllPosts } from "@/infrastructure/github/posts";
 
 import sitemap from "./sitemap";
 
-vi.mock("@/infrastructure/github/github", () => ({ getAllPosts: vi.fn() }));
+vi.mock("@/infrastructure/github/posts", () => ({ getAllPosts: vi.fn() }));
 
 const post = (
   number: number,
@@ -14,7 +14,7 @@ const post = (
   lastEditedAt: string | null = null,
 ): Post => ({
   id: `post-${number}`,
-  number,
+  slug: `post-${number}`,
   title: `Post ${number}`,
   body: "",
   excerpt: "",
@@ -50,7 +50,7 @@ describe("sitemap", () => {
     const byUrl = new Map(entries.map((entry) => [entry.url, entry]));
 
     expect(getAllPosts).toHaveBeenCalledOnce();
-    expect(byUrl.has("http://localhost:3000/posts/3")).toBe(true);
+    expect(byUrl.has("http://localhost:3000/posts/post-3")).toBe(true);
 
     expect(byUrl.get("http://localhost:3000")?.lastModified).toEqual(
       new Date("2026-01-04T00:00:00.000Z"),
@@ -67,11 +67,11 @@ describe("sitemap", () => {
     expect(
       byUrl.get("http://localhost:3000/category/study"),
     ).not.toHaveProperty("lastModified");
-    expect(byUrl.get("http://localhost:3000/posts/1")?.lastModified).toEqual(
-      new Date("2026-01-01T00:00:00.000Z"),
-    );
-    expect(byUrl.get("http://localhost:3000/posts/2")?.lastModified).toEqual(
-      new Date("2026-01-04T00:00:00.000Z"),
-    );
+    expect(
+      byUrl.get("http://localhost:3000/posts/post-1")?.lastModified,
+    ).toEqual(new Date("2026-01-01T00:00:00.000Z"));
+    expect(
+      byUrl.get("http://localhost:3000/posts/post-2")?.lastModified,
+    ).toEqual(new Date("2026-01-04T00:00:00.000Z"));
   });
 });

@@ -5,7 +5,7 @@ import { getCategoryNavigation, siteConfig } from "@/config/site";
 import { ArtGallery } from "@/features/post/art-gallery";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostGrid } from "@/features/post/post-grid";
-import { getAllPosts } from "@/infrastructure/github/github";
+import { getAllPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
 
 type CategoryPageProps = {

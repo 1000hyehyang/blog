@@ -1,30 +1,3 @@
-import { resolveExcerpt } from "./excerpt";
-import { splitDiscussionForm } from "./discussion-form";
-import { metadataSchema, resolveCoverImage } from "./metadata";
-
-export function parsePostBody(source: string) {
-  const form = splitDiscussionForm(source);
-  const metadataResult = metadataSchema.safeParse(form?.raw ?? {});
-  const metadata = metadataResult.success
-    ? metadataResult.data
-    : metadataSchema.parse({});
-  const coverImage = resolveCoverImage(metadata.coverImage);
-  const galleryImage = resolveCoverImage(metadata.galleryImage);
-  const body = form?.body ?? "";
-  const valid = form !== null && metadataResult.success;
-
-  return {
-    body,
-    metadata: {
-      ...metadata,
-      excerpt: resolveExcerpt(metadata.excerpt, body, coverImage),
-      coverImage,
-      galleryImage,
-    },
-    valid,
-  };
-}
-
 export function toSlug(value: string) {
   return value
     .normalize("NFKD")

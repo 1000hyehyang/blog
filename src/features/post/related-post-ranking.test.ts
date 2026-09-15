@@ -10,12 +10,12 @@ function category(slug: string): Post["category"] {
   return { name: slug, slug };
 }
 
-function createPost(overrides: Partial<Post> & Pick<Post, "number">): Post {
+function createPost(overrides: Partial<Post> & { number: number }): Post {
   const { number, ...rest } = overrides;
 
   return {
     id: `D_${number}`,
-    number,
+    slug: `post-${overrides.number}`,
     title: `고유 제목 ${number}`,
     body: "본문",
     excerpt: "요약",

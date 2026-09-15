@@ -136,7 +136,7 @@ function compareScoredPosts(left: ScoredPost, right: ScoredPost): number {
   );
   if (dateDifference !== 0) return dateDifference;
 
-  return left.post.number - right.post.number;
+  return left.post.slug.localeCompare(right.post.slug, "en", { numeric: true });
 }
 
 function normalizeLimit(limit: number): number {
@@ -145,18 +145,18 @@ function normalizeLimit(limit: number): number {
 }
 
 function getCandidates(posts: Post[], current: Post): Post[] {
-  const seenPostNumbers = new Set<number>();
+  const seenPostSlugs = new Set<string>();
 
   return posts.filter((post) => {
     if (
       !post.published ||
-      post.number === current.number ||
-      seenPostNumbers.has(post.number)
+      post.slug === current.slug ||
+      seenPostSlugs.has(post.slug)
     ) {
       return false;
     }
 
-    seenPostNumbers.add(post.number);
+    seenPostSlugs.add(post.slug);
     return true;
   });
 }

@@ -1,5 +1,5 @@
 import { siteConfig } from "@/config/site";
-import { getPosts } from "@/infrastructure/github/github";
+import { getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -21,7 +21,7 @@ export async function GET() {
   const { posts } = await getPosts({ first: 50 });
   const items = posts
     .map((post) => {
-      const postUrl = absoluteUrl(routes.post(post.number));
+      const postUrl = absoluteUrl(routes.post(post.slug));
       return `
     <item>
       <title>${escapeXml(post.title)}</title>

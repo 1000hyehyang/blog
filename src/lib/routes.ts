@@ -3,6 +3,6 @@ export const routes = {
   posts: "/posts",
   search: "/search",
   feed: "/feed.xml",
-  post: (number: number) => `/posts/${number}`,
+  post: (slug: string) => `/posts/${encodeURIComponent(slug)}`,
   category: (slug: string) => `/category/${slug}`,
 } as const;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostGrid } from "@/features/post/post-grid";
-import { getPosts } from "@/infrastructure/github/github";
+import { getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = {

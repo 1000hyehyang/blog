@@ -3,7 +3,11 @@ import type { NextConfig } from "next";
 import { remoteImagePatterns } from "./src/config/images";
 
 const nextConfig: NextConfig = {
+  // Keep browser tests separate from an already running local editor.
+  distDir: process.env.BLOG_E2E === "1" ? ".next/e2e" : ".next",
+  devIndicators: false,
   allowedDevOrigins: ["127.0.0.1"],
+  outputFileTracingIncludes: { "/*": ["./content/posts/**/*.md"] },
   images: {
     remotePatterns: remoteImagePatterns,
   },

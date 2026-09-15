@@ -10,6 +10,7 @@
 
 # testing
 /coverage
+/.migration-backup/
 /test-results/
 /playwright-report/
 
