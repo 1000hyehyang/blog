@@ -3,10 +3,10 @@ const siteUrl = (
 ).replace(/\/+$/, "");
 
 export const siteConfig = {
-  name: "1000hyehyang Dev Blog",
-  shortName: "Dev Blog",
-  title: "1000hyehyang's Dev Blog",
-  description: "문제를 발견하고, 기술로 해결하며 얻은 경험을 기록합니다.",
+  name: "1000hyehyang Blog",
+  shortName: "Blog",
+  title: "1000hyehyang's Blog",
+  description: "배우고, 만들고, 살아가며 남기는 기록",
   url: siteUrl,
   author: { name: "1000hyehyang" },
   navigation: [

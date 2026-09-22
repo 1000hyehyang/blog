@@ -19,7 +19,7 @@ import {
   ImagePlus,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { siteConfig } from "@/config/site";
 import {
   readDrafts,
@@ -100,9 +100,13 @@ export function PostEditor({
   const [publishMode, setPublishMode] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<"body" | "coverImage" | "galleryImage">("body");
-  const unsupported = hasUnsupportedHtml(initial?.body ?? "");
+  const unsupported = useMemo(
+    () => hasUnsupportedHtml(initial?.body ?? ""),
+    [initial?.body],
+  );
+  const extensions = useMemo(() => editorExtensions(), []);
   const editor = useEditor({
-    extensions: editorExtensions(),
+    extensions,
     content: initial?.body ?? "",
     contentType: "markdown",
     immediatelyRender: false,

@@ -65,7 +65,7 @@ test("local drafts reopen from management, preserve tags and checklist layout, a
   });
   await drawer.getByRole("button", { name: "임시 저장", exact: true }).click();
   await expect(page).toHaveURL(/\/write\?draft=post-/);
-  await page.getByRole("link", { name: "Dev Blog STUDIO" }).click();
+  await page.getByRole("link", { name: "Blog STUDIO" }).click();
   await expect(page).toHaveURL("/manage");
   await page.getByRole("button", { name: "임시 저장", exact: true }).click();
   await expect(
@@ -271,7 +271,7 @@ test("management is separate and authentication preserves the edit destination",
   await page.getByLabel("비밀번호", { exact: true }).fill(testPassword);
   await expect(page).toHaveURL("/write?slug=post-1");
   await expect(page.getByRole("heading", { name: "글 수정" })).toBeAttached();
-  await page.getByRole("link", { name: "Dev Blog STUDIO" }).click();
+  await page.getByRole("link", { name: "Blog STUDIO" }).click();
   await expect(page).toHaveURL("/manage");
   await expect(page.locator("main ul > li")).toHaveCount(6);
   const edit = page.getByRole("link", { name: / 수정$/ }).first();

@@ -49,7 +49,9 @@ describe("featured 포스트 선택", () => {
       category: { name: "Development", slug: "development" },
     });
 
-    expect(getFeaturedPosts([first, second])).toEqual([second, first]);
+    const posts = [first, second];
+    expect(getFeaturedPosts(posts)).toEqual([second, first]);
+    expect(posts).toEqual([first, second]);
   });
 
   it("클라이언트 캐러셀에는 본문을 제외한 미리보기 데이터만 전달한다", () => {

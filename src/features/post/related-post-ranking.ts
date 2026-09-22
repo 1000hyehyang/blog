@@ -46,14 +46,17 @@ function countIntersection(left: Set<string>, right: Set<string>): number {
   return count;
 }
 
-function calculateTitleSimilarity(current: Post, candidate: Post): number {
-  const currentTokens = tokenizeTitle(current.title);
-  const candidateTokens = tokenizeTitle(candidate.title);
+function calculateTitleSimilarity(
+  currentTokens: Set<string>,
+  candidateTitle: string,
+): number {
+  const candidateTokens = tokenizeTitle(candidateTitle);
   const intersectionSize = countIntersection(currentTokens, candidateTokens);
 
   if (intersectionSize === 0) return 0;
 
-  const unionSize = new Set([...currentTokens, ...candidateTokens]).size;
+  const unionSize =
+    currentTokens.size + candidateTokens.size - intersectionSize;
   return intersectionSize / unionSize;
 }
 
@@ -75,45 +78,6 @@ function calculateRecencyScore(
   const decay = 1 + ageInDays / SCORING_RULES.recencyHalfLifeDays;
 
   return SCORING_RULES.recency / decay;
-}
-
-function calculateRelevanceScore(current: Post, candidate: Post): number {
-  const currentCategory = normalizeText(current.category.slug);
-  const candidateCategory = normalizeText(candidate.category.slug);
-  const hasSameCategory =
-    currentCategory.length > 0 && currentCategory === candidateCategory;
-
-  const currentTags = toUniqueNormalizedSet(current.tags);
-  const candidateTags = toUniqueNormalizedSet(candidate.tags);
-  const sharedTagCount = countIntersection(currentTags, candidateTags);
-  const titleSimilarity = calculateTitleSimilarity(current, candidate);
-
-  return (
-    (hasSameCategory ? SCORING_RULES.sameCategory : 0) +
-    sharedTagCount * SCORING_RULES.sharedTag +
-    titleSimilarity * SCORING_RULES.titleSimilarity
-  );
-}
-
-function scorePost(
-  current: Post,
-  candidate: Post,
-  nowTimestamp: number,
-): ScoredPost {
-  const relevanceScore = calculateRelevanceScore(current, candidate);
-  const createdAtTimestamp = parseTimestamp(candidate.createdAt);
-
-  // 관련도 없는 글은 최신순으로 빈 자리만 채운다.
-  const recencyScore =
-    relevanceScore > 0
-      ? calculateRecencyScore(createdAtTimestamp, nowTimestamp)
-      : 0;
-
-  return {
-    post: candidate,
-    totalScore: relevanceScore + recencyScore,
-    createdAtTimestamp,
-  };
 }
 
 function compareTimestampsDescending(
@@ -172,9 +136,36 @@ export function rankRelatedPosts(
   const normalizedLimit = normalizeLimit(limit);
   if (normalizedLimit === 0) return [];
   const nowTimestamp = now.getTime();
+  const currentCategory = normalizeText(current.category.slug);
+  const currentTags = toUniqueNormalizedSet(current.tags);
+  const currentTokens = tokenizeTitle(current.title);
 
   return getCandidates(posts, current)
-    .map((post) => scorePost(current, post, nowTimestamp))
+    .map((post): ScoredPost => {
+      const hasSameCategory =
+        currentCategory.length > 0 &&
+        currentCategory === normalizeText(post.category.slug);
+      const sharedTagCount = countIntersection(
+        currentTags,
+        toUniqueNormalizedSet(post.tags),
+      );
+      const relevanceScore =
+        (hasSameCategory ? SCORING_RULES.sameCategory : 0) +
+        sharedTagCount * SCORING_RULES.sharedTag +
+        calculateTitleSimilarity(currentTokens, post.title) *
+          SCORING_RULES.titleSimilarity;
+      const createdAtTimestamp = parseTimestamp(post.createdAt);
+      // 관련도 없는 글은 최신순으로 빈 자리만 채운다.
+      const recencyScore =
+        relevanceScore > 0
+          ? calculateRecencyScore(createdAtTimestamp, nowTimestamp)
+          : 0;
+      return {
+        post,
+        totalScore: relevanceScore + recencyScore,
+        createdAtTimestamp,
+      };
+    })
     .sort(compareScoredPosts)
     .slice(0, normalizedLimit)
     .map(({ post }) => post);

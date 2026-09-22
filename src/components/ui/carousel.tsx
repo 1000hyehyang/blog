@@ -11,14 +11,11 @@ export type CarouselApi = UseEmblaCarouselType[1];
 
 type CarouselProps = {
   opts?: Parameters<typeof useEmblaCarousel>[0];
-  plugins?: Parameters<typeof useEmblaCarousel>[1];
-  orientation?: "horizontal" | "vertical";
   setApi?: (api: CarouselApi) => void;
 } & React.ComponentProps<"div">;
 
 type CarouselContextValue = {
   carouselRef: ReturnType<typeof useEmblaCarousel>[0];
-  api: ReturnType<typeof useEmblaCarousel>[1];
 };
 
 const CarouselContext = React.createContext<CarouselContextValue | null>(null);
@@ -32,25 +29,8 @@ function useCarouselContext() {
 }
 
 const Carousel = React.forwardRef<HTMLDivElement, CarouselProps>(
-  (
-    {
-      orientation = "horizontal",
-      opts,
-      setApi,
-      plugins,
-      className,
-      children,
-      ...props
-    },
-    ref,
-  ) => {
-    const [carouselRef, api] = useEmblaCarousel(
-      {
-        ...opts,
-        axis: orientation === "horizontal" ? "x" : "y",
-      },
-      plugins,
-    );
+  ({ opts, setApi, className, children, ...props }, ref) => {
+    const [carouselRef, api] = useEmblaCarousel({ ...opts, axis: "x" });
 
     React.useEffect(() => {
       if (!api || !setApi) return;
@@ -58,7 +38,7 @@ const Carousel = React.forwardRef<HTMLDivElement, CarouselProps>(
     }, [api, setApi]);
 
     return (
-      <CarouselContext.Provider value={{ carouselRef, api }}>
+      <CarouselContext.Provider value={{ carouselRef }}>
         <div
           ref={ref}
           className={cn("relative", className)}

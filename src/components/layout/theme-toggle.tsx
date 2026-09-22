@@ -9,12 +9,6 @@ import { usePrefersReducedMotion } from "@/lib/react/use-prefers-reduced-motion"
 
 const TRANSITION_CLASS_NAME = "theme-circle-transition";
 
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => {
-    finished: Promise<void>;
-  };
-};
-
 function useThemeCircleTransition() {
   const { resolvedTheme, setTheme } = useTheme();
   const shouldReduceMotion = usePrefersReducedMotion();
@@ -36,9 +30,7 @@ function useThemeCircleTransition() {
     }
 
     const nextTheme = isDark ? "light" : "dark";
-    const viewTransitionDocument = document as ViewTransitionDocument;
-
-    if (shouldReduceMotion || !viewTransitionDocument.startViewTransition) {
+    if (shouldReduceMotion || !document.startViewTransition) {
       setTheme(nextTheme);
       return;
     }
@@ -54,7 +46,7 @@ function useThemeCircleTransition() {
     };
 
     try {
-      const transition = viewTransitionDocument.startViewTransition(() => {
+      const transition = document.startViewTransition(() => {
         setTheme(nextTheme);
       });
 

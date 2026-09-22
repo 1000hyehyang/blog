@@ -13,10 +13,29 @@ async function getVisibleSearchbox(page: Page) {
 
 test("홈과 주요 탐색 UI를 표시한다", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Dev Blog",
-  );
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Blog");
   await getVisibleSearchbox(page);
+});
+
+test("Featured 캐러셀의 화살표와 페이지 버튼으로 이동한다", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const first = page.getByRole("button", {
+    name: "1번째 featured 포스트 보기",
+    exact: true,
+  });
+  const second = page.getByRole("button", {
+    name: "2번째 featured 포스트 보기",
+    exact: true,
+  });
+  await expect(first).toHaveAttribute("aria-current", "true");
+  await page.getByRole("button", { name: "다음 featured 포스트" }).click();
+  await expect(second).toHaveAttribute("aria-current", "true");
+  await page.getByRole("button", { name: "이전 featured 포스트" }).click();
+  await expect(first).toHaveAttribute("aria-current", "true");
+  await second.click();
+  await expect(second).toHaveAttribute("aria-current", "true");
 });
 
 test("헤더 검색창에서 엔터 시 검색 페이지로 이동한다", async ({ page }) => {

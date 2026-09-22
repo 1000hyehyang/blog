@@ -197,7 +197,7 @@ export async function getPosts(
     sort?: "latest" | "oldest";
   } = {},
 ) {
-  const posts = [...(await getAllPosts(options))];
+  const posts = await getAllPosts(options);
   if (options.sort === "oldest") posts.reverse();
   const start = options.after
     ? Math.max(0, posts.findIndex((p) => p.slug === options.after) + 1)

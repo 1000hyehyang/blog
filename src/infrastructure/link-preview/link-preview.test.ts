@@ -64,7 +64,7 @@ describe("self-hosted link preview", () => {
       title: "Internal post",
       description: "Internal description",
       image: "https://images.example.com/cover.png",
-      siteName: "1000hyehyang Dev Blog",
+      siteName: "1000hyehyang Blog",
     });
     expect(getPost).toHaveBeenCalledWith("20");
     expect(fetchSpy).not.toHaveBeenCalled();

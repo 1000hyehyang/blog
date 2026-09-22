@@ -98,6 +98,26 @@ describe("링크 미리보기 HTML 파싱", () => {
 });
 
 describe("link preview image metadata", () => {
+  it("preserves metadata priority and duplicate image fallback order", () => {
+    const html = `
+      <meta name="twitter:title" content="Twitter title">
+      <meta property="og:title" content="">
+      <meta property="OG:TITLE" content="First OG title">
+      <meta property="og:title" content="Second OG title">
+      <meta name="twitter:image" content="/twitter.png">
+      <meta property="og:image" content="http://127.0.0.1/private.png">
+      <meta property="og:image" content="/first.png">
+      <meta property="og:image" content="/second.png">
+    `;
+
+    expect(
+      parseLinkPreviewHtml(html, new URL("https://example.com/article")),
+    ).toMatchObject({
+      title: "First OG title",
+      image: "https://example.com/first.png",
+    });
+  });
+
   it("prefers Open Graph images and skips unsafe image candidates", () => {
     const html = `
       <meta name="twitter:image" content="https://cdn.example.com/twitter.png">

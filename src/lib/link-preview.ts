@@ -162,29 +162,26 @@ function parseAttributes(tag: string): HtmlAttributes {
   return attributes;
 }
 
-function findMetaContents(html: string, names: string[]): string[] {
-  const entries = (html.match(/<meta\s+[^>]*>/gi) ?? []).map((tag) => {
+function parseMetaContents(html: string): Map<string, string[]> {
+  const contents = new Map<string, string[]>();
+  for (const tag of html.match(/<meta\s+[^>]*>/gi) ?? []) {
     const attributes = parseAttributes(tag);
-    return {
-      name: (
-        attributes.property ??
-        attributes.name ??
-        attributes.itemprop ??
-        ""
-      ).toLowerCase(),
-      content: attributes.content,
-    };
-  });
-
-  return names.flatMap((name) =>
-    entries.flatMap((entry) =>
-      entry.name === name.toLowerCase() && entry.content ? [entry.content] : [],
-    ),
-  );
+    const name = (
+      attributes.property ??
+      attributes.name ??
+      attributes.itemprop ??
+      ""
+    ).toLowerCase();
+    if (!attributes.content) continue;
+    const values = contents.get(name) ?? [];
+    values.push(attributes.content);
+    contents.set(name, values);
+  }
+  return contents;
 }
 
-function findMetaContent(html: string, names: string[]): string | undefined {
-  return findMetaContents(html, names)[0];
+function findMetaContents(contents: Map<string, string[]>, names: string[]) {
+  return names.flatMap((name) => contents.get(name.toLowerCase()) ?? []);
 }
 
 function findDocumentTitle(html: string): string | undefined {
@@ -241,28 +238,25 @@ function findLinkedAsset(
   return undefined;
 }
 
-function findIcon(html: string, pageUrl: URL): string | undefined {
-  return findLinkedAsset(html, pageUrl, "icon");
-}
-
 export function parseLinkPreviewHtml(
   html: string,
   pageUrl: URL,
 ): LinkPreviewMetadata {
+  const meta = parseMetaContents(html);
   const rawTitle =
-    findMetaContent(html, ["og:title", "twitter:title"]) ??
+    findMetaContents(meta, ["og:title", "twitter:title"])[0] ??
     findDocumentTitle(html);
   const rawDescription =
-    findMetaContent(html, [
+    findMetaContents(meta, [
       "og:description",
       "twitter:description",
       "description",
-    ]) ?? findDocumentDescription(html);
+    ])[0] ?? findDocumentDescription(html);
   const title = rawTitle ? normalizeMetadataText(rawTitle, 160) : "";
   const description = rawDescription
     ? normalizeMetadataText(rawDescription, 280)
     : "";
-  const rawSiteName = findMetaContent(html, ["og:site_name"]);
+  const rawSiteName = findMetaContents(meta, ["og:site_name"])[0];
   const siteName = rawSiteName ? normalizeMetadataText(rawSiteName, 80) : "";
 
   return {
@@ -270,7 +264,7 @@ export function parseLinkPreviewHtml(
     description: description || undefined,
     image:
       resolveFirstAssetUrl(
-        findMetaContents(html, [
+        findMetaContents(meta, [
           "og:image:secure_url",
           "og:image:url",
           "og:image",
@@ -280,7 +274,7 @@ export function parseLinkPreviewHtml(
         ]),
         pageUrl,
       ) ?? findLinkedAsset(html, pageUrl, "image_src"),
-    icon: findIcon(html, pageUrl),
+    icon: findLinkedAsset(html, pageUrl, "icon"),
     siteName: siteName || undefined,
   };
 }
