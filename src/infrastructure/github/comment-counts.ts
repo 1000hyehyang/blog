@@ -9,7 +9,6 @@ type DiscussionCounts = {
   reactions: { totalCount: number };
 };
 
-// Comments remain in Giscus; never use Discussion bodies as post content.
 export async function withCommentCounts(
   posts: FilePost[],
 ): Promise<FilePost[]> {
@@ -58,7 +57,7 @@ export async function withCommentCounts(
       if (page.pageInfo.hasNextPage && (!after || cursors.has(after)))
         return posts;
       if (after) cursors.add(after);
-      // ponytail: small comment repository; retain saved counts beyond 1,000 discussions, add a dedicated index then.
+      // Discussion이 1,000개를 넘으면 저장된 댓글 수를 사용한다.
       if (after && discussions.length >= 1000) return posts;
     } while (after);
     return posts.map((post) => {
@@ -77,7 +76,7 @@ export async function withCommentCounts(
       };
     });
   } catch {
-    // A comment-service outage must not take down the articles.
+    // 댓글 조회에 실패해도 글은 표시한다.
     return posts;
   }
 }

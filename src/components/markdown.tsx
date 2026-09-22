@@ -76,7 +76,7 @@ function MarkdownLink({ href, children }: ComponentProps<"a">) {
 
 function MarkdownImage({ src, alt }: ComponentProps<"img">) {
   return (
-    // Markdown 본문은 next/image 허용 목록에 추가할 수 없는 임의의 호스트를 참조할 수 있다.
+    // 본문 이미지는 next/image 허용 목록 밖의 호스트도 사용한다.
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className="markdown-image"

@@ -110,7 +110,7 @@ html.theme-circle-transition::view-transition-new(root) {
   border-color: var(--color-border);
 }
 
-/* 커스텀 스크롤바를 지원하지 않는 브라우저에만 기본 스타일을 적용한다. */
+/* 기본 스크롤바 속성이 WebKit 스타일을 덮어쓰지 않도록 분리한다. */
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-width: thin;
@@ -147,7 +147,7 @@ html.theme-circle-transition::view-transition-new(root) {
 }
 
 html {
-  /* 페이지별 스크롤바 유무에 따른 중앙 콘텐츠의 가로 이동을 막는다. */
+  /* 스크롤바 유무에 따라 콘텐츠가 좌우로 움직이지 않도록 한다. */
   overflow-y: scroll;
 }
 body {
@@ -158,7 +158,7 @@ body {
 }
 
 @media (max-width: 767px) {
-  /* 모바일 주소창 변화와 가로 overflow가 겹칠 때 생기는 레이아웃 흔들림을 막는다. */
+  /* 모바일 주소창 높이가 바뀔 때 가로 넘침을 막는다. */
   html {
     overflow-x: clip;
     overflow-y: auto;

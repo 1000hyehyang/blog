@@ -5,8 +5,7 @@ process.env.LOCAL_CONTENT_PATH = "tests/fixtures/posts";
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
-    // jsdom은 스크롤 기반 등장 애니메이션을 실행할 수 없으므로,
-    // 단위 테스트에서는 reduced motion 경로를 사용해 콘텐츠를 계속 표시한다.
+    // jsdom에서 등장 애니메이션 때문에 콘텐츠가 숨겨지지 않도록 한다.
     matches: query === "(prefers-reduced-motion: reduce)",
     media: query,
     onchange: null,

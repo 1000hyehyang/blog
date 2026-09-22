@@ -65,6 +65,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
             <button
               type="button"
               aria-label="이전 featured 포스트"
+              disabled={!api}
               onClick={() => api?.scrollPrev()}
               className={cn(
                 navButtonClassName,
@@ -76,6 +77,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
             <button
               type="button"
               aria-label="다음 featured 포스트"
+              disabled={!api}
               onClick={() => api?.scrollNext()}
               className={cn(
                 navButtonClassName,
@@ -167,6 +169,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
               key={post.id}
               type="button"
               onClick={() => api?.scrollTo(index)}
+              disabled={!api}
               aria-label={`${index + 1}번째 featured 포스트 보기`}
               aria-current={current === index ? "true" : undefined}
               className={cn(

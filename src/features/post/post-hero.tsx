@@ -6,10 +6,7 @@ type PostHeroProps = {
   post: Post;
 };
 
-/**
- * aspect-ratio와 min-height를 한 요소에 두면 좁은 화면에서 계산된 min-width가
- * 뷰포트를 넘으므로 비율, 최소 높이, 이미지 레이어를 분리한다.
- */
+// 좁은 화면에서 가로로 넘치지 않도록 비율과 최소 높이를 별도 요소에 둔다.
 export function PostHero({ post }: PostHeroProps) {
   return (
     <header className="grid min-h-[260px] grid-cols-1 overflow-hidden rounded-[var(--radius-lg)] bg-muted">

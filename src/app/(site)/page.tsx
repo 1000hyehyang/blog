@@ -15,7 +15,7 @@ import {
 } from "@/features/post/post-queries";
 import { getAllPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
-import { buildBlogJsonLd, serializeJsonLd } from "@/lib/seo";
+import { buildWebsiteJsonLd, serializeJsonLd } from "@/lib/seo";
 
 const RECENT_POSTS_COUNT = 9;
 const RECENT_ART_COUNT = 8;
@@ -40,7 +40,9 @@ export default async function Home() {
     <div className="page-shell">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildBlogJsonLd()) }}
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(buildWebsiteJsonLd()),
+        }}
       />
 
       <HomeHero title={siteConfig.title} description={siteConfig.description} />

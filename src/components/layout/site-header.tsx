@@ -23,7 +23,6 @@ export function SiteHeader() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
 
-  // document.body를 쓰는 포털은 클라이언트 마운트 이후에만 생성한다.
   const mounted = useHydrated();
 
   useEffect(() => {

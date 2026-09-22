@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { PostHeading } from "@/lib/content";
 
 const HEADER_OFFSET = 96;
-// 레이아웃 좌표와 스크롤 좌표 사이에서 발생하는 소수점 반올림 오차를 흡수한다.
+// 스크롤 좌표의 반올림 오차로 이전 제목이 선택되는 것을 막는다.
 const ACTIVE_HEADING_OFFSET = HEADER_OFFSET + 1;
 
 type PostTableOfContentsProps = {

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { resolveExcerpt } from "./excerpt";
 
-// JSON is a YAML subset: strict frontmatter avoids executable MDX and YAML coercion.
 export const slugSchema = z
   .string()
   .min(1)
@@ -56,6 +55,7 @@ export function serializePostFile(value: FilePost) {
 }
 
 export function parsePostFile(source: string, slug: string): FilePost {
+  // YAML의 암묵적 타입 변환을 피하기 위해 메타데이터는 JSON으로 읽는다.
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(source);
   if (!match) throw new Error(`Invalid post frontmatter: ${slug}`);
   const post = postFileSchema.parse({

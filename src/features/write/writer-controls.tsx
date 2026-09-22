@@ -314,7 +314,6 @@ function PinnedCard({
       }
     >
       <span className={styles.pinnedThumbnail}>
-        {/* Stored external URLs are already validated; no image proxy is needed in the writer. */}
         {post.coverImage.src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={post.coverImage.src} alt="" draggable={false} />

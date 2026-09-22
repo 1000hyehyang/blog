@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 import { remoteImagePatterns } from "./src/config/images";
 
 const nextConfig: NextConfig = {
-  // Keep browser tests separate from an already running local editor.
+  // 개발 서버와 E2E 테스트의 빌드 파일을 분리한다.
   distDir: process.env.BLOG_E2E === "1" ? ".next/e2e" : ".next",
   devIndicators: false,
   allowedDevOrigins: ["127.0.0.1"],
@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     staleTimes: {
-      // 웹훅 무효화 이후에도 남을 수 있는 프리패치 RSC의 수명을 제한한다.
+      // 글 수정 후 이전 프리패치 결과가 오래 남지 않도록 제한한다.
       static: 30,
     },
   },

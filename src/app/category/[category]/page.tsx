@@ -21,16 +21,19 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
   const navigation = getCategoryNavigation(category);
-  if (!navigation) return {};
+  if (!navigation) notFound();
+
+  const description = `${siteConfig.name}의 ${navigation.label} 글 모음. ${navigation.tagline}`;
 
   return {
     title: `${navigation.label} 카테고리`,
-    description: navigation.tagline,
+    description,
     alternates: { canonical: routes.category(category) },
     openGraph: {
       type: "website",
+      locale: "ko_KR",
       title: `${navigation.label} 카테고리`,
-      description: navigation.tagline,
+      description,
       url: routes.category(category),
       images: [siteConfig.defaultImage],
       siteName: siteConfig.name,
@@ -38,7 +41,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: `${navigation.label} 카테고리`,
-      description: navigation.tagline,
+      description,
       images: [siteConfig.defaultImage],
     },
   };

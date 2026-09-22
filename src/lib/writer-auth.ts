@@ -75,7 +75,7 @@ export async function verifyWriterPassword(password: string) {
   return timingSafeEqual(derived, Buffer.from(match[2], "hex"));
 }
 
-// ponytail: per-instance throttle; configure Vercel Firewall rate limiting for distributed login protection.
+// 인스턴스별 제한이므로 분산 배포에서는 방화벽의 속도 제한도 필요하다.
 let attempts = 0;
 let resetAt = 0;
 export function allowLoginAttempt(now = Date.now()) {

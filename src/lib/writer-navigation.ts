@@ -1,6 +1,5 @@
 import { slugSchema } from "./content/post-file";
 
-// Only known local destinations may be used after password login.
 export function writerDestination(next?: unknown): string {
   if (typeof next !== "string") return "/manage";
   if (next === "/write" || next === "/manage" || next === "/manage?tab=drafts")

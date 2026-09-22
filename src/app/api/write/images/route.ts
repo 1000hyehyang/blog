@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           validUntil: Date.now() + 5 * 60 * 1000,
         };
       },
-      // The SDK verifies the callback signature; it does not carry the administrator cookie.
+      // 업로드 콜백에는 로그인 쿠키가 없으므로 SDK가 서명을 검증한다.
       onUploadCompleted: async () => {},
     });
     return NextResponse.json(result, {

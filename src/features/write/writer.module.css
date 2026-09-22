@@ -648,7 +648,6 @@
   }
 }
 
-/* Writer controls share the public site's foreground/muted hover palette. */
 .writer button,
 .writer .primary,
 .selectMenu button {

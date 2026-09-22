@@ -23,30 +23,34 @@ export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
   const post = await getPost((await params).slug);
-  if (!post?.published) return {};
+  if (!post?.published) notFound();
 
   const images = [post.coverImage.src || siteConfig.defaultImage];
+  const description = post.excerpt || post.title;
 
   return {
     title: post.title,
-    description: post.excerpt,
+    description,
     keywords: post.tags,
     alternates: { canonical: routes.post(post.slug) },
     openGraph: {
       type: "article",
+      siteName: siteConfig.name,
+      locale: "ko_KR",
       title: post.title,
-      description: post.excerpt,
+      description,
       url: routes.post(post.slug),
       images,
       publishedTime: post.createdAt,
       modifiedTime: resolvePostModifiedAt(post),
-      authors: [siteConfig.author.name],
+      authors: [siteConfig.socialLinks.github],
+      section: post.category.name,
       tags: post.tags,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.excerpt,
+      description,
       images,
     },
   };

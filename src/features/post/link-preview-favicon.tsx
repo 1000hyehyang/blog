@@ -11,7 +11,7 @@ export function LinkPreviewFavicon({ src }: { src?: string }) {
   }
 
   return (
-    // Favicon URLs are discovered dynamically and cannot use a static next/image allowlist.
+    // 외부 페이지의 파비콘은 호스트를 미리 알 수 없다.
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className="link-preview-card__favicon"

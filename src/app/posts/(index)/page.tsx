@@ -7,31 +7,45 @@ import { PostGrid } from "@/features/post/post-grid";
 import { getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
 
-export const metadata: Metadata = {
-  title: "All Posts",
-  description: `${siteConfig.name}의 모든 포스트`,
-  alternates: { canonical: routes.posts },
-  openGraph: {
-    type: "website",
-    title: "All Posts",
-    description: `${siteConfig.name}의 모든 포스트`,
-    url: routes.posts,
-    images: [siteConfig.defaultImage],
-    siteName: siteConfig.name,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "All Posts",
-    description: `${siteConfig.name}의 모든 포스트`,
-    images: [siteConfig.defaultImage],
-  },
+type PostsPageProps = {
+  searchParams: Promise<{ cursor?: string; sort?: string }>;
 };
 
-export default async function PostsPage({
+export async function generateMetadata({
   searchParams,
-}: {
-  searchParams: Promise<{ cursor?: string; sort?: string }>;
-}) {
+}: PostsPageProps): Promise<Metadata> {
+  const query = await searchParams;
+  const params = new URLSearchParams();
+  if (query.cursor) params.set("cursor", query.cursor);
+  if (query.sort === "oldest") params.set("sort", "oldest");
+  const canonical = `${routes.posts}${params.size ? `?${params}` : ""}`;
+
+  return {
+    title: "All Posts",
+    description: `${siteConfig.name}의 모든 포스트`,
+    alternates: { canonical },
+    ...(query.sort === "oldest" && {
+      robots: { index: false, follow: true },
+    }),
+    openGraph: {
+      type: "website",
+      locale: "ko_KR",
+      title: "All Posts",
+      description: `${siteConfig.name}의 모든 포스트`,
+      url: canonical,
+      images: [siteConfig.defaultImage],
+      siteName: siteConfig.name,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "All Posts",
+      description: `${siteConfig.name}의 모든 포스트`,
+      images: [siteConfig.defaultImage],
+    },
+  };
+}
+
+export default async function PostsPage({ searchParams }: PostsPageProps) {
   const query = await searchParams;
   const sort = query.sort === "oldest" ? "oldest" : "latest";
   const result = await getPosts({ first: 12, after: query.cursor, sort });

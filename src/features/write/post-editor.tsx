@@ -291,7 +291,7 @@ export function PostEditor({
   async function save(published: boolean) {
     if (!editor || !start()) return;
     try {
-      // Keep the generated URL on retries, and never rename an existing post.
+      // 저장에 실패해도 재시도할 때 같은 글 주소를 사용한다.
       const slug = allocateSlug();
       const order = pinnedOrder
         .filter(

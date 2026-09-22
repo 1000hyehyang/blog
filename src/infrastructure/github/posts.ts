@@ -139,7 +139,7 @@ export async function getStoredPostsWithSha(
     names = files.filter((f) => f.type === "file").map((f) => String(f.name));
   } else names = await readdir(localPostsPath());
   const posts: { post: FilePost; sha: string }[] = [];
-  // ponytail: small personal blog; batch reads by 8, use a generated index when the collection grows.
+  // GitHub API에 요청이 몰리지 않도록 8개씩 읽는다.
   const slugs = names
     .filter((n) => n.endsWith(".md"))
     .map((n) => n.slice(0, -3));
@@ -165,7 +165,7 @@ export async function getStoredPostsWithSha(
 export async function getStoredPosts(ref?: string): Promise<FilePost[]> {
   return (await getStoredPostsWithSha(ref)).map(({ post }) => post);
 }
-// Cache published content only. Drafts never enter a shared public cache.
+// 비공개 글은 공용 캐시에 넣지 않는다.
 const publishedPosts = unstable_cache(
   async () =>
     withCommentCounts((await getStoredPosts()).filter((p) => p.published)),
@@ -270,7 +270,7 @@ export async function savePost(
     lastEditedAt: previous ? now : null,
   };
   if (ordering) {
-    // Read every precondition from the same immutable commit; never force-push.
+    // 조회 중 브랜치가 바뀌어도 검증 기준은 같은 커밋으로 유지한다.
     const posts = await getStoredPosts(ref);
     const current = pinnedPosts(posts).map((post) => post.slug);
     if (JSON.stringify(current) !== JSON.stringify(ordering.base))

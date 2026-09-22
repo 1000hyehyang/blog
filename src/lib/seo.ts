@@ -4,16 +4,20 @@ import { resolvePostModifiedAt } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 export function absoluteUrl(path: string) {
-  return `${siteConfig.url}${path === "/" ? "" : path}`;
+  return path === "/"
+    ? siteConfig.url
+    : new URL(path, `${siteConfig.url}/`).href;
 }
 
 export function buildPostJsonLd(post: Post) {
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
+    url: absoluteUrl(routes.post(post.slug)),
     headline: post.title,
-    description: post.excerpt,
-    image: post.coverImage.src || absoluteUrl(siteConfig.defaultImage),
+    description: post.excerpt || post.title,
+    image: absoluteUrl(post.coverImage.src || siteConfig.defaultImage),
+    articleSection: post.category.name,
     datePublished: post.createdAt,
     dateModified: resolvePostModifiedAt(post),
     keywords: post.tags.join(", "),
@@ -31,10 +35,10 @@ export function buildPostJsonLd(post: Post) {
   };
 }
 
-export function buildBlogJsonLd() {
+export function buildWebsiteJsonLd() {
   return {
     "@context": "https://schema.org",
-    "@type": "Blog",
+    "@type": "WebSite",
     name: siteConfig.name,
     description: siteConfig.description,
     url: siteConfig.url,
@@ -47,7 +51,7 @@ export function buildBlogJsonLd() {
   };
 }
 
-/** JSON-LD를 script 태그에 안전하게 삽입할 수 있는 문자열로 직렬화한다. */
+// 본문의 </script>가 JSON-LD 태그를 닫지 못하도록 이스케이프한다.
 export function serializeJsonLd(value: object) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
