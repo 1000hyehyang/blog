@@ -14,6 +14,8 @@ type ManagedPost = Pick<
   "slug" | "title" | "category" | "published" | "createdAt" | "lastEditedAt"
 > & { localVersion?: string; sha?: string };
 const MANAGE_PAGE_SIZE = 6;
+const postKey = (post: ManagedPost) =>
+  `${post.localVersion ? "local" : "stored"}:${post.slug}`;
 export function ManagePosts({
   posts,
   initialTab = "published",
@@ -30,8 +32,9 @@ export function ManagePosts({
   const [page, setPage] = useState(1);
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
   const [error, setError] = useState("");
-  const [deleting, setDeleting] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const [removed, setRemoved] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   useEffect(() => {
     function refresh() {
       try {
@@ -49,31 +52,41 @@ export function ManagePosts({
       window.removeEventListener("writer-drafts", refresh);
     };
   }, []);
-  async function removePublished(post: ManagedPost) {
-    if (!post.sha || post.sha === "local" || !confirm("이 글을 삭제할까요?"))
+  async function removePost(post: ManagedPost) {
+    if (post.localVersion) {
+      removeDraft(post.slug, post.localVersion);
       return;
-    setDeleting(post.slug);
+    }
+    if (!post.sha || post.sha === "local") return;
+    const response = await fetch(
+      `/api/write/posts/${encodeURIComponent(post.slug)}`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sha: post.sha }),
+      },
+    );
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.message ?? "글을 삭제하지 못했습니다.");
+    setRemoved((slugs) => [...slugs, post.slug]);
+  }
+  async function removePosts(targets: ManagedPost[], message: string) {
+    if (!targets.length || !confirm(message)) return;
+    setDeleting(true);
     setError("");
     try {
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(post.slug)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sha: post.sha }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message ?? "글을 삭제하지 못했습니다.");
-      setRemoved((slugs) => [...slugs, post.slug]);
-      router.refresh();
+      for (const post of targets) {
+        await removePost(post);
+        setSelected((keys) => keys.filter((key) => key !== postKey(post)));
+      }
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "글을 삭제하지 못했습니다.",
       );
     } finally {
-      setDeleting("");
+      router.refresh();
+      setDeleting(false);
     }
   }
   const all: ManagedPost[] = [
@@ -95,6 +108,12 @@ export function ManagePosts({
       const diff = Date.parse(a.createdAt) - Date.parse(b.createdAt);
       return (sort === "oldest" ? diff : -diff) || a.slug.localeCompare(b.slug);
     });
+  const deletable = filtered.filter(
+    (post) => post.localVersion || (post.sha && post.sha !== "local"),
+  );
+  const selectedPosts = deletable.filter((post) =>
+    selected.includes(postKey(post)),
+  );
   const pages = Math.max(1, Math.ceil(filtered.length / MANAGE_PAGE_SIZE));
   const current = Math.min(page, pages);
   return (
@@ -116,6 +135,7 @@ export function ManagePosts({
             onClick={() => {
               setTab("published");
               setPage(1);
+              setSelected([]);
             }}
           >
             발행됨
@@ -126,6 +146,7 @@ export function ManagePosts({
             onClick={() => {
               setTab("drafts");
               setPage(1);
+              setSelected([]);
             }}
           >
             임시 저장
@@ -144,6 +165,7 @@ export function ManagePosts({
           onChange={(value) => {
             setCategory(value);
             setPage(1);
+            setSelected([]);
           }}
         />
         <WriterSelect
@@ -160,11 +182,57 @@ export function ManagePosts({
         />
       </div>
       {error && <p role="alert">{error}</p>}
+      {filtered.length > 0 && (
+        <div className={styles.managementSelection}>
+          <label>
+            <input
+              type="checkbox"
+              checked={
+                deletable.length > 0 &&
+                selectedPosts.length === deletable.length
+              }
+              disabled={deleting || !deletable.length}
+              onChange={(event) =>
+                setSelected(event.target.checked ? deletable.map(postKey) : [])
+              }
+            />
+            전체 선택
+          </label>
+          <button
+            type="button"
+            disabled={deleting || !selectedPosts.length}
+            onClick={() =>
+              void removePosts(
+                selectedPosts,
+                `선택한 글 ${selectedPosts.length}개를 삭제할까요?`,
+              )
+            }
+          >
+            선택 삭제 ({selectedPosts.length})
+          </button>
+        </div>
+      )}
       <ul className={styles.postList}>
         {filtered
           .slice((current - 1) * MANAGE_PAGE_SIZE, current * MANAGE_PAGE_SIZE)
           .map((post) => (
             <li key={`${post.localVersion ? "local:" : ""}${post.slug}`}>
+              <input
+                type="checkbox"
+                aria-label={`${post.title} 선택`}
+                checked={selected.includes(postKey(post))}
+                disabled={
+                  deleting ||
+                  (!post.localVersion && (!post.sha || post.sha === "local"))
+                }
+                onChange={(event) =>
+                  setSelected((keys) =>
+                    event.target.checked
+                      ? [...keys, postKey(post)]
+                      : keys.filter((key) => key !== postKey(post)),
+                  )
+                }
+              />
               <div className={styles.postSummary}>
                 <div className={styles.postMeta}>
                   <span>{post.published ? "발행됨" : "임시 저장"}</span>
@@ -196,16 +264,10 @@ export function ManagePosts({
                     aria-label={`${post.title} 임시 저장 삭제`}
                     title="삭제"
                     className={styles.editAction}
-                    onClick={() => {
-                      if (!confirm("임시 저장한 글을 삭제할까요?")) return;
-                      try {
-                        removeDraft(post.slug, post.localVersion!);
-                      } catch {
-                        setError(
-                          "임시 저장본이 변경되었습니다. 다시 확인해 주세요.",
-                        );
-                      }
-                    }}
+                    disabled={deleting}
+                    onClick={() =>
+                      void removePosts([post], "임시 저장한 글을 삭제할까요?")
+                    }
                   >
                     <Trash2 size={17} aria-hidden="true" />
                   </button>
@@ -215,8 +277,10 @@ export function ManagePosts({
                     aria-label={`${post.title} 삭제`}
                     title="삭제"
                     className={styles.editAction}
-                    disabled={post.sha === "local" || deleting === post.slug}
-                    onClick={() => void removePublished(post)}
+                    disabled={deleting || !post.sha || post.sha === "local"}
+                    onClick={() =>
+                      void removePosts([post], "이 글을 삭제할까요?")
+                    }
                   >
                     <Trash2 size={17} aria-hidden="true" />
                   </button>
@@ -226,11 +290,16 @@ export function ManagePosts({
           ))}
       </ul>
       {!filtered.length && (
-        <p className={styles.emptyState}>
-          {tab === "drafts"
-            ? "임시 저장한 글이 없습니다."
-            : "게시글이 없습니다."}
-        </p>
+        <div className={styles.emptyState}>
+          {tab === "drafts" ? (
+            <p>임시 저장한 글이 없습니다.</p>
+          ) : (
+            <>
+              <h2>아직 발행한 포스트가 없어요</h2>
+              <p>새 글을 작성해 보세요.</p>
+            </>
+          )}
+        </div>
       )}
       <nav className={styles.pagination} aria-label="글 목록 페이지">
         <button

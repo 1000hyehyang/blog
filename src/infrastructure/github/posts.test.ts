@@ -11,6 +11,7 @@ import {
   savePost,
   deletePost,
   getStoredPosts,
+  getStoredPostsWithSha,
 } from "./posts";
 
 vi.mock("server-only", () => ({}));
@@ -98,6 +99,32 @@ describe("Markdown store", () => {
       async () => new Response(null, { status: 404 }),
     );
     await expect(getStoredPosts()).rejects.toMatchObject({ status: 503 });
+  });
+  it("treats a missing posts directory on an existing branch as an empty blog", async () => {
+    for (const [key, value] of Object.entries({
+      CONTENT_SOURCE: "github",
+      GITHUB_OWNER: "owner",
+      GITHUB_REPO: "repo",
+      GITHUB_TOKEN: "test",
+      GITHUB_CONTENT_BRANCH: "content",
+    }))
+      vi.stubEnv(key, value);
+    const fetchMock = vi.fn(async (url: string) =>
+      url.includes("/git/ref/heads/content")
+        ? Response.json({ object: { sha: "a".repeat(40) } })
+        : new Response(null, { status: 404 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await getStoredPostsWithSha()).toEqual([]);
+    expect(await getAllPosts()).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/git/ref/heads/content"),
+      expect.any(Object),
+    );
+  });
+  it("treats a missing local posts directory as empty", async () => {
+    vi.stubEnv("LOCAL_CONTENT_PATH", "tests/fixtures/no-posts-directory");
+    expect(await getStoredPostsWithSha()).toEqual([]);
   });
   it("writes only the chosen slug with the supplied SHA and preserves immutable metadata", async () => {
     vi.stubEnv("CONTENT_SOURCE", "github");

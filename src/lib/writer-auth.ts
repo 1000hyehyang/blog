@@ -22,12 +22,13 @@ export function writerConfigured() {
   );
 }
 export function sameOrigin(request: Request) {
-  const expected = process.env.WRITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL;
-  if (!expected && process.env.NODE_ENV === "production") return false;
+  const expected =
+    process.env.NODE_ENV === "production"
+      ? process.env.WRITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL
+      : request.url;
+  if (!expected) return false;
   try {
-    return (
-      request.headers.get("origin") === new URL(expected || request.url).origin
-    );
+    return request.headers.get("origin") === new URL(expected).origin;
   } catch {
     return false;
   }

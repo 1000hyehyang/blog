@@ -87,10 +87,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
           }
         />
       ) : (
-        <EmptyState
-          title="포스트가 없습니다"
-          description="표시할 포스트를 찾지 못했습니다."
-        />
+        <EmptyState />
       )}
       {result.pageInfo.hasNextPage && result.pageInfo.endCursor && (
         <div className="mt-14 text-center">

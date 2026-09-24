@@ -71,10 +71,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <PostGrid posts={posts} eagerImageSource={eagerImageSource} />
         )
       ) : (
-        <EmptyState
-          title="포스트가 없습니다"
-          description="이 카테고리에는 아직 공개된 포스트가 없습니다."
-        />
+        <EmptyState />
       )}
     </div>
   );

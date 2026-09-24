@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 import { remoteImagePatterns } from "./src/config/images";
 
 const nextConfig: NextConfig = {
-  // 개발 서버와 E2E 테스트의 빌드 파일을 분리한다.
   distDir: process.env.BLOG_E2E === "1" ? ".next/e2e" : ".next",
   devIndicators: false,
   allowedDevOrigins: ["127.0.0.1"],

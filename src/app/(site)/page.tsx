@@ -68,10 +68,7 @@ export default async function Home() {
         {recent.length ? (
           <PostGrid posts={recent} eagerImageSource={eagerImageSource} />
         ) : (
-          <EmptyState
-            title="아직 포스트가 없습니다"
-            description="첫 글을 발행해 보세요."
-          />
+          <EmptyState />
         )}
       </section>
 

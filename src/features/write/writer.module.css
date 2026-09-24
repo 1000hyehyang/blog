@@ -464,6 +464,24 @@
 .postList {
   border-top: 1px solid var(--border);
 }
+.managementSelection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+}
+.managementSelection label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.managementSelection input,
+.postList input {
+  flex-shrink: 0;
+  accent-color: var(--foreground);
+}
 .postList li {
   display: flex;
   justify-content: space-between;
@@ -473,6 +491,7 @@
   border-bottom: 1px solid var(--border);
 }
 .postSummary {
+  flex: 1;
   min-width: 0;
 }
 .postMeta {
@@ -529,6 +548,13 @@
   gap: 1rem;
   padding: 5rem 0;
   color: var(--muted-foreground);
+}
+.emptyState h2 {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.emptyState h2 + p {
+  font-size: 0.875rem;
 }
 .loginPage {
   display: grid;

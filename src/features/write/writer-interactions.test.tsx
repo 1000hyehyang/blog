@@ -172,3 +172,38 @@ it("deletes a published post with its current SHA", async () => {
   expect(screen.queryByText("발행된 글")).not.toBeInTheDocument();
   expect(refresh).toHaveBeenCalled();
 });
+
+it("selects and deletes all filtered posts across pages with one confirmation", async () => {
+  const fetchMock = vi.fn(async () => Response.json({ deleted: true }));
+  const confirmMock = vi.fn().mockReturnValue(true);
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("confirm", confirmMock);
+  render(
+    <ManagePosts
+      posts={Array.from({ length: 7 }, (_, index) => ({
+        slug: `post-${index}`,
+        title: `글 ${index}`,
+        category: { name: "Development", slug: "development" },
+        published: true,
+        createdAt: "2026-01-01T00:00:00Z",
+        lastEditedAt: null,
+        sha: "a".repeat(40),
+      }))}
+    />,
+  );
+  fireEvent.click(screen.getByLabelText("전체 선택"));
+  fireEvent.click(screen.getByRole("button", { name: "선택 삭제 (7)" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(7));
+  await screen.findByText("아직 발행한 포스트가 없어요");
+  expect(confirmMock).toHaveBeenCalledTimes(1);
+  expect(refresh).toHaveBeenCalled();
+});
+
+it("shows the management page's empty state when no posts remain", () => {
+  render(<ManagePosts posts={[]} />);
+  expect(screen.getByText("아직 발행한 포스트가 없어요")).toBeInTheDocument();
+  expect(screen.getByText("새 글을 작성해 보세요.")).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "글 관리 0" }),
+  ).toBeInTheDocument();
+});

@@ -51,6 +51,9 @@ function config() {
     token: GITHUB_TOKEN,
   };
 }
+function branchPath() {
+  return config().branch.split("/").map(encodeURIComponent).join("/");
+}
 async function request(endpoint: string, init: RequestInit = {}) {
   const { base, token } = config();
   const response = await fetch(`${base}${endpoint}`, {
@@ -128,16 +131,26 @@ export async function getStoredPostsWithSha(
       `${endpoint()}?ref=${encodeURIComponent(ref ?? config().branch)}`,
       { signal },
     );
-    if (response.status === 404)
-      throw new PostStoreError(
-        "콘텐츠 브랜치에 content/posts를 먼저 배포해 주세요.",
-        503,
-      );
+    if (response.status === 404) {
+      const refResponse = await request(`/git/ref/heads/${branchPath()}`, {
+        signal,
+      });
+      if (refResponse.status === 404)
+        throw new PostStoreError("콘텐츠 브랜치를 찾을 수 없습니다.", 503);
+      return [];
+    }
     const files = await response.json();
     if (!Array.isArray(files) || files.length >= 1000)
       throw new PostStoreError("콘텐츠 목록을 안전하게 읽을 수 없습니다.", 502);
     names = files.filter((f) => f.type === "file").map((f) => String(f.name));
-  } else names = await readdir(localPostsPath());
+  } else {
+    try {
+      names = await readdir(localPostsPath());
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      names = [];
+    }
+  }
   const posts: { post: FilePost; sha: string }[] = [];
   // GitHub API에 요청이 몰리지 않도록 8개씩 읽는다.
   const slugs = names
@@ -193,11 +206,10 @@ export async function getPosts(
   options: {
     first?: number;
     after?: string;
-    category?: string;
     sort?: "latest" | "oldest";
   } = {},
 ) {
-  const posts = await getAllPosts(options);
+  const posts = await getAllPosts();
   if (options.sort === "oldest") posts.reverse();
   const start = options.after
     ? Math.max(0, posts.findIndex((p) => p.slug === options.after) + 1)
@@ -232,13 +244,8 @@ export async function savePost(
   if (fields.published && !fields.body.trim())
     throw new PostStoreError("본문을 입력해 주세요.", 400);
   const ordering = pinned ? pinnedOrderSchema.parse(pinned) : undefined;
-  const branchPath = config()
-    .branch.split("/")
-    .map(encodeURIComponent)
-    .join("/");
-  const head = ordering
-    ? await gitJson(`/git/ref/heads/${branchPath}`)
-    : undefined;
+  const branch = branchPath();
+  const head = ordering ? await gitJson(`/git/ref/heads/${branch}`) : undefined;
   const ref = head?.object?.sha;
   if (ordering && !/^[a-f0-9]{40}$/.test(ref ?? ""))
     throw new PostStoreError("콘텐츠 브랜치를 확인할 수 없습니다.", 502);
@@ -331,7 +338,7 @@ export async function savePost(
     });
     if (!/^[a-f0-9]{40}$/.test(commit.sha ?? ""))
       throw new PostStoreError("저장할 커밋을 확인할 수 없습니다.", 502);
-    await gitJson(`/git/refs/heads/${branchPath}`, {
+    await gitJson(`/git/refs/heads/${branch}`, {
       method: "PATCH",
       body: JSON.stringify({ sha: commit.sha, force: false }),
     });

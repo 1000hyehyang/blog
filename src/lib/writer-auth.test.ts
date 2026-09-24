@@ -86,6 +86,40 @@ describe("writer trust boundaries", () => {
     expect(sameOrigin(new Request("https://blog.example"))).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+  it("checks the request origin in development and the configured origin in production", () => {
+    const request = new Request("http://localhost:3001/api/write/session", {
+      method: "POST",
+      headers: { origin: "http://localhost:3001" },
+    });
+    vi.stubEnv("WRITE_ORIGIN", "http://localhost:3000");
+    vi.stubEnv("NODE_ENV", "development");
+    expect(sameOrigin(request)).toBe(true);
+    expect(
+      sameOrigin(
+        new Request(request.url, {
+          headers: { origin: "http://localhost:3000" },
+        }),
+      ),
+    ).toBe(false);
+    vi.stubEnv("NODE_ENV", "production");
+    expect(sameOrigin(request)).toBe(false);
+    expect(
+      sameOrigin(
+        new Request(request.url, {
+          headers: { origin: "http://localhost:3000" },
+        }),
+      ),
+    ).toBe(true);
+    vi.stubEnv("NODE_ENV", "development");
+    expect(
+      sameOrigin(
+        new Request(request.url, {
+          headers: { origin: "http://attacker.example" },
+        }),
+      ),
+    ).toBe(false);
+    expect(sameOrigin(new Request(request.url))).toBe(false);
+  });
   it("sets HttpOnly cookies only after password verification and clears them on logout", async () => {
     const request = (value: string) =>
       new Request("https://blog.example/api/write/session", {

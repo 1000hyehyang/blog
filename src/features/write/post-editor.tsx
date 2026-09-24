@@ -31,7 +31,6 @@ import { nextPostSlug, type FilePost } from "@/lib/content/post-file";
 import { motion } from "framer-motion";
 import { PinnedCards, WriterCheckbox, WriterSelect } from "./writer-controls";
 import type { PinnedPost } from "./pinned-posts";
-import { DitherLoader } from "@/components/dither-loader";
 import { TagInput } from "./tag-input";
 import { IconButton } from "./icon-button";
 import { EditorBodySkeleton } from "./writer-skeleton";
@@ -621,16 +620,12 @@ export function PostEditor({
 
       <footer className={styles.bottomBar}>
         <p role="status" aria-live="polite" className={styles.saveStatus}>
-          {busy ? (
-            <DitherLoader label="저장 중" />
-          ) : (
-            message ||
+          {message ||
             (!writable
               ? "현재 발행할 수 없습니다"
               : dirty
                 ? "저장하지 않은 변경사항"
-                : "모든 변경사항 저장됨")
-          )}
+                : "모든 변경사항 저장됨")}
         </p>
         <div className={styles.bottomActions}>
           <button
@@ -764,7 +759,7 @@ export function PostEditor({
           </fieldset>
         </motion.div>
         <p role="status" className={styles.dialogStatus}>
-          {busy ? <DitherLoader label="저장 중" /> : message}
+          {message}
         </p>
         <div className={styles.dialogActions}>
           {initial && sha && (
