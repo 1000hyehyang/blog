@@ -37,6 +37,7 @@ import { EditorBodySkeleton } from "./writer-skeleton";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
+import { StatefulButton, type ButtonState } from "./stateful-button";
 
 const emptyFields = {
   title: "",
@@ -58,6 +59,7 @@ type Props = {
   postSlugs?: string[];
   draft?: LocalDraft;
 };
+type Action = "publish" | "draft" | "delete";
 const imageTypes: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
@@ -95,6 +97,10 @@ export function PostEditor({
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [message, setMessage] = useState("");
+  const [feedback, setFeedback] = useState<{
+    action: Action;
+    state: ButtonState;
+  } | null>(null);
   const publishDialog = useRef<HTMLDialogElement>(null);
   const [publishMode, setPublishMode] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -195,16 +201,24 @@ export function PostEditor({
     };
   }, [dirty, busy]);
 
-  function start() {
+  function start(action?: Action) {
     if (busyRef.current) return false;
     busyRef.current = true;
     setBusy(true);
     setMessage("");
+    setFeedback(action ? { action, state: "loading" } : null);
     return true;
   }
   function finish() {
     busyRef.current = false;
     setBusy(false);
+  }
+  async function showSuccess(action: Action) {
+    setFeedback({ action, state: "success" });
+    await new Promise((resolve) => setTimeout(resolve, 450));
+  }
+  function buttonState(action: Action): ButtonState {
+    return feedback?.action === action ? feedback.state : "idle";
   }
   function update(values: Partial<typeof fields>) {
     setFields((current) => ({ ...current, ...values }));
@@ -288,7 +302,7 @@ export function PostEditor({
   }
 
   async function save(published: boolean) {
-    if (!editor || !start()) return;
+    if (!editor || !start("publish")) return;
     try {
       // 저장에 실패해도 재시도할 때 같은 글 주소를 사용한다.
       const slug = allocateSlug();
@@ -326,10 +340,12 @@ export function PostEditor({
           );
         }
       }
+      await showSuccess("publish");
       publishDialog.current?.close();
       router.replace("/manage");
       router.refresh();
     } catch (error) {
+      setFeedback({ action: "publish", state: "error" });
       setMessage(
         error instanceof Error
           ? error.message
@@ -339,8 +355,8 @@ export function PostEditor({
       finish();
     }
   }
-  function storeDraft() {
-    if (!editor || !start()) return;
+  async function storeDraft() {
+    if (!editor || !start("draft")) return;
     try {
       const slug = allocateSlug();
       const now = new Date().toISOString();
@@ -367,9 +383,11 @@ export function PostEditor({
       setDraftVersion(now);
       setDirty(false);
       setMessage("임시 저장했습니다.");
+      await showSuccess("draft");
       publishDialog.current?.close();
       router.replace(`/write?draft=${encodeURIComponent(slug)}`);
     } catch (error) {
+      setFeedback({ action: "draft", state: "error" });
       setMessage(
         error instanceof Error
           ? error.message
@@ -380,7 +398,12 @@ export function PostEditor({
     }
   }
   async function remove() {
-    if (!initial || !sha || !window.confirm("이 글을 삭제할까요?") || !start())
+    if (
+      !initial ||
+      !sha ||
+      !window.confirm("이 글을 삭제할까요?") ||
+      !start("delete")
+    )
       return;
     try {
       const response = await fetch(
@@ -394,10 +417,12 @@ export function PostEditor({
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setDirty(false);
+      await showSuccess("delete");
       publishDialog.current?.close();
       router.replace("/manage");
       router.refresh();
     } catch (error) {
+      setFeedback({ action: "delete", state: "error" });
       setMessage(
         error instanceof Error ? error.message : "삭제에 실패했습니다.",
       );
@@ -421,6 +446,7 @@ export function PostEditor({
   }
   function openPublish(published: boolean) {
     setPublishMode(published);
+    setFeedback(null);
     publishDialog.current?.showModal();
   }
   const formattingDisabled = !editor || unsupported;
@@ -715,6 +741,7 @@ export function PostEditor({
               <div className={styles.pinnedHeading}>
                 <h3 id="pinned-heading">Pinned</h3>
                 <WriterCheckbox
+                  ariaLabel="Pinned"
                   checked={fields.featured}
                   disabled={busy}
                   onChange={(checked) => {
@@ -763,18 +790,36 @@ export function PostEditor({
         </p>
         <div className={styles.dialogActions}>
           {initial && sha && (
-            <button type="button" disabled={busy || !writable} onClick={remove}>
-              삭제
-            </button>
+            <StatefulButton
+              type="button"
+              state={buttonState("delete")}
+              label="삭제"
+              loadingLabel="삭제 중"
+              successLabel="삭제 완료"
+              disabled={busy || !writable}
+              onClick={remove}
+            />
           )}
-          <button
+          <StatefulButton
             className={styles.primary}
             type="button"
             onClick={() => (publishMode ? save(true) : storeDraft())}
             disabled={busy || (publishMode && !writable) || !editor}
-          >
-            {publishMode ? (sha ? "수정 완료" : "발행") : "임시 저장"}
-          </button>
+            state={buttonState(publishMode ? "publish" : "draft")}
+            label={
+              publishMode ? (initialSha ? "수정 완료" : "발행") : "임시 저장"
+            }
+            loadingLabel={
+              publishMode ? (initialSha ? "수정 중" : "발행 중") : "저장 중"
+            }
+            successLabel={
+              publishMode
+                ? initialSha
+                  ? "수정 완료"
+                  : "발행 완료"
+                : "저장 완료"
+            }
+          />
         </div>
       </motion.dialog>
     </div>

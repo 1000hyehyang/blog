@@ -40,15 +40,18 @@ export function WriterSelect({
     const rect = trigger.current!.getBoundingClientRect();
     setActive(Math.max(0, index));
     const below = window.innerHeight - rect.bottom;
+    const opensUp =
+      below < Math.min(options.length * 42 + 8, 320) && rect.top > below;
+    const width = Math.min(Math.max(rect.width, 180), window.innerWidth - 16);
     setPosition({
       position: "fixed",
-      left: Math.min(rect.left, window.innerWidth - 200),
-      width: Math.max(rect.width, 180),
-      ...(below > 250
-        ? { top: rect.bottom + 8, maxHeight: below - 20 }
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+      width,
+      ...(!opensUp
+        ? { top: rect.bottom, maxHeight: Math.max(0, below - 20) }
         : {
-            bottom: window.innerHeight - rect.top + 8,
-            maxHeight: rect.top - 20,
+            bottom: window.innerHeight - rect.top,
+            maxHeight: Math.max(0, rect.top - 20),
           }),
     });
   }
@@ -80,9 +83,11 @@ export function WriterSelect({
     if (open)
       list.current?.children[active]?.scrollIntoView?.({ block: "nearest" });
   }, [active, open]);
+  const opensUp = position?.bottom !== undefined;
+  const edge = open ? [10, 0, 10] : 10;
   return (
     <>
-      <button
+      <motion.button
         ref={trigger}
         type="button"
         role="combobox"
@@ -93,6 +98,18 @@ export function WriterSelect({
         aria-activedescendant={open ? `${id}-${active}` : undefined}
         disabled={disabled}
         className={styles.selectTrigger}
+        initial={false}
+        animate={
+          reduced
+            ? undefined
+            : {
+                borderTopLeftRadius: opensUp ? edge : 10,
+                borderTopRightRadius: opensUp ? edge : 10,
+                borderBottomLeftRadius: opensUp ? 10 : edge,
+                borderBottomRightRadius: opensUp ? 10 : edge,
+              }
+        }
+        transition={{ duration: reduced ? 0 : 0.45, times: [0, 0.4, 1] }}
         onClick={() => (open ? setPosition(null) : expand())}
         onBlur={() => setPosition(null)}
         onKeyDown={(event) => {
@@ -145,7 +162,7 @@ export function WriterSelect({
         >
           <ChevronDown size={15} />
         </motion.span>
-      </button>
+      </motion.button>
       {typeof document !== "undefined" &&
         createPortal(
           <AnimatePresence>
@@ -156,14 +173,38 @@ export function WriterSelect({
                 role="listbox"
                 aria-label={label}
                 className={styles.selectMenu}
-                style={position!}
-                initial={{ opacity: 0, y: reduced ? 0 : -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: reduced ? 0 : 0.16 }}
+                style={{
+                  ...position,
+                  transformOrigin: opensUp ? "bottom" : "top",
+                }}
+                initial={
+                  reduced ? { opacity: 0 } : { opacity: 0, scaleY: 0.75, y: 0 }
+                }
+                animate={
+                  reduced
+                    ? { opacity: 1 }
+                    : { opacity: 1, scaleY: 1, y: opensUp ? -8 : 8 }
+                }
+                exit={
+                  reduced ? { opacity: 0 } : { opacity: 0, scaleY: 0.85, y: 0 }
+                }
+                transition={
+                  reduced
+                    ? { duration: 0 }
+                    : {
+                        opacity: { duration: 0.16 },
+                        scaleY: { type: "spring", stiffness: 420, damping: 32 },
+                        y: {
+                          type: "spring",
+                          stiffness: 420,
+                          damping: 32,
+                          delay: 0.08,
+                        },
+                      }
+                }
               >
                 {options.map((option, index) => (
-                  <button
+                  <motion.button
                     key={option.value}
                     id={`${id}-${index}`}
                     type="button"
@@ -171,13 +212,25 @@ export function WriterSelect({
                     aria-selected={option.value === value}
                     tabIndex={-1}
                     data-active={index === active}
+                    initial={
+                      reduced
+                        ? false
+                        : { opacity: 0, y: -6, filter: "blur(3px)" }
+                    }
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                      duration: reduced ? 0 : 0.18,
+                      delay: reduced ? 0 : 0.05 + index * 0.035,
+                    }}
                     onPointerMove={() => setActive(index)}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => select(index)}
                   >
                     <span>{option.label}</span>
-                    {option.value === value && <Check size={16} />}
-                  </button>
+                    {option.value === value && (
+                      <Check size={16} aria-hidden="true" />
+                    )}
+                  </motion.button>
                 ))}
               </motion.div>
             )}
@@ -192,36 +245,70 @@ export function WriterCheckbox({
   checked,
   onChange,
   disabled,
+  indeterminate = false,
+  label,
+  ariaLabel,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  indeterminate?: boolean;
+  label?: string;
+  ariaLabel?: string;
 }) {
   const reduced = useReducedMotion();
+  const marked = checked || indeterminate;
   return (
     <label className={styles.checkbox}>
       <input
         type="checkbox"
-        aria-label="Pinned"
+        aria-label={ariaLabel}
+        aria-checked={indeterminate ? "mixed" : checked}
+        ref={(node) => {
+          if (node) node.indeterminate = indeterminate;
+        }}
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
       />
-      <span className={styles.checkboxBox} aria-hidden="true">
-        <svg viewBox="0 0 20 20">
-          <motion.path
-            d="m4 10 4 4 8-8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={false}
-            animate={{ pathLength: checked ? 1 : 0, opacity: checked ? 1 : 0 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
-          />
-        </svg>
+      <span
+        className={styles.checkboxBox}
+        data-checked={marked}
+        aria-hidden="true"
+      >
+        <AnimatePresence initial={false}>
+          {marked && (
+            <motion.svg
+              key={indeterminate ? "mixed" : "checked"}
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={reduced ? false : { opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={
+                reduced
+                  ? { opacity: 0 }
+                  : { opacity: 0, scale: 0.5, filter: "blur(4px)" }
+              }
+              transition={{ duration: reduced ? 0 : 0.16 }}
+            >
+              <motion.path
+                d={indeterminate ? "M4 10h12" : "m4 10 4 4 8-8"}
+                initial={{ pathLength: reduced ? 1 : 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{
+                  duration: reduced ? 0 : indeterminate ? 0.2 : 0.3,
+                  delay: reduced ? 0 : 0.04,
+                }}
+              />
+            </motion.svg>
+          )}
+        </AnimatePresence>
       </span>
+      {label && <span>{label}</span>}
     </label>
   );
 }

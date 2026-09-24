@@ -36,7 +36,7 @@
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--background);
   color: var(--foreground);
   padding: 0.65rem 1rem;
@@ -50,6 +50,34 @@
 .writer button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.statefulButton {
+  position: relative;
+}
+.writer .statefulButton[data-state="loading"],
+.writer .statefulButton[data-state="success"] {
+  opacity: 1;
+}
+.writer .statefulButton[data-state="loading"] {
+  cursor: progress;
+}
+.writer .statefulButton[data-state="success"] {
+  cursor: default;
+}
+.buttonContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.buttonSpinner {
+  animation: button-spin 0.8s linear infinite;
+}
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .writer .primary {
   background: var(--foreground);
@@ -329,7 +357,6 @@
   margin-left: auto;
 }
 .bottomActions button {
-  border-radius: 999px;
   min-width: 7rem;
   padding: 0.8rem 1.5rem;
 }
@@ -471,16 +498,6 @@
   gap: 1rem;
   margin-bottom: 1rem;
   font-size: 0.8rem;
-}
-.managementSelection label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.managementSelection input,
-.postList input {
-  flex-shrink: 0;
-  accent-color: var(--foreground);
 }
 .postList li {
   display: flex;
@@ -691,6 +708,7 @@
 .writer .selectTrigger {
   justify-content: space-between;
   min-width: 6rem;
+  border-radius: var(--radius-md);
 }
 .category .selectTrigger {
   width: 100%;
@@ -720,10 +738,12 @@
   font: inherit;
   font-size: 0.85rem;
   text-align: left;
+  color: var(--muted-foreground);
 }
 .selectMenu button[data-active="true"],
 .selectMenu button[aria-selected="true"] {
   background: var(--muted);
+  color: var(--foreground);
 }
 .pinnedSection {
   display: grid;
@@ -763,23 +783,28 @@
 .checkboxBox {
   display: grid;
   place-items: center;
-  width: 1.2rem;
-  height: 1.2rem;
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
   transition:
     background-color 180ms,
     border-color 180ms,
-    transform 180ms;
+    transform 280ms cubic-bezier(0.2, 1.5, 0.3, 1);
 }
 .checkboxBox svg {
   width: 1rem;
   height: 1rem;
 }
-.checkbox input:checked + .checkboxBox {
+.checkboxBox[data-checked="true"] {
   background: var(--foreground);
   color: var(--background);
   border-color: var(--foreground);
+}
+.checkbox input:focus-visible + .checkboxBox {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 .checkbox input:disabled ~ span {
   opacity: 0.4;
@@ -881,6 +906,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .buttonSpinner {
+    animation: none;
+  }
   .writer button,
   .writer .primary,
   .selectMenu button,

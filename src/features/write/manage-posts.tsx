@@ -6,7 +6,7 @@ import { readDrafts, removeDraft, type LocalDraft } from "./local-drafts";
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { FilePost } from "@/lib/content/post-file";
 import { siteConfig } from "@/config/site";
-import { WriterSelect } from "./writer-controls";
+import { WriterCheckbox, WriterSelect } from "./writer-controls";
 import styles from "./writer.module.css";
 
 type ManagedPost = Pick<
@@ -184,20 +184,20 @@ export function ManagePosts({
       {error && <p role="alert">{error}</p>}
       {filtered.length > 0 && (
         <div className={styles.managementSelection}>
-          <label>
-            <input
-              type="checkbox"
-              checked={
-                deletable.length > 0 &&
-                selectedPosts.length === deletable.length
-              }
-              disabled={deleting || !deletable.length}
-              onChange={(event) =>
-                setSelected(event.target.checked ? deletable.map(postKey) : [])
-              }
-            />
-            전체 선택
-          </label>
+          <WriterCheckbox
+            label="전체 선택"
+            checked={
+              deletable.length > 0 && selectedPosts.length === deletable.length
+            }
+            indeterminate={
+              selectedPosts.length > 0 &&
+              selectedPosts.length < deletable.length
+            }
+            disabled={deleting || !deletable.length}
+            onChange={(checked) =>
+              setSelected(checked ? deletable.map(postKey) : [])
+            }
+          />
           <button
             type="button"
             disabled={deleting || !selectedPosts.length}
@@ -217,17 +217,16 @@ export function ManagePosts({
           .slice((current - 1) * MANAGE_PAGE_SIZE, current * MANAGE_PAGE_SIZE)
           .map((post) => (
             <li key={`${post.localVersion ? "local:" : ""}${post.slug}`}>
-              <input
-                type="checkbox"
-                aria-label={`${post.title} 선택`}
+              <WriterCheckbox
+                ariaLabel={`${post.title} 선택`}
                 checked={selected.includes(postKey(post))}
                 disabled={
                   deleting ||
                   (!post.localVersion && (!post.sha || post.sha === "local"))
                 }
-                onChange={(event) =>
+                onChange={(checked) =>
                   setSelected((keys) =>
-                    event.target.checked
+                    checked
                       ? [...keys, postKey(post)]
                       : keys.filter((key) => key !== postKey(post)),
                   )

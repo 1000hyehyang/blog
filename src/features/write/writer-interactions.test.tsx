@@ -10,6 +10,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { TagInput } from "./tag-input";
 import { WriterLogin } from "./writer-login";
 import { ManagePosts } from "./manage-posts";
+import { WriterSelect } from "./writer-controls";
 import {
   saveDraft,
   readDraft,
@@ -57,6 +58,33 @@ it("commits comma-separated tag chips, removes them and unpacks the last chip wi
   expect(
     screen.getByRole("button", { name: "한글 태그 삭제" }),
   ).toBeInTheDocument();
+});
+
+it("opens the select above the viewport edge and keeps keyboard selection", () => {
+  const onChange = vi.fn();
+  render(
+    <WriterSelect
+      label="카테고리"
+      value="next"
+      options={[
+        { value: "next", label: "Next.js" },
+        { value: "remix", label: "Remix" },
+        { value: "vite", label: "Vite" },
+      ]}
+      onChange={onChange}
+    />,
+  );
+  const trigger = screen.getByRole("combobox", { name: "카테고리" });
+  vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(20, window.innerHeight - 40, 180, 30),
+  );
+  fireEvent.click(trigger);
+  expect(screen.getByRole("listbox", { name: "카테고리" }).style.bottom).toBe(
+    "40px",
+  );
+  fireEvent.keyDown(trigger, { key: "End" });
+  fireEvent.keyDown(trigger, { key: "Enter" });
+  expect(onChange).toHaveBeenCalledWith("vite");
 });
 
 it("uses seven masked password slots, posts to the existing session API and retains retry access", async () => {
@@ -190,6 +218,11 @@ it("selects and deletes all filtered posts across pages with one confirmation", 
         sha: "a".repeat(40),
       }))}
     />,
+  );
+  fireEvent.click(screen.getByRole("checkbox", { name: "글 0 선택" }));
+  expect(screen.getByRole("checkbox", { name: "전체 선택" })).toHaveAttribute(
+    "aria-checked",
+    "mixed",
   );
   fireEvent.click(screen.getByLabelText("전체 선택"));
   fireEvent.click(screen.getByRole("button", { name: "선택 삭제 (7)" }));

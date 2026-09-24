@@ -121,7 +121,7 @@ describe("writer data preservation", () => {
       base: ["first", "second"],
       order: ["first", url.split("/").at(-1)],
     });
-    fireEvent.click(screen.getByRole("button", { name: "발행" }));
+    fireEvent.click(await screen.findByRole("button", { name: "다시 시도" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(fetchMock.mock.calls[1][0]).toBe(url);
   });
@@ -233,6 +233,39 @@ describe("writer data preservation", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "발행" }));
+    expect(
+      await screen.findByRole("button", { name: "발행 완료" }),
+    ).toBeDisabled();
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
+  });
+  it("shows feedback only on the clicked action button", async () => {
+    let respond!: (response: Response) => void;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>((resolve) => (respond = resolve))),
+    );
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+
+    const drawer = screen.getByRole("dialog", { name: "발행 설정" });
+    expect(
+      await within(drawer).findByRole("button", { name: "수정 중" }),
+    ).toHaveAttribute("aria-busy", "true");
+    expect(
+      within(drawer).getByRole("button", { name: "삭제" }),
+    ).toBeInTheDocument();
+    expect(
+      within(drawer).getByRole("heading", { name: "발행 설정" }),
+    ).toBeInTheDocument();
+
+    respond(Response.json({ message: "다시 시도해 주세요." }, { status: 502 }));
+    expect(
+      await within(drawer).findByRole("button", { name: "다시 시도" }),
+    ).toBeEnabled();
+    expect(within(drawer).getByRole("button", { name: "삭제" })).toBeEnabled();
   });
 });

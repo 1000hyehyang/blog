@@ -1,6 +1,25 @@
 import { expect, test } from "@playwright/test";
 import { createTestSession, testPassword } from "./writer-credentials";
 
+test("category options become visible when the select opens", async ({
+  page,
+}) => {
+  await page.context().addCookies([
+    {
+      name: "blog-writer",
+      value: createTestSession(),
+      url: "http://127.0.0.1:3100",
+      httpOnly: true,
+      sameSite: "Strict",
+    },
+  ]);
+  await page.goto("/write");
+  await page.getByRole("combobox", { name: "카테고리" }).click();
+  const option = page.getByRole("option", { name: "Art" });
+  await expect(option).toBeVisible();
+  await expect(option).toHaveCSS("opacity", "1");
+});
+
 test("local drafts reopen from management, preserve tags and checklist layout, and never publish", async ({
   page,
   isMobile,
