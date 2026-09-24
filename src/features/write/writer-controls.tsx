@@ -327,6 +327,7 @@ export function PinnedCards({
   onRemove: (slug: string) => void;
 }) {
   const [announcement, setAnnouncement] = useState("");
+  const postsBySlug = new Map(posts.map((post) => [post.slug, post]));
   function move(slug: string, direction: number) {
     const from = order.indexOf(slug),
       to = from + direction;
@@ -335,14 +336,12 @@ export function PinnedCards({
     [next[from], next[to]] = [next[to], next[from]];
     onReorder(next);
     setAnnouncement(
-      `${posts.find((post) => post.slug === slug)?.title}, ${order.length}개 중 ${to + 1}번째`,
+      `${postsBySlug.get(slug)?.title}, ${order.length}개 중 ${to + 1}번째`,
     );
   }
   function remove(slug: string) {
     onRemove(slug);
-    setAnnouncement(
-      `${posts.find((post) => post.slug === slug)?.title}, Pinned 해제`,
-    );
+    setAnnouncement(`${postsBySlug.get(slug)?.title}, Pinned 해제`);
   }
   return (
     <>
@@ -358,7 +357,7 @@ export function PinnedCards({
           {order.map((slug) => (
             <PinnedCard
               key={slug}
-              post={posts.find((post) => post.slug === slug)!}
+              post={postsBySlug.get(slug)!}
               disabled={disabled}
               onMove={(direction) => move(slug, direction)}
               onRemove={() => remove(slug)}

@@ -1,5 +1,5 @@
-export const EMPTY_POSTS_TITLE = "아직 포스트가 없어요";
-export const EMPTY_POSTS_DESCRIPTION = "새로운 이야기를 준비하고 있어요.";
+const EMPTY_POSTS_TITLE = "아직 포스트가 없어요";
+const EMPTY_POSTS_DESCRIPTION = "새로운 이야기를 준비하고 있어요.";
 
 export function EmptyState({
   title = EMPTY_POSTS_TITLE,

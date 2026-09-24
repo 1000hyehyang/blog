@@ -285,25 +285,27 @@ export async function savePost(
         "Pinned 목록이 변경되었습니다. 작성 내용을 복사해 보관한 뒤 다시 열어 주세요.",
         409,
       );
-    const allowed = new Set(current.filter((value) => value !== slug));
+    const allowed = new Set(current);
+    allowed.delete(slug);
     const currentPinned = post.featured && post.published;
     if (currentPinned) allowed.add(slug);
+    const orderIndex = new Map(
+      ordering.order.map((value, index) => [value, index]),
+    );
     if (
-      new Set(ordering.order).size !== ordering.order.length ||
+      orderIndex.size !== ordering.order.length ||
       ordering.order.some((value) => !allowed.has(value)) ||
-      ordering.order.includes(slug) !== currentPinned
+      orderIndex.has(slug) !== currentPinned
     )
       throw new PostStoreError("Pinned 목록이 올바르지 않습니다.", 400);
-    post.featuredOrder = currentPinned
-      ? ordering.order.indexOf(slug)
-      : undefined;
+    post.featuredOrder = currentPinned ? orderIndex.get(slug) : undefined;
     const changed: FilePost[] = [post];
     for (const value of posts) {
       if (value.slug === slug) continue;
-      const index = ordering.order.indexOf(value.slug);
-      if (value.featured && index < 0)
+      const index = orderIndex.get(value.slug);
+      if (value.featured && index === undefined)
         changed.push({ ...value, featured: false, featuredOrder: undefined });
-      else if (index >= 0 && value.featuredOrder !== index)
+      else if (index !== undefined && value.featuredOrder !== index)
         changed.push({ ...value, featuredOrder: index });
     }
     const parent = await gitJson(`/git/commits/${ref}`);
