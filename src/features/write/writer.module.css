@@ -385,7 +385,6 @@
 }
 .editor :global(.tableWrapper) {
   width: calc(100% - 2.25rem);
-  max-width: 100%;
   margin-bottom: 2.5rem;
   overflow-x: auto;
 }
@@ -451,14 +450,12 @@
   height: 20px;
   border: 1px solid var(--border);
   background: var(--muted);
-  font-size: 1rem;
   opacity: 0.55;
 }
 .writer .tableAddColumn {
   width: 20px;
   border: 1px solid var(--border);
   background: var(--muted);
-  font-size: 1rem;
   opacity: 0.55;
 }
 .writer .tableAddRow:hover,
