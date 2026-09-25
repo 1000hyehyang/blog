@@ -3,9 +3,12 @@ import { readFile, readdir } from "node:fs/promises";
 import { renderToStaticMarkup } from "react-dom/server";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { parsePostFile } from "@/lib/content/post-file";
+import { MarkdownContent } from "@/components/markdown";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
+
+vi.mock("server-only", () => ({}));
 
 function rendered(source: string) {
   const div = document.createElement("div");
@@ -15,6 +18,54 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("keeps image alignment, size and caption after saving and reopening", () => {
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: '![설명](https://example.com/image.png "기존 제목")',
+      contentType: "markdown",
+    });
+    const original = editor.getMarkdown();
+    expect(original).toContain('"기존 제목"');
+    const image = editor.state.doc.firstChild!;
+    expect(image.type.name).toBe("image");
+    editor.commands.setNodeSelection(0);
+    editor.commands.updateAttributes("image", {
+      align: "right",
+      width: 65,
+      caption: '캡션 "한글"',
+    });
+    const saved = editor.getMarkdown();
+    expect(saved).toContain("blog-image:v1:");
+    editor.commands.setContent(saved, { contentType: "markdown" });
+    expect(editor.state.doc.firstChild?.attrs).toMatchObject({
+      align: "right",
+      width: 65,
+      caption: '캡션 "한글"',
+      title: "기존 제목",
+    });
+    const publicView = document.createElement("div");
+    publicView.innerHTML = renderToStaticMarkup(
+      <MarkdownContent source={saved} />,
+    );
+    expect(publicView.querySelector(".markdown-image-frame")).toHaveAttribute(
+      "data-align",
+      "right",
+    );
+    expect(publicView.querySelector(".markdown-image-frame")).toHaveStyle({
+      width: "65%",
+    });
+    expect(
+      publicView.querySelector(".markdown-image-caption"),
+    ).toHaveTextContent('캡션 "한글"');
+    editor.commands.setNodeSelection(0);
+    editor.commands.updateAttributes("image", {
+      align: "center",
+      width: 100,
+      caption: "",
+    });
+    expect(editor.getMarkdown().trim()).toBe(original.trim());
+    editor.destroy();
+  });
   it("round-trips formatting, images, lists, tables and code", () => {
     const source =
       "# 제목\n\n**굵게** *기울임* ~~취소~~ [링크](https://example.com)\n\n![설명](https://example.com/image.png)\n\n- [x] 완료\n- [ ] 대기\n\n> 인용\n\n```ts\nconst a = '<text>';\n```\n\n| A | B |\n| - | - |\n| C | D |";

@@ -349,13 +349,13 @@ button:not(:disabled):hover {
 .prose > :first-child {
   margin-top: 0;
 }
-.prose > p:has(> img:only-child) {
+.prose > p:has(> :is(img, .markdown-image-frame):only-child) {
   margin-block: 2em;
 }
-.prose > p:has(> img:only-child):first-child {
+.prose > p:has(> :is(img, .markdown-image-frame):only-child):first-child {
   margin-top: 0;
 }
-.prose > p:has(> img:only-child):last-child {
+.prose > p:has(> :is(img, .markdown-image-frame):only-child):last-child {
   margin-bottom: 0;
 }
 .prose img {
@@ -365,6 +365,40 @@ button:not(:disabled):hover {
 .prose .markdown-image {
   max-width: 100%;
   margin-inline: auto;
+}
+.prose .markdown-image-frame {
+  display: block;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.prose .markdown-image-frame .markdown-image {
+  width: 100%;
+}
+.prose .markdown-image-frame[data-width="100"] .markdown-image {
+  width: auto;
+}
+.prose
+  .markdown-image-frame[data-width="100"][data-align="left"]
+  .markdown-image {
+  margin-left: 0;
+}
+.prose
+  .markdown-image-frame[data-width="100"][data-align="right"]
+  .markdown-image {
+  margin-right: 0;
+}
+.prose .markdown-image-frame[data-align="left"] {
+  margin-left: 0;
+}
+.prose .markdown-image-frame[data-align="right"] {
+  margin-right: 0;
+}
+.prose .markdown-image-caption {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
 }
 .prose .markdown-heading {
   color: var(--foreground);

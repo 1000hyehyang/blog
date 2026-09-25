@@ -212,6 +212,41 @@ describe("writer data preservation", () => {
     expect(editor).toHaveTextContent("한글 본문");
     expect(editor.querySelectorAll("img")).toHaveLength(1);
   });
+  it("sets a selected image as the cover and saves its layout and caption", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ message: "충돌입니다" }, { status: 409 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor
+        initial={{
+          ...initial,
+          body: "![설명](https://example.com/image.png)",
+        }}
+        initialSha={"a".repeat(40)}
+        writable
+      />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(editor.querySelector("img")!);
+    expect(screen.getByLabelText("이미지 설정")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "대표 이미지로 설정" }));
+    fireEvent.click(screen.getByRole("button", { name: "오른쪽 정렬" }));
+    fireEvent.change(screen.getByRole("slider", { name: /크기/ }), {
+      target: { value: "65" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "캡션" }), {
+      target: { value: "사진 설명" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const post = JSON.parse(fetchMock.mock.calls[0][1].body).post;
+    expect(post.coverImage.src).toBe("https://example.com/image.png");
+    expect(post.body).toContain("blog-image:v1:");
+  });
   it("returns to management after publishing", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({

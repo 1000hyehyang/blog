@@ -301,6 +301,80 @@
   height: auto;
   margin: 1.5rem auto;
 }
+.editor :global(.tiptap) figure[data-blog-image] {
+  max-width: 100%;
+  margin: 1.5rem auto;
+}
+.editor :global(.tiptap) figure[data-blog-image] img {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+.editor :global(.tiptap) figure[data-width="100"] img {
+  width: auto;
+  margin-inline: auto;
+}
+.editor :global(.tiptap) figure[data-width="100"][data-align="left"] img {
+  margin-left: 0;
+}
+.editor :global(.tiptap) figure[data-width="100"][data-align="right"] img {
+  margin-right: 0;
+}
+.editor :global(.tiptap) figure[data-align="left"] {
+  margin-left: 0;
+}
+.editor :global(.tiptap) figure[data-align="right"] {
+  margin-right: 0;
+}
+.editor :global(.tiptap) figcaption {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
+.imageControls {
+  position: fixed;
+  z-index: 35;
+  bottom: calc(6rem + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(48rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 10rem);
+  overflow-y: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  box-shadow: var(--shadow-md);
+}
+.imageAlign {
+  display: flex;
+  gap: 0.25rem;
+}
+.writer .imageSize,
+.writer .imageCaption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.writer .imageSize input {
+  width: 8rem;
+  padding: 0;
+  border: 0;
+  accent-color: var(--foreground);
+}
+.writer .imageCaption {
+  flex: 1;
+  min-width: min(100%, 15rem);
+}
+.writer .imageCaption input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+}
 .editor :global(.tiptap) hr {
   border-top: 1px solid var(--border);
 }
@@ -652,6 +726,9 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
     flex-wrap: wrap;
+  }
+  .imageControls {
+    bottom: calc(7rem + env(safe-area-inset-bottom));
   }
   .saveStatus {
     order: -1;
