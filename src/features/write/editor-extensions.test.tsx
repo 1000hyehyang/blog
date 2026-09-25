@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { parsePostFile } from "@/lib/content/post-file";
 import { MarkdownContent } from "@/components/markdown";
+import { remarkUnderline } from "@/lib/markdown-underline";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { nextCoverImageSrc } from "./image-editor";
 import { readImageGroup } from "@/lib/image-group";
@@ -21,6 +22,41 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("saves underlines and renders them in posts", () => {
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: "밑줄",
+      contentType: "markdown",
+    });
+    editor.commands.setTextSelection({ from: 1, to: 3 });
+    editor.commands.toggleUnderline();
+    const source = editor.getMarkdown();
+    expect(source).toContain("++밑줄++");
+    expect(renderToStaticMarkup(<MarkdownContent source={source} />)).toContain(
+      "<u>밑줄</u>",
+    );
+    editor.commands.setContent(source, { contentType: "markdown" });
+    expect(editor.getHTML()).toContain("<u>밑줄</u>");
+    expect(
+      renderToStaticMarkup(<MarkdownContent source="++**강조**++" />),
+    ).toContain("<u><strong>강조</strong></u>");
+    const literal = renderToStaticMarkup(
+      <MarkdownContent source={"\\+\\+그대로\\+\\+"} />,
+    );
+    expect(literal).not.toContain("<u>");
+    expect(literal).toContain("++그대로++");
+    expect(
+      renderToStaticMarkup(<MarkdownContent source="C++ and C++" />),
+    ).toContain("C++ and C++");
+    expect(
+      renderToStaticMarkup(
+        <ReactMarkdown remarkPlugins={[remarkUnderline]}>
+          {"`++code++`"}
+        </ReactMarkdown>,
+      ),
+    ).toContain("<code>++code++</code>");
+    editor.destroy();
+  });
   it("highlights editable code without changing saved Markdown", async () => {
     const source = "```ts\nconst value = 1;\nconst next = 2;\n```";
     const editor = new Editor({

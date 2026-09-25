@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import {
   Bold,
   Italic,
+  Underline,
   Strikethrough,
   List,
   ListOrdered,
   ListTodo,
   Quote,
   Table2,
-  Minus,
   Undo2,
   Redo2,
   ImagePlus,
@@ -189,6 +189,7 @@ export function PostEditor({
       return {
         bold: editor?.isActive("bold"),
         italic: editor?.isActive("italic"),
+        underline: editor?.isActive("underline"),
         strike: editor?.isActive("strike"),
         bulletList: editor?.isActive("bulletList"),
         orderedList: editor?.isActive("orderedList"),
@@ -602,6 +603,12 @@ export function PostEditor({
             () => editor?.chain().focus().toggleItalic().run(),
           ],
           [
+            "밑줄",
+            Underline,
+            active?.underline,
+            () => editor?.chain().focus().toggleUnderline().run(),
+          ],
+          [
             "취소선",
             Strikethrough,
             active?.strike,
@@ -641,12 +648,6 @@ export function PostEditor({
                 .focus()
                 .insertTable({ rows: 3, cols: 3, withHeaderRow: false })
                 .run(),
-          ],
-          [
-            "구분선",
-            Minus,
-            false,
-            () => editor?.chain().focus().setHorizontalRule().run(),
           ],
           [
             "실행 취소",

@@ -451,6 +451,10 @@ button:not(:disabled):hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.prose u,
+.tiptap u {
+  text-underline-offset: 3px;
+}
 .prose .link-preview-card {
   --link-preview-height: 11.5rem;
 

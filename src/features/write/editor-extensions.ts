@@ -177,7 +177,7 @@ const EditableImage = Image.extend({
 });
 export function editorExtensions() {
   return [
-    StarterKit.configure({ underline: false, link: { openOnClick: false } }),
+    StarterKit.configure({ link: { openOnClick: false } }),
     EditableImage.configure({ allowBase64: false }),
     TaskList,
     TaskItem.configure({

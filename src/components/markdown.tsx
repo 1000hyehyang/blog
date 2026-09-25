@@ -16,6 +16,7 @@ import {
   highlightMarkdownCode,
 } from "@/lib/markdown-code";
 import { getStandaloneExternalUrl } from "@/lib/markdown-link";
+import { remarkUnderline } from "@/lib/markdown-underline";
 import { getReactNodeText } from "@/lib/react/get-node-text";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import { hasImageSettings, readImageMetadata } from "@/lib/image-metadata";
@@ -170,7 +171,7 @@ export function MarkdownContent({ source }: { source: string }) {
   return (
     <div className="prose">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkUnderline]}
         components={markdownComponents}
       >
         {source}
