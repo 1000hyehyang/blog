@@ -18,7 +18,6 @@ export function ImageLayoutDialog({
   error,
   busy,
   onLayoutChange,
-  onMove,
   onConfirm,
   onClose,
 }: {
@@ -28,7 +27,6 @@ export function ImageLayoutDialog({
   error: string;
   busy: boolean;
   onLayoutChange: (layout: ImageGroupLayout) => void;
-  onMove: (index: number, direction: -1 | 1) => void;
   onConfirm: () => void;
   onClose: () => void;
 }) {
@@ -91,35 +89,6 @@ export function ImageLayoutDialog({
             </span>
             <Icon size={22} aria-hidden="true" />
           </button>
-        ))}
-      </div>
-      <div className={styles.imageLayoutOrder} aria-label="사진 순서">
-        {images.map((image, index) => (
-          <div key={image.preview} className={styles.imageLayoutItem}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={image.preview}
-              alt={image.file.name}
-              onLoad={(event) => (event.currentTarget.dataset.loaded = "true")}
-            />
-            <span>{index + 1}</span>
-            <button
-              type="button"
-              aria-label={`${index + 1}번째 사진 앞으로 이동`}
-              disabled={busy || index === 0}
-              onClick={() => onMove(index, -1)}
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              aria-label={`${index + 1}번째 사진 뒤로 이동`}
-              disabled={busy || index === images.length - 1}
-              onClick={() => onMove(index, 1)}
-            >
-              →
-            </button>
-          </div>
         ))}
       </div>
       {error && (

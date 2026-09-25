@@ -56,7 +56,13 @@ test("multiple photos open a responsive layout chooser before upload", async ({
   await expect(
     dialog.getByRole("button", { name: "슬라이드" }),
   ).toHaveAttribute("aria-pressed", "true");
-  await dialog.getByRole("button", { name: "2번째 사진 앞으로 이동" }).click();
+  await expect(dialog.getByLabel("사진 순서")).toHaveCount(0);
+  const selected = dialog.getByRole("button", { name: "슬라이드" });
+  const selectedBox = (await selected.boundingBox())!;
+  const iconBox = (await selected.locator("svg").boundingBox())!;
+  expect(
+    selectedBox.y + selectedBox.height - iconBox.y - iconBox.height,
+  ).toBeGreaterThan(10);
   await page.setViewportSize({ width: 390, height: 844 });
   const box = await dialog.boundingBox();
   expect(box).not.toBeNull();

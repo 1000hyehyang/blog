@@ -768,17 +768,6 @@ export function PostEditor({
             current ? { ...current, layout } : null,
           )
         }
-        onMove={(index, direction) =>
-          setPendingImages((current) => {
-            if (!current) return null;
-            const items = [...current.items];
-            [items[index], items[index + direction]] = [
-              items[index + direction],
-              items[index],
-            ];
-            return { ...current, items };
-          })
-        }
         onConfirm={() => void uploadPendingImages()}
         onClose={() => {
           for (const url of previewUrls.current) URL.revokeObjectURL(url);

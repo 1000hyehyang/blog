@@ -573,7 +573,7 @@
   grid-template-columns: minmax(0, 1fr);
   justify-content: stretch;
   gap: 0.75rem;
-  padding: 0;
+  padding: 0 0 0.875rem;
   border: 0;
   background: transparent;
   color: var(--foreground);
@@ -620,36 +620,6 @@
 .imageLayoutExample[data-layout="slide"] img {
   flex: 0 0 85%;
   height: 50%;
-}
-.imageLayoutOrder {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  overflow-x: auto;
-  text-align: left;
-}
-.imageLayoutItem {
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  align-items: center;
-  gap: 0.25rem;
-  flex: 0 0 5.5rem;
-  font-size: 0.75rem;
-}
-.imageLayoutItem img {
-  grid-column: 1 / -1;
-  width: 5.5rem;
-  height: 4rem;
-  object-fit: cover;
-}
-.imageLayoutItem button {
-  border: 0;
-  background: transparent;
-  color: var(--foreground);
-  cursor: pointer;
-}
-.imageLayoutItem button:disabled {
-  opacity: 0.3;
 }
 .imageLayoutDialog .imageLayoutError {
   color: #b91c1c;

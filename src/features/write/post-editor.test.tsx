@@ -233,9 +233,9 @@ describe("writer data preservation", () => {
       },
     );
     mocks.upload
-      .mockResolvedValueOnce({ url: "https://example.com/second.png" })
+      .mockResolvedValueOnce({ url: "https://example.com/first.png" })
       .mockRejectedValueOnce(new Error("업로드 실패"))
-      .mockResolvedValueOnce({ url: "https://example.com/first.png" });
+      .mockResolvedValueOnce({ url: "https://example.com/second.png" });
     render(
       <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
     );
@@ -248,16 +248,14 @@ describe("writer data preservation", () => {
     const dialog = screen.getByRole("dialog", { name: "사진 첨부 방식" });
     expect(dialog).toBeVisible();
     fireEvent.click(within(dialog).getByRole("button", { name: "콜라주" }));
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "2번째 사진 앞으로 이동" }),
-    );
+    expect(within(dialog).queryByLabelText("사진 순서")).toBeNull();
     fireEvent.click(
       within(dialog).getByRole("button", { name: "본문에 삽입" }),
     );
     await within(dialog).findByText("업로드 실패");
     expect(editor.querySelectorAll("figure img")).toHaveLength(0);
-    expect(mocks.upload.mock.calls[0][1]).toBe(second);
-    expect(mocks.upload.mock.calls[1][1]).toBe(first);
+    expect(mocks.upload.mock.calls[0][1]).toBe(first);
+    expect(mocks.upload.mock.calls[1][1]).toBe(second);
     fireEvent.click(
       within(dialog).getByRole("button", { name: "업로드 재시도" }),
     );
@@ -265,7 +263,7 @@ describe("writer data preservation", () => {
       expect(editor.querySelectorAll("figure img")).toHaveLength(2),
     );
     expect(mocks.upload).toHaveBeenCalledTimes(3);
-    expect(mocks.upload.mock.calls[2][1]).toBe(first);
+    expect(mocks.upload.mock.calls[2][1]).toBe(second);
     expect(editor.querySelector("figure")).not.toHaveAttribute("data-selected");
     expect(editor.querySelector("figure [data-layout]")).toHaveAttribute(
       "data-layout",
