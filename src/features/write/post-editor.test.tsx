@@ -86,6 +86,31 @@ describe("writer data preservation", () => {
       url,
     );
   });
+  it("shows the published YouTube player while editing a standalone video URL", async () => {
+    const url = "https://youtu.be/s_91Rtt1iqU";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PostEditor initial={null} initialSha={null} writable />);
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.paste(editor, {
+      clipboardData: { files: [], getData: () => `[${url}](${url})` },
+    });
+
+    await waitFor(() =>
+      expect(
+        editor.querySelector("[data-youtube-player] iframe"),
+      ).toHaveAttribute(
+        "src",
+        "https://www.youtube-nocookie.com/embed/s_91Rtt1iqU?rel=0",
+      ),
+    );
+    expect(editor.querySelector("p + .standalone-link-widget")).not.toBeNull();
+    expect(
+      editor.querySelector(".standalone-link-widget > [contenteditable=false]"),
+    ).not.toBeNull();
+    expect(editor.querySelector(".link-preview-card")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
   it("generates one URL across retries and submits the visible card order", async () => {
     const fetchMock = vi
       .fn()

@@ -7,6 +7,7 @@ const VIDEO_ID = "s_91Rtt1iqU";
 describe("parseYouTubeUrl", () => {
   it.each([
     `https://youtu.be/${VIDEO_ID}?si=tracking-token`,
+    `https://youtu.be./${VIDEO_ID}`,
     `https://www.youtube.com/watch?v=${VIDEO_ID}&feature=share`,
     `https://m.youtube.com/watch?v=${VIDEO_ID}`,
     `https://www.youtube.com/shorts/${VIDEO_ID}`,

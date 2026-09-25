@@ -8,7 +8,9 @@ import {
   LinkPreviewCard,
   type LinkPreviewCardData,
 } from "@/features/post/link-preview-card";
+import { YouTubePlayer } from "@/features/post/youtube-player";
 import { parseExternalHttpUrl } from "@/lib/link-preview";
+import { parseYouTubeUrl } from "@/lib/youtube";
 
 function LinkPreviewWidget({ url }: { url: string }) {
   const parsed = new URL(url);
@@ -34,8 +36,21 @@ function LinkPreviewWidget({ url }: { url: string }) {
   return <LinkPreviewCard preview={preview} />;
 }
 
-export const LinkPreviewExtension = Extension.create({
-  name: "linkPreviewWidget",
+function StandaloneLinkWidget({ url }: { url: string }) {
+  const video = parseYouTubeUrl(url);
+  return (
+    <div contentEditable={false}>
+      {video ? (
+        <YouTubePlayer video={video} />
+      ) : (
+        <LinkPreviewWidget url={url} />
+      )}
+    </div>
+  );
+}
+
+export const StandaloneLinkExtension = Extension.create({
+  name: "standaloneLinkWidget",
   addDecorations() {
     return {
       create: ({ editor, state }) => {
@@ -50,12 +65,13 @@ export const LinkPreviewExtension = Extension.create({
             ?.attrs.href;
           if (href && parseExternalHttpUrl(href)?.href !== url.href) return;
           widgets.push(
-            ReactWidgetRenderer(LinkPreviewWidget, {
+            ReactWidgetRenderer(StandaloneLinkWidget, {
               editor,
-              pos: pos + node.nodeSize - 1,
+              pos: pos + node.nodeSize,
               key: `${pos}:${url.href}`,
               props: { url: url.href },
-              className: "prose link-preview-widget",
+              as: "div",
+              className: "prose standalone-link-widget",
               side: 1,
               stopEvent: () => true,
               ignoreSelection: true,

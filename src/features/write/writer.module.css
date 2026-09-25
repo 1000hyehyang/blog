@@ -299,7 +299,7 @@
 .editor :global(.tiptap .link-preview-card) {
   text-decoration: none;
 }
-.editor :global(.link-preview-widget) {
+.editor :global(.standalone-link-widget) {
   display: block;
   margin-top: 0.5rem;
   white-space: normal;

@@ -33,7 +33,7 @@ type LinkPreview = LinkPreviewMetadata & {
   hostname: string;
 };
 
-async function resolvePublicDestination(url: URL) {
+async function resolvePublicDestinations(url: URL) {
   const parsed = parseExternalHttpUrl(url.href);
   if (!parsed) throw new Error("Unsupported link preview URL");
 
@@ -49,7 +49,7 @@ async function resolvePublicDestination(url: URL) {
     throw new Error("Link preview resolved to a non-public address");
   }
 
-  return addresses[0];
+  return addresses;
 }
 
 async function fetchPublicResponse(
@@ -67,12 +67,12 @@ async function fetchPublicResponse(
     redirectCount <= MAX_REDIRECTS;
     redirectCount += 1
   ) {
-    const destination = await resolvePublicDestination(currentUrl);
+    const destinations = await resolvePublicDestinations(currentUrl);
     const dispatcher = new Agent({
       connect: {
         lookup(_hostname, options, callback) {
-          if (options.all) callback(null, [destination]);
-          else callback(null, destination.address, destination.family);
+          if (options.all) callback(null, destinations);
+          else callback(null, destinations[0].address, destinations[0].family);
         },
       },
     });

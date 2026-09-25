@@ -71,7 +71,10 @@ describe("self-hosted link preview", () => {
   });
 
   it("connects to the public address that was checked", async () => {
-    remote.lookup.mockResolvedValue([{ address: "8.8.8.8", family: 4 }]);
+    remote.lookup.mockResolvedValue([
+      { address: "8.8.8.8", family: 4 },
+      { address: "1.1.1.1", family: 4 },
+    ]);
     remote.fetch.mockResolvedValue(
       new Response("<title>External post</title>", {
         headers: { "content-type": "text/html" },
@@ -93,7 +96,21 @@ describe("self-hosted link preview", () => {
     );
     expect(callback).toHaveBeenLastCalledWith(null, [
       { address: "8.8.8.8", family: 4 },
+      { address: "1.1.1.1", family: 4 },
     ]);
+  });
+
+  it("rejects a destination set containing a private address", async () => {
+    remote.lookup.mockResolvedValue([
+      { address: "8.8.8.8", family: 4 },
+      { address: "127.0.0.1", family: 4 },
+    ]);
+    const { getLinkPreview } = await import("./link-preview");
+
+    await expect(
+      getLinkPreview("https://external.example/post"),
+    ).resolves.toMatchObject({ title: "external.example" });
+    expect(remote.fetch).not.toHaveBeenCalled();
   });
 
   it("keeps metadata from a page whose body exceeds the preview limit", async () => {

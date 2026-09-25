@@ -18,10 +18,10 @@ function normalizeVideoId(value: string | null | undefined): string | null {
   return YOUTUBE_VIDEO_ID.test(candidate) ? candidate : null;
 }
 
-function getPathVideoId(url: URL): string | null {
+function getPathVideoId(url: URL, hostname: string): string | null {
   const segments = url.pathname.split("/").filter(Boolean);
 
-  if (SHORT_HOSTS.has(url.hostname)) {
+  if (SHORT_HOSTS.has(hostname)) {
     return normalizeVideoId(segments[0]);
   }
 
@@ -50,7 +50,7 @@ export function parseYouTubeUrl(value: string): YouTubeVideo | null {
       return null;
     }
 
-    const id = getPathVideoId(url);
+    const id = getPathVideoId(url, hostname);
     return id ? { id } : null;
   } catch {
     return null;

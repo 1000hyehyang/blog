@@ -5,7 +5,7 @@ import { Table, TableKit } from "@tiptap/extension-table";
 import { Markdown, MarkdownManager } from "@tiptap/markdown";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ImageNodeView } from "./image-editor";
-import { LinkPreviewExtension } from "./link-preview-widget";
+import { StandaloneLinkExtension } from "./standalone-link-widget";
 import {
   asImageGroup,
   readImageGroup,
@@ -186,7 +186,7 @@ export function editorExtensions() {
     TableKit.configure({ table: false }),
     SafeTable,
     Markdown,
-    LinkPreviewExtension,
+    StandaloneLinkExtension,
   ];
 }
 
