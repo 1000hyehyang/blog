@@ -18,6 +18,45 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("edits table dimensions without losing cells or Markdown", () => {
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: "앞 문단\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n뒤 문단",
+      contentType: "markdown",
+    });
+    const firstParagraph = editor.state.doc.firstChild!;
+    editor.commands.setTextSelection(firstParagraph.nodeSize + 4);
+    expect(editor.state.doc.child(1).childCount).toBe(2);
+    expect(editor.commands.addRowAfter()).toBe(true);
+    expect(editor.commands.addColumnAfter()).toBe(true);
+    expect(editor.state.doc.child(1).childCount).toBe(3);
+    expect(editor.state.doc.child(1).firstChild?.childCount).toBe(3);
+    const tablePosition = firstParagraph.nodeSize;
+    const expanded = editor.state.doc.child(1);
+    const addedRowPosition = tablePosition + 1 + expanded.child(0).nodeSize;
+    editor.commands.setTextSelection(addedRowPosition + 3);
+    expect(editor.commands.deleteRow()).toBe(true);
+    const firstRow = editor.state.doc.child(1).firstChild!;
+    editor.commands.setTextSelection(
+      tablePosition + 4 + firstRow.child(0).nodeSize,
+    );
+    expect(editor.commands.deleteColumn()).toBe(true);
+    expect(editor.state.doc.child(1).childCount).toBe(2);
+    expect(editor.state.doc.child(1).firstChild?.childCount).toBe(2);
+    expect(editor.state.doc.firstChild?.textContent).toBe("앞 문단");
+    const saved = editor.getMarkdown();
+    expect(saved).toContain("| 1");
+    expect(saved).toContain("2");
+    expect(editor.commands.undo()).toBe(true);
+    expect(editor.getMarkdown()).not.toBe(saved);
+    expect(editor.commands.redo()).toBe(true);
+    expect(editor.getMarkdown()).toBe(saved);
+    editor.commands.setContent(saved, { contentType: "markdown" });
+    expect(editor.state.doc.child(1).type.name).toBe("table");
+    expect(editor.state.doc.child(1).childCount).toBe(2);
+    expect(editor.state.doc.child(1).firstChild?.childCount).toBe(2);
+    editor.destroy();
+  });
   it("keeps image alignment, size and caption after saving and reopening", () => {
     const editor = new Editor({
       extensions: editorExtensions(),

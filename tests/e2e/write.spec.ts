@@ -20,6 +20,121 @@ test("category options become visible when the select opens", async ({
   await expect(option).toHaveCSS("opacity", "1");
 });
 
+test("table row and column menus stay open while moving from handle to delete", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "This test checks pointer hover menus.");
+  await page.context().addCookies([
+    {
+      name: "blog-writer",
+      value: createTestSession(),
+      url: "http://127.0.0.1:3100",
+      httpOnly: true,
+      sameSite: "Strict",
+    },
+  ]);
+  await page.goto("/write");
+  await page.getByRole("button", { name: "표", exact: true }).click();
+  const editor = page.getByRole("textbox", { name: "본문 편집기" });
+  await expect(editor.locator("tr")).toHaveCount(3);
+  await expect(editor.locator("th")).toHaveCount(0);
+  const table = editor.locator("table");
+  await editor.locator("tr:first-child td:first-child").hover();
+  const tableBox = (await table.boundingBox())!;
+  const rowAdd = page.getByRole("button", { name: "마지막에 행 추가" });
+  const columnAdd = page.getByRole("button", { name: "마지막에 열 추가" });
+  const rowAddBox = (await rowAdd.boundingBox())!;
+  const columnAddBox = (await columnAdd.boundingBox())!;
+  expect(rowAddBox.y).toBeGreaterThanOrEqual(tableBox.y + tableBox.height + 4);
+  expect(columnAddBox.x).toBeGreaterThanOrEqual(
+    tableBox.x + tableBox.width + 4,
+  );
+  await rowAdd.click();
+  await expect(editor.locator("tr")).toHaveCount(4);
+  await editor.locator("tr:first-child td:first-child").hover();
+  await columnAdd.click();
+  await expect(editor.locator("tr:first-child td")).toHaveCount(4);
+  await editor.locator("tr:nth-child(2) td:first-child").hover();
+  await page.getByRole("button", { name: "2행 메뉴" }).click();
+  const deleteRow = page.getByRole("menuitem", { name: "행 삭제" });
+  await deleteRow.hover();
+  await expect(deleteRow).toBeVisible();
+  await deleteRow.click();
+  await expect(editor.locator("tr")).toHaveCount(3);
+  await editor.locator("tr:first-child td:first-child").hover();
+  await page.getByRole("button", { name: "1열 메뉴" }).click();
+  const deleteColumn = page.getByRole("menuitem", { name: "열 삭제" });
+  await deleteColumn.hover();
+  await expect(deleteColumn).toBeVisible();
+  await deleteColumn.click();
+  await expect(editor.locator("tr:first-child td")).toHaveCount(3);
+  await editor.locator("tr:first-child td:first-child").hover();
+  const tableHandle = page.getByRole("button", { name: "표 메뉴" });
+  const tableHandleBox = (await tableHandle.boundingBox())!;
+  const firstRowBox = (await editor.locator("tr:first-child").boundingBox())!;
+  expect(tableHandleBox.x + tableHandleBox.width).toBeLessThan(tableBox.x);
+  expect(
+    Math.abs(
+      tableHandleBox.y +
+        tableHandleBox.height / 2 -
+        firstRowBox.y -
+        firstRowBox.height / 2,
+    ),
+  ).toBeLessThan(2);
+  await tableHandle.hover();
+  await tableHandle.click();
+  await page.getByRole("menuitem", { name: "표 삭제" }).click();
+  await expect(table).toHaveCount(0);
+});
+
+test("mobile table handles and add controls stay on screen", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, "This test checks the touch layout.");
+  await page.context().addCookies([
+    {
+      name: "blog-writer",
+      value: createTestSession(),
+      url: "http://127.0.0.1:3100",
+      httpOnly: true,
+      sameSite: "Strict",
+    },
+  ]);
+  await page.goto("/write");
+  await page.getByRole("button", { name: "표", exact: true }).tap();
+  const editor = page.getByRole("textbox", { name: "본문 편집기" });
+  const table = editor.locator("table");
+  await editor.locator("tr:first-child td:first-child").tap();
+  const tableHandle = page.getByRole("button", { name: "표 메뉴" });
+  const rowHandle = page.getByRole("button", { name: "1행 메뉴" });
+  const rowAdd = page.getByRole("button", { name: "마지막에 행 추가" });
+  const columnAdd = page.getByRole("button", { name: "마지막에 열 추가" });
+  await expect(tableHandle).toBeInViewport();
+  await expect(rowHandle).toBeInViewport();
+  await expect(rowAdd).toBeInViewport();
+  await expect(columnAdd).toBeInViewport();
+  for (const control of [tableHandle, rowHandle, rowAdd, columnAdd]) {
+    const box = (await control.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+  const bar = (await rowAdd.boundingBox())!;
+  const icon = (await rowAdd.locator("svg").boundingBox())!;
+  const tableBox = (await table.boundingBox())!;
+  expect(
+    Math.abs(icon.x + icon.width / 2 - bar.x - bar.width / 2),
+  ).toBeLessThan(1);
+  expect(
+    Math.abs(icon.y + icon.height / 2 - bar.y - bar.height / 2),
+  ).toBeLessThan(1);
+  expect(bar.y - tableBox.y - tableBox.height).toBeGreaterThanOrEqual(3);
+  await tableHandle.tap();
+  await page.getByRole("menuitem", { name: "표 삭제" }).tap();
+  await expect(table).toHaveCount(0);
+});
+
 test("local drafts reopen from management, preserve tags and checklist layout, and never publish", async ({
   page,
   isMobile,

@@ -247,6 +247,112 @@ describe("writer data preservation", () => {
     expect(post.coverImage.src).toBe("https://example.com/image.png");
     expect(post.body).toContain("blog-image:v1:");
   });
+  it("edits a table through contextual handles and saves the result", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ message: "충돌입니다" }, { status: 409 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor
+        initial={{ ...initial, body: "| A | B |\n| --- | --- |\n| 1 | 2 |" }}
+        initialSha={"a".repeat(40)}
+        writable
+      />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    expect(
+      screen.queryByRole("group", { name: "표 설정" }),
+    ).not.toBeInTheDocument();
+    const cell = editor.querySelector("tr:last-child td")!;
+    fireEvent.mouseMove(cell);
+    fireEvent.click(await screen.findByRole("button", { name: "2행 메뉴" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "아래에 행 추가" }));
+    expect(editor.querySelectorAll("tr")).toHaveLength(3);
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "1열 메뉴" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "오른쪽에 열 추가" }));
+    expect(editor.querySelector("tr")?.children).toHaveLength(3);
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body).post.body;
+    expect(body).toContain("| A");
+    expect(
+      body.split("\n").filter((line: string) => line.startsWith("|")),
+    ).toHaveLength(4);
+  });
+  it("duplicates a row and column through their menus", async () => {
+    render(
+      <PostEditor
+        initial={{ ...initial, body: "| A | B |\n| --- | --- |\n| 1 | 2 |" }}
+        initialSha={"a".repeat(40)}
+        writable
+      />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "2행 메뉴" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "행 복제" }));
+    expect(editor.querySelectorAll("tr")).toHaveLength(3);
+    expect(editor.querySelector("tr:last-child")?.textContent).toBe("12");
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "1열 메뉴" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "열 복제" }));
+    expect(editor.querySelector("tr:last-child")?.textContent).toBe("112");
+    expect(editor.querySelector("tr")?.children).toHaveLength(3);
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "마지막에 행 추가" }));
+    expect(editor.querySelectorAll("tr")).toHaveLength(4);
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "마지막에 열 추가" }));
+    expect(editor.querySelector("tr")?.children).toHaveLength(4);
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td:last-child")!);
+    const rowHandle = screen.getByRole("button", { name: "4행 메뉴" });
+    fireEvent.click(rowHandle);
+    fireEvent.mouseLeave(rowHandle.parentElement!);
+    const deleteRow = screen.getByRole("menuitem", { name: "행 삭제" });
+    fireEvent.pointerDown(deleteRow);
+    expect(deleteRow).toBeInTheDocument();
+    fireEvent.click(deleteRow);
+    expect(editor.querySelectorAll("tr")).toHaveLength(3);
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td:last-child")!);
+    const columnHandle = screen.getByRole("button", { name: "4열 메뉴" });
+    fireEvent.click(columnHandle);
+    fireEvent.mouseLeave(columnHandle.parentElement!);
+    const deleteColumn = screen.getByRole("menuitem", { name: "열 삭제" });
+    fireEvent.pointerDown(deleteColumn);
+    expect(deleteColumn).toBeInTheDocument();
+    fireEvent.click(deleteColumn);
+    expect(editor.querySelector("tr")?.children).toHaveLength(3);
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "표 메뉴" }));
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "표 아래에 문단 추가" }),
+    );
+    expect(
+      editor.querySelector(".tableWrapper")?.nextElementSibling?.tagName,
+    ).toBe("P");
+    fireEvent.mouseMove(editor.querySelector("tr:last-child td")!);
+    fireEvent.click(screen.getByRole("button", { name: "표 메뉴" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "표 삭제" }));
+    expect(editor.querySelector("table")).not.toBeInTheDocument();
+  });
+  it("inserts a plain 3 by 3 table without a creation panel", async () => {
+    render(<PostEditor initial={null} initialSha={null} writable />);
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(screen.getByRole("button", { name: "표" }));
+    expect(
+      screen.queryByRole("group", { name: "새 표 만들기" }),
+    ).not.toBeInTheDocument();
+    expect(editor.querySelectorAll("tr")).toHaveLength(3);
+    expect(editor.querySelector("tr")?.children).toHaveLength(3);
+    expect(editor.querySelector("th")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "표 설정" }),
+    ).not.toBeInTheDocument();
+  });
   it("returns to management after publishing", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({

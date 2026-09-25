@@ -383,13 +383,130 @@
   table-layout: fixed;
   border-collapse: collapse;
 }
+.editor :global(.tableWrapper) {
+  width: calc(100% - 2.25rem);
+  max-width: 100%;
+  margin-bottom: 2.5rem;
+  overflow-x: auto;
+}
 .editor :global(.tiptap) td,
 .editor :global(.tiptap) th {
   border: 1px solid var(--border);
   padding: 0.6rem;
+  min-width: 6rem;
 }
 .editor :global(.tiptap) th {
+  background: transparent;
+}
+.tableOverlay {
+  position: relative;
+}
+.tableGutter {
+  position: absolute;
+  z-index: 0;
+}
+.tableSelection {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.tableSelectionActive {
+  border: 2px solid #3289ed;
+  border-radius: 2px;
+  box-shadow: none;
+}
+.writer .tableHandle,
+.writer .tableAddRow,
+.writer .tableAddColumn {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  user-select: none;
+}
+.writer .tableHandle {
+  width: 24px;
+  height: 24px;
+  font-size: 1rem;
+  line-height: 1;
+}
+.writer .tableHandle:hover,
+.writer .tableAddRow:hover,
+.writer .tableAddColumn:hover {
   background: var(--muted);
+  color: var(--foreground);
+}
+.writer .tableHandle[aria-expanded="true"] {
+  background: #3289ed;
+  color: #fff;
+}
+.writer .tableAddRow {
+  height: 20px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  font-size: 1rem;
+  opacity: 0.55;
+}
+.writer .tableAddColumn {
+  width: 20px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  font-size: 1rem;
+  opacity: 0.55;
+}
+.writer .tableAddRow:hover,
+.writer .tableAddColumn:hover {
+  opacity: 1;
+}
+.writer .tableAddRow svg,
+.writer .tableAddColumn svg {
+  display: block;
+}
+.tableMenu {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  gap: 0.1rem;
+  width: min(196px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+}
+.tableMenu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 34px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+}
+.tableMenu button svg {
+  flex: none;
+}
+.tableMenu button:hover,
+.tableMenu button:focus-visible {
+  background: var(--muted);
+}
+.tableMenu .tableMenuDelete {
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+  color: #b91c1c;
 }
 .editor :global(.ProseMirror-selectednode) {
   outline: 2px solid var(--ring);
@@ -706,6 +823,23 @@
   }
 }
 @media (max-width: 640px) {
+  .editor :global(.tableWrapper) {
+    width: calc(100% - 4.75rem);
+    margin-left: 3rem;
+  }
+  .editor :global(.tiptap) td,
+  .editor :global(.tiptap) th {
+    min-width: 4.5rem;
+    padding: 0.5rem;
+  }
+  .writer .tableHandle {
+    width: 30px;
+    height: 30px;
+    transform: translate(-3px, -3px);
+  }
+  .tableMenu button {
+    min-height: 40px;
+  }
   .topbar {
     padding-inline: 1.25rem;
   }

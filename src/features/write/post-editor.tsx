@@ -36,6 +36,7 @@ import { TagInput } from "./tag-input";
 import { IconButton } from "./icon-button";
 import { EditorBodySkeleton } from "./writer-skeleton";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
+import { TableOverlay } from "./table-overlay";
 import type { ImageAlignment, ImageMetadata } from "@/lib/image-metadata";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
@@ -529,7 +530,7 @@ export function PostEditor({
               editor
                 ?.chain()
                 .focus()
-                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                .insertTable({ rows: 3, cols: 3, withHeaderRow: false })
                 .run(),
           ],
           [
@@ -632,7 +633,9 @@ export function PostEditor({
           )}
           <div className={styles.editor}>
             {editor ? (
-              <EditorContent editor={editor} />
+              <TableOverlay editor={editor}>
+                <EditorContent editor={editor} />
+              </TableOverlay>
             ) : (
               <EditorBodySkeleton />
             )}
