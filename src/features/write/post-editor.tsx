@@ -11,7 +11,6 @@ import {
   ListOrdered,
   ListTodo,
   Quote,
-  CodeXml,
   Table2,
   Minus,
   Undo2,
@@ -196,6 +195,8 @@ export function PostEditor({
         taskList: editor?.isActive("taskList"),
         blockquote: editor?.isActive("blockquote"),
         codeBlock: editor?.isActive("codeBlock"),
+        codeLanguage: editor?.getAttributes("codeBlock").language as
+          string | undefined,
       };
     },
   });
@@ -642,12 +643,6 @@ export function PostEditor({
                 .run(),
           ],
           [
-            "코드",
-            CodeXml,
-            active?.codeBlock,
-            () => editor?.chain().focus().toggleCodeBlock().run(),
-          ],
-          [
             "구분선",
             Minus,
             false,
@@ -677,6 +672,21 @@ export function PostEditor({
           <Icon size={19} strokeWidth={1.7} />
         </IconButton>
       ))}
+      {active?.codeBlock && (
+        <input
+          className={styles.codeLanguage}
+          aria-label="코드 언어"
+          placeholder="언어 (ts, js, python…)"
+          value={active.codeLanguage ?? ""}
+          maxLength={32}
+          disabled={formattingDisabled}
+          onChange={(event) =>
+            editor?.commands.updateAttributes("codeBlock", {
+              language: event.target.value.toLowerCase().replace(/\s/g, ""),
+            })
+          }
+        />
+      )}
     </fieldset>
   );
 

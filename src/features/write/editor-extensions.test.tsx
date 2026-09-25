@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { describe, expect, it, vi } from "vitest";
+import { waitFor } from "@testing-library/react";
 import { parsePostFile } from "@/lib/content/post-file";
 import { MarkdownContent } from "@/components/markdown";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
@@ -20,6 +21,47 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("highlights editable code without changing saved Markdown", async () => {
+    const source = "```ts\nconst value = 1;\nconst next = 2;\n```";
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: source,
+      contentType: "markdown",
+    });
+
+    await waitFor(() =>
+      expect(
+        editor.view.dom.querySelectorAll(".writer-code-token").length,
+      ).toBeGreaterThan(0),
+    );
+    expect(
+      editor.view.dom
+        .querySelector(".writer-code-token")
+        ?.getAttribute("style"),
+    ).toContain("--shiki-dark:");
+    expect(editor.view.dom.querySelector("pre code")?.textContent).toBe(
+      "const value = 1;\nconst next = 2;",
+    );
+    expect(editor.getMarkdown()).toContain(source);
+
+    editor.commands.setTextSelection(5);
+    editor.commands.insertContent("x");
+    await waitFor(() =>
+      expect(editor.view.dom.querySelector("pre code")?.textContent).toContain(
+        "x",
+      ),
+    );
+    expect(editor.getMarkdown()).toContain("```ts");
+    editor.commands.updateAttributes("codeBlock", {
+      language: "not-a-real-language",
+    });
+    await waitFor(() =>
+      expect(
+        editor.view.dom.querySelectorAll(".writer-code-token"),
+      ).toHaveLength(0),
+    );
+    editor.destroy();
+  });
   it("edits table dimensions without losing cells or Markdown", () => {
     const editor = new Editor({
       extensions: editorExtensions(),

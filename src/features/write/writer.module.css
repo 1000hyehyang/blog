@@ -293,6 +293,18 @@
   color: inherit;
   padding: 0;
 }
+.editor :global(.writer-code-token) {
+  color: var(--shiki-light, var(--code-block-foreground));
+}
+:global(.dark) .editor :global(.writer-code-token) {
+  color: var(--shiki-dark, var(--code-block-foreground));
+}
+.writer .codeLanguage {
+  flex: 0 0 12rem;
+  width: 12rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+}
 .editor :global(.tiptap) a {
   text-decoration: underline;
 }

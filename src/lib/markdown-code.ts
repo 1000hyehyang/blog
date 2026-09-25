@@ -1,8 +1,14 @@
-import { bundledLanguages, codeToHtml, type BundledLanguage } from "shiki";
+import {
+  bundledLanguages,
+  codeToHtml,
+  codeToTokensWithThemes,
+  type BundledLanguage,
+} from "shiki";
 
 const LANGUAGE_CLASS_PATTERN = /(?:^|\s)language-([^\s]+)(?:\s|$)/i;
 const MAX_LANGUAGE_LABEL_LENGTH = 32;
 const PLAIN_TEXT_LANGUAGES = new Set(["text", "txt", "plain", "plaintext"]);
+const themes = { light: "github-light", dark: "github-dark" } as const;
 
 type MarkdownCodeLanguage = {
   label: string;
@@ -38,10 +44,16 @@ export async function highlightMarkdownCode(
   try {
     return await codeToHtml(code, {
       lang: language.shikiLanguage,
-      themes: { light: "github-light", dark: "github-dark" },
+      themes,
       defaultColor: false,
     });
   } catch {
     return null;
   }
+}
+
+export async function tokenizeMarkdownCode(code: string, label: string) {
+  const language = getMarkdownCodeLanguage(`language-${label}`)?.shikiLanguage;
+  if (!language) return [];
+  return codeToTokensWithThemes(code, { lang: language, themes });
 }

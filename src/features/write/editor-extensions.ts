@@ -6,6 +6,7 @@ import { Markdown, MarkdownManager } from "@tiptap/markdown";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ImageNodeView } from "./image-editor";
 import { StandaloneLinkExtension } from "./standalone-link-widget";
+import { CodeHighlighting } from "./code-highlighting";
 import {
   asImageGroup,
   readImageGroup,
@@ -187,6 +188,7 @@ export function editorExtensions() {
     SafeTable,
     Markdown,
     StandaloneLinkExtension,
+    CodeHighlighting,
   ];
 }
 
