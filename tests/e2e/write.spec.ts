@@ -69,6 +69,76 @@ test("multiple photos open a responsive layout chooser before upload", async ({
   ).toHaveCount(0);
 });
 
+test("image controls work in a draft on the real writer", async ({
+  page,
+  isMobile,
+}) => {
+  await page.context().addCookies([
+    {
+      name: "blog-writer",
+      value: createTestSession(),
+      url: "http://127.0.0.1:3100",
+      httpOnly: true,
+      sameSite: "Strict",
+    },
+  ]);
+  await page.addInitScript(() => {
+    const now = new Date().toISOString();
+    localStorage.setItem(
+      "blog:writer:draft:image-editor-e2e",
+      JSON.stringify({
+        post: {
+          slug: "image-editor-e2e",
+          id: "image-editor-e2e",
+          title: "이미지 편집 테스트",
+          body: "![첫 사진](http://127.0.0.1:3100/og-blog.png)\n\n![둘째 사진](http://127.0.0.1:3100/web-app-manifest-512x512.png)",
+          category: { name: "Development", slug: "development" },
+          tags: [],
+          excerpt: "",
+          coverImage: { src: "" },
+          featured: false,
+          published: false,
+          createdAt: now,
+          lastEditedAt: null,
+          commentsCount: 0,
+          reactionsCount: 0,
+        },
+        sha: null,
+        savedAt: now,
+        pinned: [],
+        order: [],
+      }),
+    );
+  });
+  await page.goto("/write?draft=image-editor-e2e");
+  const editor = page.getByRole("textbox", { name: "본문 편집기" });
+  const figures = editor.locator("figure");
+  await expect(figures).toHaveCount(2);
+  if (isMobile) await figures.first().locator("img").tap();
+  else await figures.first().locator("img").click();
+  await page.getByRole("textbox", { name: "캡션" }).fill("첫 번째 캡션");
+  await figures
+    .first()
+    .getByRole("button", { name: "대표 이미지로 설정" })
+    .click();
+  await expect(
+    figures.first().getByRole("button", { name: "대표 이미지로 설정" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  if (isMobile) await figures.nth(1).locator("img").tap();
+  else await figures.nth(1).locator("img").click();
+  await expect(figures.first().locator("figcaption")).toHaveText(
+    "첫 번째 캡션",
+  );
+  if (isMobile) await figures.first().locator("img").tap();
+  else await figures.first().locator("img").click();
+  await figures.first().getByRole("button", { name: "사진 삭제" }).click();
+  await expect(figures).toHaveCount(1);
+  await expect(figures.first().locator("img")).toHaveAttribute(
+    "src",
+    "http://127.0.0.1:3100/web-app-manifest-512x512.png",
+  );
+});
+
 test("table row and column menus stay open while moving from handle to delete", async ({
   page,
   isMobile,

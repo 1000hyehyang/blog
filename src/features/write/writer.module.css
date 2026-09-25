@@ -681,35 +681,6 @@
     padding: calc(0.35rem - 1px);
   }
 }
-.imageDemo {
-  width: min(100% - 2rem, 60rem);
-  margin: 3rem auto;
-}
-.imageDemo h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-.imageDemo p {
-  margin: 0.75rem 0 1.5rem;
-}
-.imageDemoActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.imageDemoActions button {
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.imageDemo details {
-  margin-top: 2rem;
-}
-.imageDemo pre {
-  overflow-x: auto;
-  white-space: pre-wrap;
-}
 .editor :global(.tiptap) hr {
   border-top: 1px solid var(--border);
 }

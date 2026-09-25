@@ -142,6 +142,34 @@ describe("Tiptap Markdown preservation", () => {
     expect(cover).toBe("");
     editor.destroy();
   });
+  it("keeps the cover while another copy of the same image remains", () => {
+    const src = "https://example.com/cover.png";
+    let cover = src;
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: `![첫 번째](${src})\n\n![두 번째](${src})`,
+      contentType: "markdown",
+      onUpdate: ({ transaction }) => {
+        cover = nextCoverImageSrc(transaction, cover);
+      },
+    });
+    const removeFirstImage = () => {
+      let position = -1;
+      let size = 0;
+      editor.state.doc.descendants((node, offset) => {
+        if (node.type.name === "image" && position === -1) {
+          position = offset;
+          size = node.nodeSize;
+        }
+      });
+      editor.commands.deleteRange({ from: position, to: position + size });
+    };
+    removeFirstImage();
+    expect(cover).toBe(src);
+    removeFirstImage();
+    expect(cover).toBe("");
+    editor.destroy();
+  });
   it("keeps the batch identity of separate photos through Markdown reopening", () => {
     const batchId = "12345678-1234-1234-1234-123456789abc";
     const editor = new Editor({ extensions: editorExtensions() });

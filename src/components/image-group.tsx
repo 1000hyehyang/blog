@@ -77,11 +77,14 @@ export function ImageGroupDisplay({
         draggable={false}
         onLoad={(event) => {
           const { naturalWidth, naturalHeight } = event.currentTarget;
-          if (naturalWidth && naturalHeight)
-            setRatios((current) => ({
-              ...current,
-              [image.src]: naturalWidth / naturalHeight,
-            }));
+          if (naturalWidth && naturalHeight) {
+            const ratio = naturalWidth / naturalHeight;
+            setRatios((current) =>
+              current[image.src] === ratio
+                ? current
+                : { ...current, [image.src]: ratio },
+            );
+          }
         }}
       />
     );
@@ -122,12 +125,13 @@ export function ImageGroupDisplay({
     );
   };
   const rows: number[][] = [];
-  for (let start = 0; start < images.length;) {
-    const count =
-      images.length - start === 3 ? 3 : Math.min(2, images.length - start);
-    rows.push(Array.from({ length: count }, (_, offset) => start + offset));
-    start += count;
-  }
+  if (layout === "collage")
+    for (let start = 0; start < images.length;) {
+      const count =
+        images.length - start === 3 ? 3 : Math.min(2, images.length - start);
+      rows.push(Array.from({ length: count }, (_, offset) => start + offset));
+      start += count;
+    }
 
   return (
     <span

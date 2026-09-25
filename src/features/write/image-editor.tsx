@@ -53,30 +53,21 @@ export function nextCoverImageSrc(transaction: Transaction, src: string) {
   let previousIndex = 0;
   transaction.before.descendants((node, position) => {
     if (node.type.name !== "image" || previousPosition !== -1) return;
-    const sources = asImageGroup(node.attrs)?.images.map(
-      (image) => image.src,
-    ) ?? [node.attrs.src];
-    const index = sources.indexOf(src);
+    const group = asImageGroup(node.attrs);
+    const index = group
+      ? group.images.findIndex((image) => image.src === src)
+      : node.attrs.src === src
+        ? 0
+        : -1;
     if (index !== -1) {
       previousPosition = position;
       previousIndex = index;
     }
   });
   if (previousPosition === -1) return src;
-  let stillPresent = false;
-  transaction.doc.descendants((node) => {
-    if (node.type.name !== "image") return;
-    const group = asImageGroup(node.attrs);
-    if (
-      group?.images.some((image) => image.src === src) ||
-      node.attrs.src === src
-    )
-      stillPresent = true;
-  });
-  if (stillPresent) return src;
   let mappedPosition = previousPosition;
+  let deleted = false;
   for (const map of transaction.mapping.maps) {
-    let deleted = false;
     map.forEach((oldStart, oldEnd, newStart, newEnd) => {
       if (
         oldStart <= mappedPosition &&
@@ -85,12 +76,29 @@ export function nextCoverImageSrc(transaction: Transaction, src: string) {
       )
         deleted = true;
     });
-    if (deleted) return "";
+    if (deleted) break;
     mappedPosition = map.map(mappedPosition);
   }
-  const replacement = transaction.doc.nodeAt(mappedPosition);
+  const replacement = deleted ? null : transaction.doc.nodeAt(mappedPosition);
+  const group =
+    replacement?.type.name === "image" ? asImageGroup(replacement.attrs) : null;
+  if (
+    replacement?.type.name === "image" &&
+    (replacement.attrs.src === src ||
+      group?.images.some((image) => image.src === src))
+  )
+    return src;
+  let stillPresent = false;
+  transaction.doc.descendants((node) => {
+    if (node.type.name !== "image") return;
+    if (
+      node.attrs.src === src ||
+      asImageGroup(node.attrs)?.images.some((image) => image.src === src)
+    )
+      stillPresent = true;
+  });
+  if (stillPresent) return src;
   if (replacement?.type.name !== "image") return "";
-  const group = asImageGroup(replacement.attrs);
   return group
     ? group.images[Math.min(previousIndex, group.images.length - 1)].src
     : replacement.attrs.src;

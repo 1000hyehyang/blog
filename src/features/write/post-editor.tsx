@@ -304,7 +304,7 @@ export function PostEditor({
   ) {
     if (!files.length) return;
     if (target !== "body" || files.length === 1) {
-      void uploadImages(files, target);
+      void uploadSingleImage(files[0], target);
       return;
     }
     const error = files.map(imageFileError).find(Boolean);
@@ -382,18 +382,16 @@ export function PostEditor({
       finish();
     }
   }
-  async function uploadImages(
-    files: File[],
+  async function uploadSingleImage(
+    file: File,
     target: "body" | "coverImage" | "galleryImage",
   ) {
     if (!editor || (target === "body" && unsupported) || !start()) return;
     editor.setEditable(false);
     try {
-      for (const file of target === "body" ? files : files.slice(0, 1)) {
-        const image = await uploadImageFile(file);
-        if (target === "body") editor.chain().focus().setImage(image).run();
-        else update({ [target]: { src: image.src } });
-      }
+      const image = await uploadImageFile(file);
+      if (target === "body") editor.chain().focus().setImage(image).run();
+      else update({ [target]: { src: image.src } });
       setMessage("이미지를 추가했습니다. 글을 저장해 주세요.");
     } catch (error) {
       setMessage(
