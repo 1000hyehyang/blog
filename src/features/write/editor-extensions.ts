@@ -6,6 +6,12 @@ import { Markdown, MarkdownManager } from "@tiptap/markdown";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ImageNodeView } from "./image-editor";
 import {
+  asImageGroup,
+  readImageGroup,
+  writeImageGroup,
+  type ImageGroup,
+} from "@/lib/image-group";
+import {
   hasImageSettings,
   readImageMetadata,
   writeImageMetadata,
@@ -71,20 +77,50 @@ const EditableImage = Image.extend({
               ""
             : "",
       },
+      batchId: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          image(element)?.getAttribute("data-blog-image-batch"),
+      },
+      layout: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          readImageGroup(element.getAttribute("data-blog-image-group"))
+            ?.layout ?? null,
+      },
+      images: {
+        default: [],
+        parseHTML: (element: HTMLElement) =>
+          readImageGroup(element.getAttribute("data-blog-image-group"))
+            ?.images ?? [],
+      },
     };
   },
   parseHTML() {
     return [
+      { tag: "figure[data-blog-image-group]" },
       { tag: "figure[data-blog-image]" },
       { tag: 'img[src]:not([src^="data:"])' },
     ];
   },
   renderHTML({ node }) {
-    const { src, alt, title, ...settings } = node.attrs as ImageMetadata & {
-      src: string;
-      alt: string | null;
-    };
-    const image = ["img", { src, alt, title }] as const;
+    const { src, alt, title, layout, images, batchId, ...settings } =
+      node.attrs as ImageMetadata & {
+        src: string;
+        alt: string | null;
+      } & Partial<ImageGroup>;
+    const group = asImageGroup({ layout, images, caption: settings.caption });
+    if (group)
+      return [
+        "figure",
+        { "data-blog-image-group": writeImageGroup(group) },
+        ...group.images.map((item) => ["img", item]),
+        ...(group.caption ? [["figcaption", {}, group.caption]] : []),
+      ];
+    const image = [
+      "img",
+      { src, alt, title, "data-blog-image-batch": batchId },
+    ] as const;
     if (!hasImageSettings(settings)) return image;
     return [
       "figure",
@@ -99,6 +135,14 @@ const EditableImage = Image.extend({
     ];
   },
   parseMarkdown: (token, helpers) => {
+    const group = readImageGroup(token.title);
+    if (group && group.images[0].src === token.href)
+      return helpers.createNode("image", {
+        src: token.href,
+        alt: token.text,
+        title: null,
+        ...group,
+      });
     const settings = readImageMetadata(token.title);
     return helpers.createNode("image", {
       src: token.href,
@@ -110,13 +154,23 @@ const EditableImage = Image.extend({
     const {
       src = "",
       alt = "",
+      layout,
+      images,
+      caption,
       ...settings
     } = node.attrs as ImageMetadata & {
       src: string;
       alt: string;
-    };
-    const title = writeImageMetadata(settings);
-    return title ? `![${alt}](${src} "${title}")` : `![${alt}](${src})`;
+    } & Partial<ImageGroup>;
+    const markdownAlt = alt
+      .replace(/([\\\[\]])/g, "\\$1")
+      .replace(/[\r\n]/g, " ");
+    const group = asImageGroup({ layout, images, caption });
+    if (group) return `![${markdownAlt}](${src} "${writeImageGroup(group)}")`;
+    const title = writeImageMetadata({ ...settings, caption });
+    return title
+      ? `![${markdownAlt}](${src} "${title}")`
+      : `![${markdownAlt}](${src})`;
   },
 });
 export function editorExtensions() {

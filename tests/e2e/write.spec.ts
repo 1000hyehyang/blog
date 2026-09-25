@@ -20,6 +20,55 @@ test("category options become visible when the select opens", async ({
   await expect(option).toHaveCSS("opacity", "1");
 });
 
+test("multiple photos open a responsive layout chooser before upload", async ({
+  page,
+}) => {
+  await page.context().addCookies([
+    {
+      name: "blog-writer",
+      value: createTestSession(),
+      url: "http://127.0.0.1:3100",
+      httpOnly: true,
+      sameSite: "Strict",
+    },
+  ]);
+  await page.goto("/write");
+  await page
+    .getByLabel("이미지 파일 선택")
+    .setInputFiles([
+      "public/og-blog.png",
+      "public/web-app-manifest-192x192.png",
+    ]);
+  const dialog = page.getByRole("dialog", { name: "사진 첨부 방식" });
+  await expect(dialog).toBeVisible();
+  await expect
+    .poll(() =>
+      dialog
+        .locator("img")
+        .first()
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await expect(
+    dialog.getByRole("button", { name: "개별사진" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("button", { name: "슬라이드" }).click();
+  await expect(
+    dialog.getByRole("button", { name: "슬라이드" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("button", { name: "2번째 사진 앞으로 이동" }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const box = await dialog.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+  await dialog.getByRole("button", { name: "사진 첨부 방식 닫기" }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "본문 편집기" }).locator("img"),
+  ).toHaveCount(0);
+});
+
 test("table row and column menus stay open while moving from handle to delete", async ({
   page,
   isMobile,

@@ -8,6 +8,7 @@ import { parsePostFile } from "@/lib/content/post-file";
 import { MarkdownContent } from "@/components/markdown";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { nextCoverImageSrc } from "./image-editor";
+import { readImageGroup } from "@/lib/image-group";
 
 vi.mock("server-only", () => ({}));
 
@@ -121,6 +122,121 @@ describe("Tiptap Markdown preservation", () => {
       src: "https://example.com/new.png",
     });
     expect(cover).toBe("https://example.com/new.png");
+    editor.commands.deleteSelection();
+    expect(cover).toBe("");
+    editor.destroy();
+  });
+  it("does not move the cover to a different image when its image is deleted", () => {
+    let cover = "https://example.com/cover.png";
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content:
+        "![대표](https://example.com/cover.png)\n\n![다음](https://example.com/next.png)",
+      contentType: "markdown",
+      onUpdate: ({ transaction }) => {
+        cover = nextCoverImageSrc(transaction, cover);
+      },
+    });
+    editor.commands.setNodeSelection(0);
+    editor.commands.deleteSelection();
+    expect(cover).toBe("");
+    editor.destroy();
+  });
+  it("keeps the batch identity of separate photos through Markdown reopening", () => {
+    const batchId = "12345678-1234-1234-1234-123456789abc";
+    const editor = new Editor({ extensions: editorExtensions() });
+    editor.commands.insertContentAt(0, [
+      {
+        type: "image",
+        attrs: { src: "https://example.com/one.png", alt: "하나", batchId },
+      },
+      {
+        type: "image",
+        attrs: { src: "https://example.com/two.png", alt: "둘", batchId },
+      },
+    ]);
+    const saved = editor.getMarkdown();
+    expect(saved.match(/blog-image:v1:/g)).toHaveLength(2);
+    editor.commands.setContent(saved, { contentType: "markdown" });
+    const images: string[] = [];
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === "image") images.push(node.attrs.batchId);
+    });
+    expect(images).toEqual([batchId, batchId]);
+    editor.destroy();
+  });
+  it("saves image groups, restores their layout and updates the cover on removal", () => {
+    let cover = "https://example.com/second.png";
+    const images = [
+      { src: "https://example.com/first.png", alt: "첫 [사진]" },
+      { src: cover, alt: "둘째 사진" },
+    ];
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: "시작",
+      contentType: "markdown",
+      onUpdate: ({ transaction }) => {
+        cover = nextCoverImageSrc(transaction, cover);
+      },
+    });
+    editor.commands.insertContentAt(editor.state.doc.content.size, {
+      type: "image",
+      attrs: {
+        ...images[0],
+        layout: "collage",
+        images,
+        caption: "함께 찍은 사진",
+      },
+    });
+    expect(editor.commands.undo()).toBe(true);
+    expect(editor.getMarkdown()).not.toContain("blog-image-group:v1:");
+    expect(editor.commands.redo()).toBe(true);
+    cover = images[1].src;
+    const saved = editor.getMarkdown();
+    expect(saved).toContain("blog-image-group:v1:");
+    expect(
+      readImageGroup(saved.match(/"(blog-image-group:[^"]+)"/)?.[1]),
+    ).toMatchObject({
+      layout: "collage",
+      images,
+      caption: "함께 찍은 사진",
+    });
+    editor.commands.setContent(saved, { contentType: "markdown" });
+    expect(editor.state.doc.child(1).attrs).toMatchObject({
+      layout: "collage",
+      images,
+      caption: "함께 찍은 사진",
+    });
+    expect(editor.state.doc.child(1).attrs.alt).toBe("첫 [사진]");
+    const publicView = document.createElement("div");
+    publicView.innerHTML = renderToStaticMarkup(
+      <MarkdownContent source={saved} />,
+    );
+    expect(
+      publicView.querySelectorAll(".markdown-image-group img"),
+    ).toHaveLength(2);
+    expect(publicView.querySelector(".markdown-image-group")).toHaveAttribute(
+      "data-layout",
+      "collage",
+    );
+    expect(publicView.querySelector(".markdown-image-group")).toHaveTextContent(
+      "함께 찍은 사진",
+    );
+    const groupPosition = editor.state.doc.firstChild!.nodeSize;
+    editor.commands.setNodeSelection(groupPosition);
+    editor.commands.updateAttributes("image", {
+      images: [
+        images[0],
+        { src: "https://example.com/third.png", alt: "셋째" },
+      ],
+      layout: "slide",
+    });
+    expect(cover).toBe("https://example.com/third.png");
+    const slideView = document.createElement("div");
+    slideView.innerHTML = renderToStaticMarkup(
+      <MarkdownContent source={editor.getMarkdown()} />,
+    );
+    expect(slideView.querySelector('[aria-label="다음 사진"]')).not.toBeNull();
     editor.commands.deleteSelection();
     expect(cover).toBe("");
     editor.destroy();

@@ -349,13 +349,20 @@ button:not(:disabled):hover {
 .prose > :first-child {
   margin-top: 0;
 }
-.prose > p:has(> :is(img, .markdown-image-frame):only-child) {
+.prose
+  > p:has(> :is(img, .markdown-image-frame, .markdown-image-group):only-child) {
   margin-block: 2em;
 }
-.prose > p:has(> :is(img, .markdown-image-frame):only-child):first-child {
+.prose
+  > p:has(
+    > :is(img, .markdown-image-frame, .markdown-image-group):only-child
+  ):first-child {
   margin-top: 0;
 }
-.prose > p:has(> :is(img, .markdown-image-frame):only-child):last-child {
+.prose
+  > p:has(
+    > :is(img, .markdown-image-frame, .markdown-image-group):only-child
+  ):last-child {
   margin-bottom: 0;
 }
 .prose img {

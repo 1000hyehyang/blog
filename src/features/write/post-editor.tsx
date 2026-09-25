@@ -37,6 +37,8 @@ import { EditorBodySkeleton } from "./writer-skeleton";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { TableOverlay } from "./table-overlay";
 import { ImageEditor, nextCoverImageSrc } from "./image-editor";
+import { ImageLayoutDialog, type PendingImage } from "./image-layout-dialog";
+import type { GroupImage, ImageGroupLayout } from "@/lib/image-group";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
 import { StatefulButton, type ButtonState } from "./stateful-button";
@@ -105,6 +107,14 @@ export function PostEditor({
   const publishDialog = useRef<HTMLDialogElement>(null);
   const [publishMode, setPublishMode] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
+  const imageLayoutDialog = useRef<HTMLDialogElement>(null);
+  const previewUrls = useRef(new Set<string>());
+  const [pendingImages, setPendingImages] = useState<{
+    items: PendingImage[];
+    layout: ImageGroupLayout;
+    range: { from: number; to: number };
+    error: string;
+  } | null>(null);
   const uploadTarget = useRef<"body" | "coverImage" | "galleryImage">("body");
   const unsupported = useMemo(
     () => hasUnsupportedHtml(initial?.body ?? ""),
@@ -139,7 +149,7 @@ export function PostEditor({
         const files = Array.from(event.clipboardData?.files ?? []);
         if (!files.length) return false;
         event.preventDefault();
-        void uploadImages(files, "body");
+        queueImages(files, "body");
         return true;
       },
       handleDrop: (view, event, _slice, moved) => {
@@ -151,7 +161,7 @@ export function PostEditor({
           top: event.clientY,
         });
         if (position) editor?.commands.setTextSelection(position.pos);
-        void uploadImages(files, "body");
+        queueImages(files, "body");
         return true;
       },
     },
@@ -174,6 +184,12 @@ export function PostEditor({
   useEffect(() => {
     editor?.setEditable(!busy && !unsupported);
   }, [editor, busy, unsupported]);
+  useEffect(
+    () => () => {
+      for (const url of previewUrls.current) URL.revokeObjectURL(url);
+    },
+    [],
+  );
   useEffect(() => {
     if (!dirty && !busy) return;
     const warn = (event: BeforeUnloadEvent) => {
@@ -263,6 +279,109 @@ export function PostEditor({
     }
   }
 
+  function imageFileError(file: File) {
+    return !imageTypes[file.type] || !file.size || file.size > 8 * 1024 * 1024
+      ? "8MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요."
+      : "";
+  }
+  async function uploadImageFile(file: File): Promise<GroupImage> {
+    const error = imageFileError(file);
+    if (error) throw new Error(error);
+    const blob = await upload(
+      `posts/${crypto.randomUUID()}.${imageTypes[file.type]}`,
+      file,
+      {
+        access: "public",
+        handleUploadUrl: "/api/write/images",
+        contentType: file.type,
+      },
+    );
+    return { src: blob.url, alt: file.name.replace(/\.[^.]+$/, "") };
+  }
+  function queueImages(
+    files: File[],
+    target: "body" | "coverImage" | "galleryImage",
+  ) {
+    if (!files.length) return;
+    if (target !== "body" || files.length === 1) {
+      void uploadImages(files, target);
+      return;
+    }
+    const error = files.map(imageFileError).find(Boolean);
+    if (error) {
+      setMessage(error);
+      return;
+    }
+    if (files.length > 50) {
+      setMessage("사진은 한 번에 50장까지 첨부할 수 있습니다.");
+      return;
+    }
+    const items = files.map((file) => {
+      const preview = URL.createObjectURL(file);
+      previewUrls.current.add(preview);
+      return { file, preview };
+    });
+    const selection = editor?.state.selection;
+    setPendingImages({
+      items,
+      layout: "individual",
+      range: { from: selection?.from ?? 0, to: selection?.to ?? 0 },
+      error: "",
+    });
+    imageLayoutDialog.current?.showModal();
+  }
+  async function uploadPendingImages() {
+    if (!pendingImages || !editor || !start()) return;
+    editor.setEditable(false);
+    let items = pendingImages.items;
+    try {
+      for (let index = 0; index < items.length; index++) {
+        if (items[index].uploaded) continue;
+        const uploaded = await uploadImageFile(items[index].file);
+        items = items.map((item, itemIndex) =>
+          itemIndex === index ? { ...item, uploaded } : item,
+        );
+        setPendingImages((current) =>
+          current ? { ...current, items, error: "" } : null,
+        );
+      }
+      const images = items.map((item) => item.uploaded!);
+      const batchId = crypto.randomUUID();
+      const content =
+        pendingImages.layout === "individual"
+          ? images.map((image) => ({
+              type: "image",
+              attrs: { ...image, batchId },
+            }))
+          : {
+              type: "image",
+              attrs: {
+                src: images[0].src,
+                alt: images[0].alt,
+                layout: pendingImages.layout,
+                images,
+              },
+            };
+      if (!editor.commands.insertContentAt(pendingImages.range, content))
+        throw new Error("사진을 본문에 삽입하지 못했습니다.");
+      imageLayoutDialog.current?.close();
+      setMessage("이미지를 추가했습니다. 글을 저장해 주세요.");
+    } catch (error) {
+      setPendingImages((current) =>
+        current
+          ? {
+              ...current,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "이미지 업로드에 실패했습니다. 다시 시도해 주세요.",
+            }
+          : null,
+      );
+    } finally {
+      finish();
+    }
+  }
   async function uploadImages(
     files: File[],
     target: "body" | "coverImage" | "galleryImage",
@@ -271,27 +390,9 @@ export function PostEditor({
     editor.setEditable(false);
     try {
       for (const file of target === "body" ? files : files.slice(0, 1)) {
-        const extension = imageTypes[file.type];
-        if (!extension || !file.size || file.size > 8 * 1024 * 1024)
-          throw new Error(
-            "8MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요.",
-          );
-        const blob = await upload(
-          `posts/${crypto.randomUUID()}.${extension}`,
-          file,
-          {
-            access: "public",
-            handleUploadUrl: "/api/write/images",
-            contentType: file.type,
-          },
-        );
-        if (target === "body")
-          editor
-            .chain()
-            .focus()
-            .setImage({ src: blob.url, alt: file.name.replace(/\.[^.]+$/, "") })
-            .run();
-        else update({ [target]: { src: blob.url } });
+        const image = await uploadImageFile(file);
+        if (target === "body") editor.chain().focus().setImage(image).run();
+        else update({ [target]: { src: image.src } });
       }
       setMessage("이미지를 추가했습니다. 글을 저장해 주세요.");
     } catch (error) {
@@ -653,10 +754,40 @@ export function PostEditor({
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
             e.target.value = "";
-            void uploadImages(files, uploadTarget.current);
+            queueImages(files, uploadTarget.current);
           }}
         />
       </div>
+
+      <ImageLayoutDialog
+        dialogRef={imageLayoutDialog}
+        images={pendingImages?.items ?? []}
+        layout={pendingImages?.layout ?? "individual"}
+        error={pendingImages?.error ?? ""}
+        busy={busy}
+        onLayoutChange={(layout) =>
+          setPendingImages((current) =>
+            current ? { ...current, layout } : null,
+          )
+        }
+        onMove={(index, direction) =>
+          setPendingImages((current) => {
+            if (!current) return null;
+            const items = [...current.items];
+            [items[index], items[index + direction]] = [
+              items[index + direction],
+              items[index],
+            ];
+            return { ...current, items };
+          })
+        }
+        onConfirm={() => void uploadPendingImages()}
+        onClose={() => {
+          for (const url of previewUrls.current) URL.revokeObjectURL(url);
+          previewUrls.current.clear();
+          setPendingImages(null);
+        }}
+      />
 
       <footer className={styles.bottomBar}>
         <p role="status" aria-live="polite" className={styles.saveStatus}>

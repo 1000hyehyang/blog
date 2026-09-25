@@ -32,6 +32,33 @@ export function ImageEditorDemo() {
         업로드하지 않습니다.
       </p>
       <div className={styles.imageDemoActions}>
+        <button
+          type="button"
+          disabled={!editor}
+          onClick={() =>
+            editor?.commands.insertContentAt(editor.state.doc.content.size, {
+              type: "image",
+              attrs: {
+                src: "/og-blog.png?group=1",
+                alt: "첫 사진",
+                layout: "collage",
+                images: [
+                  { src: "/og-blog.png?group=1", alt: "첫 사진" },
+                  {
+                    src: "/web-app-manifest-512x512.png?group=1",
+                    alt: "둘째 사진",
+                  },
+                  {
+                    src: "/web-app-manifest-192x192.png?group=1",
+                    alt: "셋째 사진",
+                  },
+                ],
+              },
+            })
+          }
+        >
+          사진 묶음 추가
+        </button>
         <button type="button" onClick={() => editor?.commands.undo()}>
           실행 취소
         </button>

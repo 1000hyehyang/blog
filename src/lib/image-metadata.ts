@@ -1,5 +1,5 @@
 const prefix = "blog-image:v1:";
-// Markdown 이미지 문법에 없는 크기·정렬·캡션만 title에 기록한다.
+// Markdown 이미지 문법에 없는 크기·정렬·캡션·묶음 식별자를 title에 기록한다.
 
 export type ImageAlignment = "left" | "center" | "right";
 export type ImageMetadata = {
@@ -7,6 +7,7 @@ export type ImageMetadata = {
   width: number;
   caption: string;
   title: string | null;
+  batchId: string | null;
 };
 
 export function readImageMetadata(
@@ -17,6 +18,7 @@ export function readImageMetadata(
     width: 100,
     caption: "",
     title: title || null,
+    batchId: null,
   };
   if (!title?.startsWith(prefix)) return fallback;
   try {
@@ -28,17 +30,25 @@ export function readImageMetadata(
       value.width > 100 ||
       typeof value.caption !== "string" ||
       value.caption.length > 300 ||
-      (value.title !== null && typeof value.title !== "string")
+      (value.title !== null && typeof value.title !== "string") ||
+      (value.batchId != null &&
+        (typeof value.batchId !== "string" ||
+          !/^[a-f0-9-]{36}$/.test(value.batchId)))
     )
       return fallback;
-    return value;
+    return { ...value, batchId: value.batchId ?? null };
   } catch {
     return fallback;
   }
 }
 
 export function writeImageMetadata(value: ImageMetadata): string | null {
-  if (value.align === "center" && value.width === 100 && !value.caption)
+  if (
+    value.align === "center" &&
+    value.width === 100 &&
+    !value.caption &&
+    !value.batchId
+  )
     return value.title;
   return prefix + encodeURIComponent(JSON.stringify(value));
 }

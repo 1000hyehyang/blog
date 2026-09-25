@@ -55,6 +55,7 @@ beforeEach(() => {
       configurable: true,
       value: function (this: HTMLDialogElement) {
         this.removeAttribute("open");
+        this.dispatchEvent(new Event("close"));
       },
     },
   });
@@ -212,6 +213,108 @@ describe("writer data preservation", () => {
     expect(editor).toHaveTextContent("한글 본문");
     expect(editor.querySelectorAll("img")).toHaveLength(1);
   });
+  it("chooses a multi-image layout, retries only failed uploads and inserts one group", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ message: "충돌입니다" }, { status: 409 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const createObjectURL = vi
+      .fn()
+      .mockReturnValueOnce("blob:first")
+      .mockReturnValueOnce("blob:second");
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal(
+      "URL",
+      class extends URL {
+        static createObjectURL = createObjectURL;
+        static revokeObjectURL = revokeObjectURL;
+      },
+    );
+    mocks.upload
+      .mockResolvedValueOnce({ url: "https://example.com/second.png" })
+      .mockRejectedValueOnce(new Error("업로드 실패"))
+      .mockResolvedValueOnce({ url: "https://example.com/first.png" });
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    const first = new File(["first"], "first.png", { type: "image/png" });
+    const second = new File(["second"], "second.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("이미지 파일 선택"), {
+      target: { files: [first, second] },
+    });
+    const dialog = screen.getByRole("dialog", { name: "사진 첨부 방식" });
+    expect(dialog).toBeVisible();
+    fireEvent.click(within(dialog).getByRole("button", { name: "콜라주" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "2번째 사진 앞으로 이동" }),
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "본문에 삽입" }),
+    );
+    await within(dialog).findByText("업로드 실패");
+    expect(editor.querySelectorAll("figure img")).toHaveLength(0);
+    expect(mocks.upload.mock.calls[0][1]).toBe(second);
+    expect(mocks.upload.mock.calls[1][1]).toBe(first);
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "업로드 재시도" }),
+    );
+    await waitFor(() =>
+      expect(editor.querySelectorAll("figure img")).toHaveLength(2),
+    );
+    expect(mocks.upload).toHaveBeenCalledTimes(3);
+    expect(mocks.upload.mock.calls[2][1]).toBe(first);
+    expect(editor.querySelector("figure")).not.toHaveAttribute("data-selected");
+    expect(editor.querySelector("figure [data-layout]")).toHaveAttribute(
+      "data-layout",
+      "collage",
+    );
+    expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).post.body).toContain(
+      "blog-image-group:v1:",
+    );
+  });
+  it("inserts individual photos as separate editable images", async () => {
+    let preview = 0;
+    vi.stubGlobal(
+      "URL",
+      class extends URL {
+        static createObjectURL = vi.fn(() => `blob:preview-${++preview}`);
+        static revokeObjectURL = vi.fn();
+      },
+    );
+    mocks.upload.mockImplementation(async (_path, file: File) => ({
+      url: `https://example.com/${file.name}`,
+    }));
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.change(screen.getByLabelText("이미지 파일 선택"), {
+      target: {
+        files: [
+          new File(["one"], "one.png", { type: "image/png" }),
+          new File(["two"], "two.png", { type: "image/png" }),
+        ],
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "본문에 삽입" }));
+    await waitFor(() =>
+      expect(editor.querySelectorAll("figure img")).toHaveLength(2),
+    );
+    await waitFor(() =>
+      expect(editor).toHaveAttribute("contenteditable", "true"),
+    );
+    expect(editor.querySelector("[data-layout]")).toBeNull();
+    expect(
+      editor.querySelectorAll('figure[class*="imageFigure"]'),
+    ).toHaveLength(2);
+  });
   it("sets a selected image as the cover and saves its layout and caption", async () => {
     const fetchMock = vi
       .fn()
@@ -235,8 +338,8 @@ describe("writer data preservation", () => {
     fireEvent.click(screen.getByRole("button", { name: "대표 이미지로 설정" }));
     fireEvent.click(screen.getByRole("button", { name: "오른쪽 정렬" }));
     expect(
-      editor.querySelector('span[class*="imageRepresentative"]'),
-    ).toHaveTextContent("대표");
+      editor.querySelector('button[aria-label="대표 이미지로 설정"]'),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(
       screen.getByRole("button", { name: "오른쪽 아래 이미지 크기 조절" }),
     ).toBeInTheDocument();
@@ -275,7 +378,7 @@ describe("writer data preservation", () => {
     );
     const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
     fireEvent.click(editor.querySelector("img")!);
-    fireEvent.keyDown(editor, { key: "Delete" });
+    fireEvent.click(screen.getByRole("button", { name: "사진 삭제" }));
     expect(editor.querySelector("img")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
@@ -284,7 +387,7 @@ describe("writer data preservation", () => {
       JSON.parse(fetchMock.mock.calls[0][1].body).post.coverImage.src,
     ).toBe("");
   });
-  it("shows one representative badge when an image URL is inserted twice", async () => {
+  it("shows one active representative control when an image URL is inserted twice", async () => {
     render(
       <PostEditor
         initial={{
@@ -299,7 +402,9 @@ describe("writer data preservation", () => {
     const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
     expect(editor.querySelectorAll("img")).toHaveLength(2);
     expect(
-      editor.querySelectorAll('span[class*="imageRepresentative"]'),
+      editor.querySelectorAll(
+        'button[aria-label="대표 이미지로 설정"][aria-pressed="true"]',
+      ),
     ).toHaveLength(1);
   });
   it("edits a table through contextual handles and saves the result", async () => {

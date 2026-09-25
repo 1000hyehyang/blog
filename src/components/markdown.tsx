@@ -19,6 +19,8 @@ import { getStandaloneExternalUrl } from "@/lib/markdown-link";
 import { getReactNodeText } from "@/lib/react/get-node-text";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import { hasImageSettings, readImageMetadata } from "@/lib/image-metadata";
+import { readImageGroup } from "@/lib/image-group";
+import { ImageGroupDisplay } from "./image-group";
 
 function getHeadingText(children: ReactNode) {
   return getReactNodeText(children).replace(/\s+/g, " ").trim();
@@ -76,6 +78,16 @@ function MarkdownLink({ href, children }: ComponentProps<"a">) {
 }
 
 function MarkdownImage({ src, alt, title }: ComponentProps<"img">) {
+  const group = readImageGroup(title);
+  if (group && group.images[0].src === src)
+    return (
+      <ImageGroupDisplay
+        className="markdown-image-group"
+        images={group.images}
+        layout={group.layout}
+        caption={group.caption}
+      />
+    );
   const settings = readImageMetadata(title);
   const image = (
     // 본문 이미지는 next/image 허용 목록 밖의 호스트도 사용한다.
