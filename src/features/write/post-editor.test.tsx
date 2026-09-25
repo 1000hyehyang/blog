@@ -234,18 +234,73 @@ describe("writer data preservation", () => {
     expect(screen.getByLabelText("이미지 설정")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "대표 이미지로 설정" }));
     fireEvent.click(screen.getByRole("button", { name: "오른쪽 정렬" }));
-    fireEvent.change(screen.getByRole("slider", { name: /크기/ }), {
-      target: { value: "65" },
-    });
-    fireEvent.change(screen.getByRole("textbox", { name: "캡션" }), {
+    expect(
+      editor.querySelector('span[class*="imageRepresentative"]'),
+    ).toHaveTextContent("대표");
+    expect(
+      screen.getByRole("button", { name: "오른쪽 아래 이미지 크기 조절" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("이미지를 설명해 보세요"),
+    ).toBeInTheDocument();
+    const caption = screen.getByRole("textbox", { name: "캡션" });
+    fireEvent.change(caption, {
       target: { value: "사진 설명" },
     });
+    fireEvent.blur(caption);
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const post = JSON.parse(fetchMock.mock.calls[0][1].body).post;
     expect(post.coverImage.src).toBe("https://example.com/image.png");
     expect(post.body).toContain("blog-image:v1:");
+  });
+  it("clears the representative image when its body image is deleted", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ message: "충돌입니다" }, { status: 409 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor
+        initial={{
+          ...initial,
+          body: "![설명](https://example.com/image.png)",
+          coverImage: { src: "https://example.com/image.png" },
+        }}
+        initialSha={"a".repeat(40)}
+        writable
+      />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(editor.querySelector("img")!);
+    fireEvent.keyDown(editor, { key: "Delete" });
+    expect(editor.querySelector("img")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(
+      JSON.parse(fetchMock.mock.calls[0][1].body).post.coverImage.src,
+    ).toBe("");
+  });
+  it("shows one representative badge when an image URL is inserted twice", async () => {
+    render(
+      <PostEditor
+        initial={{
+          ...initial,
+          body: "![첫 번째](https://example.com/image.png)\n\n![두 번째](https://example.com/image.png)",
+          coverImage: { src: "https://example.com/image.png" },
+        }}
+        initialSha={"a".repeat(40)}
+        writable
+      />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    expect(editor.querySelectorAll("img")).toHaveLength(2);
+    expect(
+      editor.querySelectorAll('span[class*="imageRepresentative"]'),
+    ).toHaveLength(1);
   });
   it("edits a table through contextual handles and saves the result", async () => {
     const fetchMock = vi

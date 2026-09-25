@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { parsePostFile } from "@/lib/content/post-file";
 import { MarkdownContent } from "@/components/markdown";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
+import { nextCoverImageSrc } from "./image-editor";
 
 vi.mock("server-only", () => ({}));
 
@@ -103,6 +104,25 @@ describe("Tiptap Markdown preservation", () => {
       caption: "",
     });
     expect(editor.getMarkdown().trim()).toBe(original.trim());
+    editor.destroy();
+  });
+  it("keeps the cover URL in sync when its image URL changes or is removed", () => {
+    let cover = "https://example.com/old.png";
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: "![사진](https://example.com/old.png)",
+      contentType: "markdown",
+      onUpdate: ({ transaction }) => {
+        cover = nextCoverImageSrc(transaction, cover);
+      },
+    });
+    editor.commands.setNodeSelection(0);
+    editor.commands.updateAttributes("image", {
+      src: "https://example.com/new.png",
+    });
+    expect(cover).toBe("https://example.com/new.png");
+    editor.commands.deleteSelection();
+    expect(cover).toBe("");
     editor.destroy();
   });
   it("round-trips formatting, images, lists, tables and code", () => {

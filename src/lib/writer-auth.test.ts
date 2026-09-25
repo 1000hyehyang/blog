@@ -97,6 +97,13 @@ describe("writer trust boundaries", () => {
     expect(
       sameOrigin(
         new Request(request.url, {
+          headers: { host: "127.0.0.1:3100", origin: "http://127.0.0.1:3100" },
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      sameOrigin(
+        new Request(request.url, {
           headers: { origin: "http://localhost:3000" },
         }),
       ),

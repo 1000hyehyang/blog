@@ -22,10 +22,11 @@ export function writerConfigured() {
   );
 }
 export function sameOrigin(request: Request) {
+  const url = new URL(request.url);
   const expected =
     process.env.NODE_ENV === "production"
       ? process.env.WRITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL
-      : request.url;
+      : `${url.protocol}//${request.headers.get("host") || url.host}`;
   if (!expected) return false;
   try {
     return request.headers.get("origin") === new URL(expected).origin;

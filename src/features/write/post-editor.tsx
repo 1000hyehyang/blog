@@ -1,7 +1,6 @@
 "use client";
 
-import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import { NodeSelection } from "@tiptap/pm/state";
+import { useEditor, useEditorState } from "@tiptap/react";
 import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import {
@@ -37,7 +36,7 @@ import { IconButton } from "./icon-button";
 import { EditorBodySkeleton } from "./writer-skeleton";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { TableOverlay } from "./table-overlay";
-import type { ImageAlignment, ImageMetadata } from "@/lib/image-metadata";
+import { ImageEditor, nextCoverImageSrc } from "./image-editor";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
 import { StatefulButton, type ButtonState } from "./stateful-button";
@@ -70,12 +69,6 @@ const imageTypes: Record<string, string> = {
   "image/webp": "webp",
   "image/avif": "avif",
 };
-const imageAlignments: { value: ImageAlignment; label: string }[] = [
-  { value: "left", label: "왼쪽" },
-  { value: "center", label: "가운데" },
-  { value: "right", label: "오른쪽" },
-];
-
 export function PostEditor({
   initial,
   initialSha,
@@ -126,7 +119,13 @@ export function PostEditor({
     editable: !unsupported,
     onUpdate: ({ editor, transaction }) => {
       if (!transaction.docChanged) return;
-      setFields((current) => ({ ...current, body: editor.getMarkdown() }));
+      setFields((current) => ({
+        ...current,
+        body: editor.getMarkdown(),
+        coverImage: {
+          src: nextCoverImageSrc(transaction, current.coverImage.src),
+        },
+      }));
       setDirty(true);
     },
     editorProps: {
@@ -160,7 +159,6 @@ export function PostEditor({
   const active = useEditorState({
     editor,
     selector: ({ editor }) => {
-      const selection = editor?.state.selection;
       return {
         bold: editor?.isActive("bold"),
         italic: editor?.isActive("italic"),
@@ -170,16 +168,9 @@ export function PostEditor({
         taskList: editor?.isActive("taskList"),
         blockquote: editor?.isActive("blockquote"),
         codeBlock: editor?.isActive("codeBlock"),
-        image:
-          selection instanceof NodeSelection &&
-          selection.node.type.name === "image"
-            ? (selection.node.attrs as ImageMetadata & { src: string })
-            : null,
       };
     },
   });
-  const selectedImage = active?.image;
-
   useEffect(() => {
     editor?.setEditable(!busy && !unsupported);
   }, [editor, busy, unsupported]);
@@ -634,85 +625,14 @@ export function PostEditor({
           <div className={styles.editor}>
             {editor ? (
               <TableOverlay editor={editor}>
-                <EditorContent editor={editor} />
+                <ImageEditor
+                  editor={editor}
+                  coverImageSrc={fields.coverImage.src}
+                  onCoverImageChange={(src) => update({ coverImage: { src } })}
+                />
               </TableOverlay>
             ) : (
               <EditorBodySkeleton />
-            )}
-            {selectedImage && !unsupported && (
-              <div
-                className={styles.imageControls}
-                role="group"
-                aria-label="이미지 설정"
-              >
-                <button
-                  type="button"
-                  aria-pressed={fields.coverImage.src === selectedImage.src}
-                  onClick={() =>
-                    update({
-                      coverImage: {
-                        src:
-                          fields.coverImage.src === selectedImage.src
-                            ? ""
-                            : selectedImage.src,
-                      },
-                    })
-                  }
-                >
-                  대표 이미지로 설정
-                </button>
-                <div
-                  className={styles.imageAlign}
-                  role="group"
-                  aria-label="이미지 정렬"
-                >
-                  {imageAlignments.map(({ value, label }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      aria-label={`${label} 정렬`}
-                      aria-pressed={selectedImage.align === value}
-                      onClick={() =>
-                        editor?.commands.updateAttributes("image", {
-                          align: value,
-                        })
-                      }
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <label className={styles.imageSize}>
-                  크기 <output>{selectedImage.width}%</output>
-                  <input
-                    type="range"
-                    aria-label="이미지 크기"
-                    min="25"
-                    max="100"
-                    step="5"
-                    value={selectedImage.width}
-                    onChange={(event) =>
-                      editor?.commands.updateAttributes("image", {
-                        width: Number(event.target.value),
-                      })
-                    }
-                  />
-                </label>
-                <label className={styles.imageCaption}>
-                  캡션
-                  <input
-                    type="text"
-                    maxLength={300}
-                    value={selectedImage.caption}
-                    placeholder="이미지 설명을 입력하세요"
-                    onChange={(event) =>
-                      editor?.commands.updateAttributes("image", {
-                        caption: event.target.value,
-                      })
-                    }
-                  />
-                </label>
-              </div>
             )}
           </div>
           <TagInput

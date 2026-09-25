@@ -332,48 +332,190 @@
   line-height: 1.5;
   text-align: center;
 }
-.imageControls {
-  position: fixed;
-  z-index: 35;
-  bottom: calc(6rem + env(safe-area-inset-bottom));
+.editor :global(.tiptap) .imageFigure {
+  position: relative;
+  max-width: 100%;
+  margin: 1.5rem auto;
+}
+.editor :global(.tiptap) .imageFigure[data-selected] {
+  margin-top: 3.5rem;
+}
+.editor :global(.tiptap) .imageFigure[data-align="left"] {
+  margin-left: 0;
+}
+.editor :global(.tiptap) .imageFigure[data-align="right"] {
+  margin-right: 0;
+}
+.imageFrame {
+  position: relative;
+  line-height: 0;
+}
+.editor :global(.tiptap) .imageFrame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  user-select: none;
+}
+.editor :global(.tiptap) .imageFigure[data-width="100"] .imageFrame img {
+  width: auto;
+  max-width: 100%;
+}
+.imageFigure[data-selected] .imageFrame {
+  outline: 2px solid var(--foreground);
+  outline-offset: 0;
+}
+.imageToolbar {
+  position: absolute;
+  z-index: 5;
+  bottom: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
-  width: min(48rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 10rem);
-  overflow-y: auto;
-  padding: 0.75rem;
+  gap: 2px;
+  width: max-content;
+  padding: 4px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 5px;
   background: var(--background);
   box-shadow: var(--shadow-md);
+  white-space: nowrap;
 }
-.imageAlign {
-  display: flex;
-  gap: 0.25rem;
-}
-.writer .imageSize,
-.writer .imageCaption {
-  display: flex;
+.writer .imageToolbar button,
+.imageToolbar button {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 5px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  cursor: pointer;
 }
-.writer .imageSize input {
-  width: 8rem;
+.writer .imageToolbar button:hover,
+.imageToolbar button:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+.writer .imageToolbar button[aria-pressed="true"],
+.imageToolbar button[aria-pressed="true"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+.imageToolbarDivider {
+  height: 20px;
+  margin: 0 3px;
+  border-left: 1px solid var(--border);
+}
+.imageRepresentative {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.writer .imageResize,
+.imageResize {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
-  accent-color: var(--foreground);
+  background: transparent;
+  touch-action: none;
 }
-.writer .imageCaption {
-  flex: 1;
-  min-width: min(100%, 15rem);
+.imageResize::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--foreground);
+  border-radius: 50%;
+  background: var(--background);
 }
-.writer .imageCaption input {
-  flex: 1;
-  padding: 0.4rem 0.6rem;
+.imageResize:focus-visible::after {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.imageResize[data-corner="top-left"],
+.imageResize[data-corner="bottom-right"] {
+  cursor: nwse-resize;
+}
+.imageResize[data-corner="top-right"],
+.imageResize[data-corner="bottom-left"] {
+  cursor: nesw-resize;
+}
+.imageResize[data-corner^="top"] {
+  top: -12px;
+}
+.imageResize[data-corner^="bottom"] {
+  bottom: -12px;
+}
+.imageResize[data-corner$="left"] {
+  left: -12px;
+}
+.imageResize[data-corner$="right"] {
+  right: -12px;
+}
+.editor :global(.tiptap) .imageFigcaption {
+  padding-top: 8px;
+  line-height: 1.5;
+  text-align: center;
+}
+.writer .imageFigcaption input,
+.imageFigcaption input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  text-align: center;
+  outline: none;
+}
+.imageFigcaption input::placeholder {
+  color: var(--muted-foreground);
+}
+.imageDemo {
+  width: min(100% - 2rem, 60rem);
+  margin: 3rem auto;
+}
+.imageDemo h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.imageDemo p {
+  margin: 0.75rem 0 1.5rem;
+}
+.imageDemoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.imageDemoActions button {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.imageDemo details {
+  margin-top: 2rem;
+}
+.imageDemo pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
 }
 .editor :global(.tiptap) hr {
   border-top: 1px solid var(--border);
@@ -507,6 +649,9 @@
 }
 .editor :global(.ProseMirror-selectednode) {
   outline: 2px solid var(--ring);
+}
+.editor :global(.node-image.ProseMirror-selectednode) {
+  outline: none;
 }
 .tags {
   margin-top: 2rem;
@@ -857,9 +1002,6 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
     flex-wrap: wrap;
-  }
-  .imageControls {
-    bottom: calc(7rem + env(safe-area-inset-bottom));
   }
   .saveStatus {
     order: -1;

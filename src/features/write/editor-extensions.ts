@@ -3,6 +3,8 @@ import Image from "@tiptap/extension-image";
 import { TaskList, TaskItem } from "@tiptap/extension-list";
 import { Table, TableKit } from "@tiptap/extension-table";
 import { Markdown, MarkdownManager } from "@tiptap/markdown";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { ImageNodeView } from "./image-editor";
 import {
   hasImageSettings,
   readImageMetadata,
@@ -16,6 +18,9 @@ const SafeTable = Table.extend({
 });
 
 const EditableImage = Image.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageNodeView);
+  },
   addAttributes() {
     const image = (element: HTMLElement) =>
       element.tagName === "FIGURE" ? element.querySelector("img") : element;
