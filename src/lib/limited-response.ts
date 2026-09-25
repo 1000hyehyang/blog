@@ -1,9 +1,10 @@
 export async function readLimitedResponseText(
   response: Response,
   maximumBytes: number,
+  truncate = false,
 ): Promise<string> {
   const contentLength = Number(response.headers.get("content-length") ?? 0);
-  if (contentLength > maximumBytes) {
+  if (!truncate && contentLength > maximumBytes) {
     await response.body?.cancel();
     throw new Error("Response was too large");
   }
@@ -20,12 +21,12 @@ export async function readLimitedResponseText(
       const { done, value } = await reader.read();
       if (done) break;
 
-      byteLength += value.byteLength;
-      if (byteLength > maximumBytes) {
+      const remaining = maximumBytes - byteLength;
+      if (value.byteLength > remaining && !truncate)
         throw new Error("Response was too large");
-      }
-
-      text += decoder.decode(value, { stream: true });
+      text += decoder.decode(value.subarray(0, remaining), { stream: true });
+      byteLength += value.byteLength;
+      if (value.byteLength > remaining) break;
     }
 
     return text + decoder.decode();

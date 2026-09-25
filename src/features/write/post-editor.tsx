@@ -39,6 +39,7 @@ import { TableOverlay } from "./table-overlay";
 import { ImageEditor, nextCoverImageSrc } from "./image-editor";
 import { ImageLayoutDialog, type PendingImage } from "./image-layout-dialog";
 import type { GroupImage, ImageGroupLayout } from "@/lib/image-group";
+import { parseExternalHttpUrl } from "@/lib/link-preview";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
 import { StatefulButton, type ButtonState } from "./stateful-button";
@@ -145,11 +146,28 @@ export function PostEditor({
         "aria-multiline": "true",
         spellcheck: "false",
       },
-      handlePaste: (_view, event) => {
+      handlePaste: (view, event) => {
         const files = Array.from(event.clipboardData?.files ?? []);
-        if (!files.length) return false;
+        if (files.length) {
+          event.preventDefault();
+          queueImages(files, "body");
+          return true;
+        }
+        const pasted = event.clipboardData?.getData("text/plain").trim() ?? "";
+        const link = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/.exec(pasted);
+        if (!link || !view.state.schema.marks.link) return false;
+        const label = parseExternalHttpUrl(link[1]);
+        const target = parseExternalHttpUrl(link[2]);
+        if (!label || !target || label.href !== target.href) return false;
         event.preventDefault();
-        queueImages(files, "body");
+        view.dispatch(
+          view.state.tr.replaceSelectionWith(
+            view.state.schema.text(target.href, [
+              view.state.schema.marks.link.create({ href: target.href }),
+            ]),
+            false,
+          ),
+        );
         return true;
       },
       handleDrop: (view, event, _slice, moved) => {

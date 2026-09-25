@@ -36,4 +36,15 @@ describe("limited response text", () => {
       "Response was too large",
     );
   });
+
+  it("can keep the first bytes of a large page for preview metadata", async () => {
+    const response = new Response(
+      '<meta property="og:image" content="/cover.png">' + "x".repeat(2_000),
+      { headers: { "content-length": "2049" } },
+    );
+
+    await expect(
+      readLimitedResponseText(response, 100, true),
+    ).resolves.toContain('content="/cover.png"');
+  });
 });

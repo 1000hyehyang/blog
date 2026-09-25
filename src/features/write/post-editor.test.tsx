@@ -65,6 +65,27 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer data preservation", () => {
+  it("shows a preview card when a standalone Markdown URL is pasted", async () => {
+    const url = "https://github.com/1000hyehyang";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ url, hostname: "github.com", title: "GitHub profile" }),
+      ),
+    );
+    render(<PostEditor initial={null} initialSha={null} writable />);
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.paste(editor, {
+      clipboardData: { files: [], getData: () => `[${url}](${url})` },
+    });
+
+    expect(editor.querySelector(`p > a[href="${url}"]`)).toHaveTextContent(url);
+    expect(await screen.findByText("GitHub profile")).toBeInTheDocument();
+    expect(editor.querySelector(".link-preview-card")).toHaveAttribute(
+      "href",
+      url,
+    );
+  });
   it("generates one URL across retries and submits the visible card order", async () => {
     const fetchMock = vi
       .fn()

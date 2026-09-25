@@ -296,10 +296,26 @@
 .editor :global(.tiptap) a {
   text-decoration: underline;
 }
+.editor :global(.tiptap .link-preview-card) {
+  text-decoration: none;
+}
+.editor :global(.link-preview-widget) {
+  display: block;
+  margin-top: 0.5rem;
+  white-space: normal;
+}
 .editor :global(.tiptap) img {
   max-width: 100%;
   height: auto;
   margin: 1.5rem auto;
+}
+.editor :global(.tiptap .link-preview-card__favicon) {
+  height: 1rem;
+  margin: 0;
+}
+.editor :global(.tiptap .link-preview-card__image img) {
+  height: 100%;
+  margin: 0;
 }
 .editor :global(.tiptap) figure[data-blog-image] {
   max-width: 100%;

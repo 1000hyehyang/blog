@@ -86,5 +86,31 @@ describe("self-hosted link preview", () => {
     const callback = vi.fn();
     remote.agents[0].connect.lookup("external.example", {}, callback);
     expect(callback).toHaveBeenCalledWith(null, "8.8.8.8", 4);
+    remote.agents[0].connect.lookup(
+      "external.example",
+      { all: true },
+      callback,
+    );
+    expect(callback).toHaveBeenLastCalledWith(null, [
+      { address: "8.8.8.8", family: 4 },
+    ]);
+  });
+
+  it("keeps metadata from a page whose body exceeds the preview limit", async () => {
+    remote.lookup.mockResolvedValue([{ address: "8.8.8.8", family: 4 }]);
+    remote.fetch.mockResolvedValue(
+      new Response(
+        '<meta property="og:image" content="/cover.png">' + "x".repeat(600_000),
+        { headers: { "content-type": "text/html" } },
+      ),
+    );
+    const { getLinkPreview } = await import("./link-preview");
+
+    await expect(
+      getLinkPreview("https://external.example/post"),
+    ).resolves.toMatchObject({
+      image: "https://external.example/cover.png",
+      icon: "https://external.example/favicon.ico",
+    });
   });
 });

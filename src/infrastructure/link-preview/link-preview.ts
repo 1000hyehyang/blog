@@ -70,8 +70,9 @@ async function fetchPublicResponse(
     const destination = await resolvePublicDestination(currentUrl);
     const dispatcher = new Agent({
       connect: {
-        lookup(_hostname, _options, callback) {
-          callback(null, destination.address, destination.family);
+        lookup(_hostname, options, callback) {
+          if (options.all) callback(null, [destination]);
+          else callback(null, destination.address, destination.family);
         },
       },
     });
@@ -138,7 +139,7 @@ async function fetchPublicHtml(
     }
 
     return {
-      html: await readLimitedResponseText(response, MAX_HTML_BYTES),
+      html: await readLimitedResponseText(response, MAX_HTML_BYTES, true),
       finalUrl,
     };
   } finally {
@@ -227,11 +228,12 @@ export async function getLinkPreview(
     url: url.href,
     hostname: url.hostname,
     title: url.hostname,
+    icon: new URL("/favicon.ico", url).href,
   };
 
   try {
     const metadata = await getCachedRemoteMetadata(url.href);
-    return { ...fallback, ...metadata };
+    return { ...fallback, ...metadata, icon: metadata.icon ?? fallback.icon };
   } catch (error) {
     console.warn(
       `[link-preview] Failed to load metadata for ${url.hostname}.`,
