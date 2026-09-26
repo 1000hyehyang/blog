@@ -13,7 +13,7 @@ export function buildPostJsonLd(post: Post) {
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    url: absoluteUrl(routes.post(post.slug)),
+    url: absoluteUrl(routes.post(post.id)),
     headline: post.title,
     description: post.excerpt || post.title,
     image: absoluteUrl(post.coverImage.src || siteConfig.defaultImage),
@@ -30,7 +30,7 @@ export function buildPostJsonLd(post: Post) {
     publisher: { "@type": "Person", name: siteConfig.author.name },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": absoluteUrl(routes.post(post.slug)),
+      "@id": absoluteUrl(routes.post(post.id)),
     },
   };
 }

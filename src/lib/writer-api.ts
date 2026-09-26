@@ -68,7 +68,7 @@ export function invalidatePosts() {
   revalidateTag("posts", { expire: 0 });
   revalidatePath("/", "page");
   revalidatePath("/posts", "page");
-  revalidatePath("/posts/[slug]", "page");
+  revalidatePath("/[postId]", "page");
   revalidatePath("/category/[category]", "page");
   revalidatePath("/search", "page");
   revalidatePath("/sitemap.xml");

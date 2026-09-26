@@ -7,7 +7,7 @@
   "featured": false,
   "published": true,
   "slug": "post-8",
-  "id": "post-8",
+  "id": "fixture-id-8",
   "createdAt": "2026-01-08T00:00:00Z",
   "lastEditedAt": null,
   "commentsCount": 0,

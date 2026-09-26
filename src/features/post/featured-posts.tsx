@@ -102,7 +102,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
               <CarouselItem key={post.id} className="basis-full pl-0">
                 <article className="grid items-center gap-8 md:grid-cols-[1.2fr_1fr] md:gap-10">
                   <Link
-                    href={routes.post(post.slug)}
+                    href={routes.post(post.id)}
                     className="group relative block aspect-[16/10] overflow-hidden rounded-[var(--radius-lg)] bg-muted"
                   >
                     <PostCoverImage
@@ -131,7 +131,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
                     </p>
                     <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
                       <Link
-                        href={routes.post(post.slug)}
+                        href={routes.post(post.id)}
                         className="hover:underline hover:underline-offset-4"
                       >
                         {post.title}
@@ -146,7 +146,7 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
                       </time>
                     </div>
                     <Link
-                      href={routes.post(post.slug)}
+                      href={routes.post(post.id)}
                       className="mt-7 inline-flex rounded-[var(--radius-sm)] bg-foreground px-5 py-2.5 text-xs text-background transition-[filter] duration-200 hover:brightness-[1.06] dark:hover:brightness-[0.94]"
                     >
                       자세히 보기

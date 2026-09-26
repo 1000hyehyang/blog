@@ -7,6 +7,7 @@ import {
 } from "@/lib/content/post-file";
 import {
   getAllPosts,
+  getPost,
   getPosts,
   savePost,
   deletePost,
@@ -42,6 +43,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Markdown store", () => {
+  it("looks up published posts by ID, not storage slug", async () => {
+    expect((await getPost("fixture-id-8"))?.slug).toBe("post-8");
+    expect(await getPost("post-8")).toBeNull();
+  });
+
   it("reads all sequential posts and paginates globally", async () => {
     const posts = await getAllPosts();
     expect(posts.length).toBe(8);

@@ -199,8 +199,8 @@ export async function getAllPosts(options: { category?: string } = {}) {
     (p) => !options.category || p.category.slug === options.category,
   );
 }
-export async function getPost(slug: string) {
-  return (await getAllPosts()).find((post) => post.slug === slug) ?? null;
+export async function getPost(postId: string) {
+  return (await getAllPosts()).find((post) => post.id === postId) ?? null;
 }
 export async function getPosts(
   options: {

@@ -24,7 +24,7 @@ export function PostCard({
   return (
     <article className="group">
       <Link
-        href={routes.post(post.slug)}
+        href={routes.post(post.id)}
         className="block rounded-[var(--radius-md)] focus-visible:outline-offset-4"
       >
         <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius-md)] bg-muted">

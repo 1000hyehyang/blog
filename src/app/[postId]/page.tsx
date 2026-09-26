@@ -16,13 +16,13 @@ import { routes } from "@/lib/routes";
 import { buildPostJsonLd, serializeJsonLd } from "@/lib/seo";
 
 type PostPageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ postId: string }>;
 };
 
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
-  const post = await getPost((await params).slug);
+  const post = await getPost((await params).postId);
   if (!post?.published) notFound();
 
   const images = [post.coverImage.src || siteConfig.defaultImage];
@@ -32,14 +32,14 @@ export async function generateMetadata({
     title: post.title,
     description,
     keywords: post.tags,
-    alternates: { canonical: routes.post(post.slug) },
+    alternates: { canonical: routes.post(post.id) },
     openGraph: {
       type: "article",
       siteName: siteConfig.name,
       locale: "ko_KR",
       title: post.title,
       description,
-      url: routes.post(post.slug),
+      url: routes.post(post.id),
       images,
       publishedTime: post.createdAt,
       modifiedTime: resolvePostModifiedAt(post),
@@ -57,8 +57,8 @@ export async function generateMetadata({
 }
 
 export default async function PostPage({ params }: PostPageProps) {
-  const slug = (await params).slug;
-  const post = await getPost(slug);
+  const postId = (await params).postId;
+  const post = await getPost(postId);
   if (!post || !post.published) notFound();
   const posts = await getAllPosts();
   const relatedPosts = getRelatedPosts(posts, post);
@@ -101,7 +101,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 Comments.
               </h2>
               <div className="mt-6">
-                <GiscusComments slug={post.slug} />
+                <GiscusComments postId={post.id} />
               </div>
             </section>
 

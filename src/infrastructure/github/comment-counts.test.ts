@@ -13,7 +13,7 @@ it("refreshes pathname counts without reading post bodies; outages preserve arti
     await readFile("tests/fixtures/posts/post-1.md", "utf8"),
     "post-1",
   );
-  const second = { ...first, id: "post-2", slug: "post-2" };
+  const second = { ...first, id: "article-2", slug: "post-2" };
   vi.stubEnv("NEXT_PUBLIC_GISCUS_REPO", "owner/comments");
   vi.stubEnv("NEXT_PUBLIC_GISCUS_CATEGORY_ID", "category");
   vi.stubEnv("GITHUB_TOKEN", "test");
@@ -25,19 +25,19 @@ it("refreshes pathname counts without reading post bodies; outages preserve arti
             pageInfo: { hasNextPage: false, endCursor: null },
             nodes: [
               {
-                title: "/posts/post-1",
+                title: "/post-1",
                 category: { id: "category" },
                 comments: { totalCount: 12 },
                 reactions: { totalCount: 7 },
               },
               {
-                title: "/posts/post-2",
+                title: "/article-2",
                 category: { id: "category" },
                 comments: { totalCount: 3 },
                 reactions: { totalCount: 2 },
               },
               {
-                title: "/posts/post-2-suffix",
+                title: "/article-2-suffix",
                 category: { id: "category" },
                 comments: { totalCount: 99 },
                 reactions: { totalCount: 99 },

@@ -194,7 +194,7 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
   if (!initialUrl) return {};
 
   if (initialUrl.origin === new URL(siteConfig.url).origin) {
-    const match = initialUrl.pathname.match(/^\/posts\/([^/]+)\/?$/);
+    const match = initialUrl.pathname.match(/^\/([^/]+)\/?$/);
     const post = match ? await getPost(decodeURIComponent(match[1])) : null;
 
     if (post?.published) {

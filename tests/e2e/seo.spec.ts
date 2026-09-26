@@ -14,7 +14,7 @@ test("공개 페이지에 사이트와 글 메타데이터를 제공한다", asy
     /max-image-preview:large/,
   );
 
-  await page.goto("/posts/post-1");
+  await page.goto("/post-1");
   await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
     "content",
     "article",
@@ -65,7 +65,7 @@ test("페이지별 대표 URL을 유지하고 정렬·검색·관리 화면은 �
     "/posts?sort=oldest",
     "/search?q=fixture",
     "/login",
-    "/posts/not-a-number",
+    "/not-a-post",
     "/category/not-a-category",
   ]) {
     await page.goto(path);

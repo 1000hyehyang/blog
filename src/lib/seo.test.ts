@@ -10,7 +10,7 @@ import {
 } from "./seo";
 
 const post: Post = {
-  id: "post-1",
+  id: "article-id-1",
   slug: "post-1",
   title: "글 제목",
   body: "본문",
@@ -29,7 +29,7 @@ const post: Post = {
 describe("SEO structured data", () => {
   it("resolves local URLs and preserves external image URLs", () => {
     expect(absoluteUrl("/")).toBe(siteConfig.url);
-    expect(absoluteUrl("/posts/post-1")).toBe(`${siteConfig.url}/posts/post-1`);
+    expect(absoluteUrl("/article-id-1")).toBe(`${siteConfig.url}/article-id-1`);
     expect(buildPostJsonLd(post).image).toBe(`${siteConfig.url}/cover.png`);
     expect(
       buildPostJsonLd({
@@ -44,13 +44,13 @@ describe("SEO structured data", () => {
       buildPostJsonLd({ ...post, excerpt: "", coverImage: { src: "" } }),
     ).toMatchObject({
       "@type": "BlogPosting",
-      url: `${siteConfig.url}/posts/post-1`,
+      url: `${siteConfig.url}/article-id-1`,
       description: post.title,
       image: `${siteConfig.url}${siteConfig.defaultImage}`,
       articleSection: "Study",
       datePublished: post.createdAt,
       dateModified: post.createdAt,
-      mainEntityOfPage: { "@id": `${siteConfig.url}/posts/post-1` },
+      mainEntityOfPage: { "@id": `${siteConfig.url}/article-id-1` },
     });
     expect(
       buildPostJsonLd({ ...post, lastEditedAt: "2026-02-01T00:00:00Z" })

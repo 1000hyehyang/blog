@@ -63,7 +63,7 @@ export async function withCommentCounts(
     return posts.map((post) => {
       const matches = discussions.filter(
         (discussion) =>
-          discussion.title === routes.post(post.slug) &&
+          discussion.title === routes.post(post.id) &&
           (!process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID ||
             discussion.category.id ===
               process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID),

@@ -59,7 +59,7 @@ describe("self-hosted link preview", () => {
     const { getLinkPreview } = await import("./link-preview");
 
     await expect(
-      getLinkPreview("https://blog.example.com/posts/20"),
+      getLinkPreview("https://blog.example.com/20"),
     ).resolves.toMatchObject({
       title: "Internal post",
       description: "Internal description",

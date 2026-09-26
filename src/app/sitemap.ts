@@ -50,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const modifiedAt = toModifiedDate(post);
 
     return {
-      url: absoluteUrl(routes.post(post.slug)),
+      url: absoluteUrl(routes.post(post.id)),
       ...(modifiedAt && { lastModified: modifiedAt }),
     };
   });

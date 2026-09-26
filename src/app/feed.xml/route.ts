@@ -21,7 +21,7 @@ export async function GET() {
   const { posts } = await getPosts({ first: 50 });
   const items = posts
     .map((post) => {
-      const postUrl = absoluteUrl(routes.post(post.slug));
+      const postUrl = absoluteUrl(routes.post(post.id));
       return `
     <item>
       <title>${escapeXml(post.title)}</title>

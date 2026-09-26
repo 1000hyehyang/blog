@@ -6,10 +6,10 @@ import { useTheme } from "next-themes";
 import { giscusConfig } from "@/config/giscus";
 
 type GiscusCommentsProps = {
-  slug: string;
+  postId: string;
 };
 
-export function GiscusComments({ slug }: GiscusCommentsProps) {
+export function GiscusComments({ postId }: GiscusCommentsProps) {
   const { resolvedTheme } = useTheme();
   const theme = resolvedTheme === "dark" ? "dark" : "light";
 
@@ -25,7 +25,7 @@ export function GiscusComments({ slug }: GiscusCommentsProps) {
 
   return (
     <Giscus
-      key={slug}
+      key={postId}
       repo={giscusConfig.repo}
       repoId={giscusConfig.repoId}
       {...(giscusConfig.category && giscusConfig.categoryId

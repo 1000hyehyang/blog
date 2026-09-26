@@ -13,7 +13,7 @@ const post = (
   createdAt: string,
   lastEditedAt: string | null = null,
 ): Post => ({
-  id: `post-${number}`,
+  id: `article-${number}`,
   slug: `post-${number}`,
   title: `Post ${number}`,
   body: "",
@@ -50,7 +50,7 @@ describe("sitemap", () => {
     const byUrl = new Map(entries.map((entry) => [entry.url, entry]));
 
     expect(getAllPosts).toHaveBeenCalledOnce();
-    expect(byUrl.has("http://localhost:3000/posts/post-3")).toBe(true);
+    expect(byUrl.has("http://localhost:3000/article-3")).toBe(true);
 
     expect(byUrl.get("http://localhost:3000")?.lastModified).toEqual(
       new Date("2026-01-04T00:00:00.000Z"),
@@ -67,11 +67,11 @@ describe("sitemap", () => {
     expect(
       byUrl.get("http://localhost:3000/category/study"),
     ).not.toHaveProperty("lastModified");
-    expect(
-      byUrl.get("http://localhost:3000/posts/post-1")?.lastModified,
-    ).toEqual(new Date("2026-01-01T00:00:00.000Z"));
-    expect(
-      byUrl.get("http://localhost:3000/posts/post-2")?.lastModified,
-    ).toEqual(new Date("2026-01-04T00:00:00.000Z"));
+    expect(byUrl.get("http://localhost:3000/article-1")?.lastModified).toEqual(
+      new Date("2026-01-01T00:00:00.000Z"),
+    );
+    expect(byUrl.get("http://localhost:3000/article-2")?.lastModified).toEqual(
+      new Date("2026-01-04T00:00:00.000Z"),
+    );
   });
 });

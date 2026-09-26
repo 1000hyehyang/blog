@@ -153,7 +153,7 @@ describe("포스트 UI", () => {
 
   it("PostCard에 핵심 포스트 정보를 표시한다", () => {
     render(<PostCard post={post} />);
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/posts/post-1");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/D_1");
     expect(screen.getByText(post.title)).toBeVisible();
     expect(screen.getByText(post.excerpt)).toBeVisible();
   });

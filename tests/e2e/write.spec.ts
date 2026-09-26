@@ -347,28 +347,24 @@ test("local drafts reopen from management, preserve tags and checklist layout, a
   expect(writes).toBe(0);
 });
 
-test("sequential URLs are canonical and old numeric URLs are gone", async ({
+test("post ID URLs are canonical across pages, feed and sitemap", async ({
   page,
   request,
 }) => {
-  const old = await request.get("/posts/20", { maxRedirects: 0 });
-  expect(old.headers().location).toBeUndefined();
-  await page.goto("/posts/20");
-  await expect(page).toHaveURL("/posts/20");
-  await expect(
-    page.getByRole("heading", { name: "페이지를 찾을 수 없습니다" }),
-  ).toBeVisible();
-  await page.goto("/posts/post-1");
-  await expect(page).toHaveURL("/posts/post-1");
+  await page.goto("/fixture-id-8");
+  await expect(page).toHaveURL("/fixture-id-8");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Fixture Post 8",
+  );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
-    /\/posts\/post-1$/,
+    /\/fixture-id-8$/,
   );
   expect(await (await request.get("/feed.xml")).text()).toContain(
-    "/posts/post-1",
+    "/fixture-id-8",
   );
   expect(await (await request.get("/sitemap.xml")).text()).toContain(
-    "/posts/post-1",
+    "/fixture-id-8",
   );
 });
 
@@ -539,7 +535,7 @@ test("management is separate and authentication preserves the edit destination",
   const remove = page.getByRole("button", { name: / 삭제$/ }).first();
   await expect(remove.locator("svg")).toBeVisible();
   expect(await remove.textContent()).toBe("");
-  await expect(page.locator('main a[href^="/posts/"]')).toHaveCount(0);
+  await expect(page.locator('main a[href^="/post-"]')).toHaveCount(0);
   await page.getByRole("button", { name: "다음 페이지", exact: true }).click();
   await expect(page.locator("main ul > li")).toHaveCount(2);
   await page.getByRole("button", { name: "이전 페이지", exact: true }).click();
