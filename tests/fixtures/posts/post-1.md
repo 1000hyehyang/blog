@@ -3,7 +3,6 @@
   "title": "Fixture Post 1",
   "category": { "name": "Development", "slug": "development" },
   "tags": ["fixture"],
-  "excerpt": "First test fixture post.",
   "coverImage": { "src": "" },
   "featured": true,
   "featuredOrder": 0,

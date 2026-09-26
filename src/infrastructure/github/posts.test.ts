@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import {
   parsePostFile,
   serializePostFile,
-  type FilePost,
+  type StoredPost,
 } from "@/lib/content/post-file";
 import {
   getAllPosts,
@@ -19,14 +19,13 @@ vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("./comment-counts", () => ({
   withCommentCounts: (posts: unknown) => posts,
 }));
-const sample: FilePost = {
+const sample: StoredPost = {
   id: "a",
   slug: "a",
   title: "title",
   body: "body",
   category: { name: "Art", slug: "art" },
   tags: [],
-  excerpt: "",
   coverImage: { src: "" },
   featured: false,
   published: true,
@@ -249,7 +248,6 @@ describe("atomic pinned ordering", () => {
         ...first,
         title: "수정",
         body: "새 **본문**",
-        excerpt: "stale manual summary",
       },
       head,
       { base: ["a", "b"], order: ["b", "a"] },

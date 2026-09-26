@@ -148,14 +148,6 @@ it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwri
   };
   saveDraft(draft, null);
   expect(readDrafts()).toEqual([draft]);
-  localStorage.setItem(
-    localStorage.key(0)!,
-    JSON.stringify({
-      ...draft,
-      post: { ...draft.post, excerpt: "old summary" },
-    }),
-  );
-  expect(readDrafts()).toEqual([draft]);
   expect(() =>
     saveDraft({ ...draft, post: { ...draft.post, body: "overwrite" } }, null),
   ).toThrow();

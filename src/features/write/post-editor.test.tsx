@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PostEditor } from "./post-editor";
-import type { FilePost } from "@/lib/content/post-file";
+import type { StoredPost } from "@/lib/content/post-file";
 
 const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
@@ -19,13 +19,12 @@ vi.mock("@vercel/blob/client", () => ({ upload: mocks.upload }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }),
 }));
-const initial: FilePost = {
+const initial: StoredPost = {
   id: "post-id",
   slug: "sample-post",
   title: "원본 제목",
   body: "# 원본\n\n한글 본문\n\n---\n",
   tags: [],
-  excerpt: "",
   category: { name: "Development", slug: "development" },
   coverImage: { src: "" },
   featured: false,

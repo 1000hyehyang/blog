@@ -3,7 +3,6 @@
   "title": "Fixture Post 5",
   "category": { "name": "Development", "slug": "development" },
   "tags": ["fixture"],
-  "excerpt": "Fifth test fixture post.",
   "coverImage": { "src": "" },
   "featured": false,
   "published": true,

@@ -49,7 +49,7 @@ export function nextPostSlug(slugs: string[]) {
   return `post-${latest + 1}`;
 }
 
-export function serializePostFile(value: FilePost) {
+export function serializePostFile(value: StoredPost) {
   const { body, ...metadata } = postFileSchema.parse(value);
   return `---\n${JSON.stringify(metadata, null, 2)}\n---\n${body}`;
 }
