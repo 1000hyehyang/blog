@@ -36,20 +36,22 @@ export function remarkUnderline() {
       for (const child of node.children) {
         const start = child.position?.start.offset;
         const end = child.position?.end.offset;
-        const escaped =
-          start !== undefined &&
-          end !== undefined &&
-          source.slice(start, end).includes("\\+");
-        if (child.type !== "text" || !child.value?.includes("++") || escaped) {
+        if (child.type !== "text" || !child.value?.includes("++")) {
           add(child);
           continue;
         }
 
         const parts = child.value.split("++");
+        const rawMarkers =
+          start !== undefined && end !== undefined
+            ? [...source.slice(start, end).matchAll(/(?:\\?\+){2}/g)]
+            : [];
         for (const [index, part] of parts.entries()) {
           if (part) add({ type: "text", value: part });
           if (index === parts.length - 1) continue;
           if (
+            (rawMarkers.length === parts.length - 1 &&
+              rawMarkers[index][0].includes("\\")) ||
             (!underlined && /^\s/.test(parts[index + 1])) ||
             (underlined && /\s$/.test(part))
           ) {

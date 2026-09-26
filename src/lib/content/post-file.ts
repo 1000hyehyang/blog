@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { resolveExcerpt } from "./excerpt";
+import { createExcerpt } from "./excerpt";
 
 export const slugSchema = z
   .string()
@@ -23,7 +23,6 @@ export const postFieldsSchema = z.object({
     slug: z.string().regex(/^[a-z0-9-]+$/),
   }),
   tags: z.array(z.string().trim().min(1).max(80)).max(30),
-  excerpt: z.string().max(1000).default(""),
   coverImage: z.object({ src: imageUrl }),
   galleryImage: z.object({ src: imageUrl }).optional(),
   featured: z.boolean(),
@@ -38,7 +37,8 @@ export const postFileSchema = postFieldsSchema.extend({
   commentsCount: z.number().int().nonnegative().default(0),
   reactionsCount: z.number().int().nonnegative().default(0),
 });
-export type FilePost = z.infer<typeof postFileSchema>;
+export type StoredPost = z.infer<typeof postFileSchema>;
+export type FilePost = StoredPost & { excerpt: string };
 
 export function nextPostSlug(slugs: string[]) {
   let latest = 0;
@@ -66,6 +66,6 @@ export function parsePostFile(source: string, slug: string): FilePost {
     throw new Error(`Post filename does not match slug: ${slug}`);
   return {
     ...post,
-    excerpt: resolveExcerpt(post.excerpt, post.body, post.coverImage.src),
+    excerpt: createExcerpt(post.body),
   };
 }

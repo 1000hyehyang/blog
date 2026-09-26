@@ -26,7 +26,7 @@ import {
   removeDraft,
   type LocalDraft,
 } from "./local-drafts";
-import { nextPostSlug, type FilePost } from "@/lib/content/post-file";
+import { nextPostSlug, type StoredPost } from "@/lib/content/post-file";
 import { motion } from "framer-motion";
 import { PinnedCards, WriterCheckbox, WriterSelect } from "./writer-controls";
 import type { PinnedPost } from "./pinned-posts";
@@ -47,7 +47,6 @@ const emptyFields = {
   title: "",
   body: "",
   tags: [] as string[],
-  excerpt: "",
   coverImage: { src: "" },
   galleryImage: { src: "" },
   category: { name: "Development", slug: "development" },
@@ -56,7 +55,7 @@ const emptyFields = {
   published: false,
 };
 type Props = {
-  initial: FilePost | null;
+  initial: StoredPost | null;
   initialSha: string | null;
   writable: boolean;
   pinned?: PinnedPost[];

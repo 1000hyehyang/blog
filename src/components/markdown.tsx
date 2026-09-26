@@ -1,6 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import { CopyCodeButton } from "@/components/copy-code-button";
 import { ExternalLinkPreview } from "@/features/post/external-link-preview";
@@ -16,7 +15,7 @@ import {
   highlightMarkdownCode,
 } from "@/lib/markdown-code";
 import { getStandaloneExternalUrl } from "@/lib/markdown-link";
-import { remarkUnderline } from "@/lib/markdown-underline";
+import { markdownPlugins } from "@/lib/markdown-plugins";
 import { getReactNodeText } from "@/lib/react/get-node-text";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import { hasImageSettings, readImageMetadata } from "@/lib/image-metadata";
@@ -171,7 +170,7 @@ export function MarkdownContent({ source }: { source: string }) {
   return (
     <div className="prose">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkUnderline]}
+        remarkPlugins={markdownPlugins}
         components={markdownComponents}
       >
         {source}

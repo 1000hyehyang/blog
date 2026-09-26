@@ -46,6 +46,11 @@ describe("Tiptap Markdown preservation", () => {
     expect(literal).not.toContain("<u>");
     expect(literal).toContain("++그대로++");
     expect(
+      renderToStaticMarkup(
+        <MarkdownContent source={"문장++밑줄++ \\+\\+그대로\\+\\+"} />,
+      ),
+    ).toContain("문장<u>밑줄</u> ++그대로++");
+    expect(
       renderToStaticMarkup(<MarkdownContent source="C++ and C++" />),
     ).toContain("C++ and C++");
     expect(

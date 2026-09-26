@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createExcerpt, resolveExcerpt } from "./content/excerpt";
+import { createExcerpt } from "./content/excerpt";
 import { formatDate, toBodyHeadingLevel, toSlug } from "./content";
 
 describe("게시글 콘텐츠 유틸리티", () => {
@@ -10,22 +10,15 @@ describe("게시글 콘텐츠 유틸리티", () => {
     );
   });
 
-  it("이스케이프된 물결표를 보여 주고 기존 글의 잘못된 요약도 바로잡는다", () => {
+  it("이스케이프된 물결표를 보여 준다", () => {
     const body = "첫 문장 \\~ 물결과 ~~삭제~~ 내용";
     const expected = "첫 문장 ~ 물결과 삭제 내용";
     expect(createExcerpt(body)).toBe(expected);
-    expect(resolveExcerpt("첫 문장 \\ 물결과 삭제 내용", body, "")).toBe(
-      expected,
-    );
-    expect(resolveExcerpt("직접 쓴 요약", body, "")).toBe("직접 쓴 요약");
   });
 
   it("일반 문장 기호와 이스케이프 문자를 보존한다", () => {
     const body = "C# front-end x_y 2*3 \\*별표\\* \\#해시 \\~물결";
     expect(createExcerpt(body)).toBe("C# front-end x_y 2*3 *별표* #해시 ~물결");
-    expect(
-      resolveExcerpt("C front end x y 2 3 \\ 별표\\ \\ 해시 \\ 물결", body, ""),
-    ).toBe("C# front-end x_y 2*3 *별표* #해시 ~물결");
   });
 
   it("목록과 표의 글자를 읽고 코드 블록과 이미지는 제외한다", () => {
@@ -38,8 +31,10 @@ describe("게시글 콘텐츠 유틸리티", () => {
 
   it("밑줄 표기만 제거하고 C++와 이스케이프된 기호 및 코드 내용은 보존한다", () => {
     expect(
-      createExcerpt("++밑줄++ C++ \\+\\+그대로\\+\\+ `++code++` ++**강조**++"),
-    ).toBe("밑줄 C++ ++그대로++ ++code++ 강조");
+      createExcerpt(
+        "문장++밑줄++ C++ \\+\\+그대로\\+\\+ `++code++` ++**강조**++",
+      ),
+    ).toBe("문장밑줄 C++ ++그대로++ ++code++ 강조");
   });
 
   it("요약 길이 제한에서 이모지를 잘라 깨뜨리지 않는다", () => {
@@ -51,6 +46,10 @@ describe("게시글 콘텐츠 유틸리티", () => {
       "A & B © © 끝",
     );
     expect(createExcerpt("`&copy;` 그대로")).toBe("&copy; 그대로");
+  });
+
+  it("본문에 있는 특수 문자를 다른 문자로 바꾸지 않는다", () => {
+    expect(createExcerpt("\uE000")).toBe("\uE000");
   });
 
   it("카테고리 이름을 URL slug로 변환한다", () => {
