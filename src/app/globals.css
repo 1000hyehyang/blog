@@ -157,7 +157,6 @@ body {
 }
 
 @media (max-width: 767px) {
-  /* 모바일 주소창 높이가 바뀔 때 가로 넘침을 막는다. */
   html {
     overflow-x: clip;
     overflow-y: auto;

@@ -98,7 +98,6 @@ test("damaged drafts remain downloadable and do not block new draft saves", asyn
     localStorage.setItem("blog:writer:draft:post-20", '{"body":"preserve me'),
   );
   await page.getByRole("button", { name: "임시 저장", exact: true }).click();
-  // Opening the page again reads the same storage snapshot as a fresh session.
   await page.reload();
   await page.getByRole("button", { name: "임시 저장", exact: true }).click();
   const recovery = page.getByRole("region", {

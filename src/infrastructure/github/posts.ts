@@ -367,7 +367,7 @@ export async function searchPosts(
   const manifest = await publicManifest();
   const matches = new Set<string>();
   if (manifest) {
-    // Retain matching slugs, never the aggregate of all decoded bodies.
+    // 검색 본문 전체를 메모리에 쌓지 않도록 일치하는 slug만 모은다.
     await batches(manifest.search, async ({ sha }) => {
       for (const value of await publicSearchChunk(sha))
         if (value.text.includes(normalized)) matches.add(value.slug);
@@ -472,7 +472,7 @@ async function commitFiles(
       parents: [ref],
     }),
   });
-  // A concurrent writer makes this non-fast-forward and receives 409. Never force.
+  // 동시에 저장된 변경을 덮어쓰지 않도록 강제 갱신을 금지한다.
   await gitJson(`/git/refs/heads/${branchPath()}`, {
     method: "PATCH",
     body: JSON.stringify({ sha: gitShaSchema.parse(commit.sha), force: false }),
@@ -504,8 +504,8 @@ export async function savePost(
   const previous = await getStoredPost(slug, ref);
   let matchingVersion = (previous?.sha ?? null) === sha;
   if (!matchingVersion && previous && sha && ordering) {
-    // Reordering another pinned post rewrites ranks in this file too. Rebase
-    // only those fields; an actual article edit must still fail the SHA check.
+    // 다른 글의 고정 순서를 바꾸면 이 파일의 SHA도 달라질 수 있다.
+    // 고정 정보만 바뀐 경우에 한해 저장을 허용한다.
     try {
       const original = parsePostFile(await readBlob(sha), slug);
       matchingVersion =

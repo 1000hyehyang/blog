@@ -38,7 +38,6 @@ test("본문 이미지 뷰어의 배치, 탐색, 확대, 접근성과 오류 복
   ).toHaveCount(0);
   await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
 
-  // Tab stays in the native modal, including when the first control is disabled.
   await close.press("Shift+Tab");
   await expect(next).toBeFocused();
   await next.press("Tab");
@@ -108,7 +107,7 @@ test("본문 이미지 뷰어의 배치, 탐색, 확대, 접근성과 오류 복
         path: `test-results/image-viewer-${isMobile ? "mobile" : "desktop"}.png`,
       });
     }
-    // The letterboxed background closes the viewer; the image itself keeps it open.
+    // 이미지 요소 안에서도 사진 바깥 여백을 누르면 뷰어가 닫혀야 한다.
     const image = dialog.getByRole("img");
     await image.click();
     await expect(dialog).toBeVisible();
@@ -123,7 +122,6 @@ test("본문 이미지 뷰어의 배치, 탐색, 확대, 접근성과 오류 복
   await close.press("ArrowLeft");
   await expect(dialog).toContainText("1 / 8");
 
-  // Horizontal touch gestures page once; vertical gestures don't change selection.
   const touch = await page.context().newCDPSession(page);
   const swipe = async (dx: number, dy: number) => {
     const bounds = (await dialog

@@ -67,8 +67,7 @@ async function fetchCounts(owner: string, name: string, category: string) {
       if (page.pageInfo.hasNextPage && (!after || cursors.has(after)))
         return {};
       if (after) cursors.add(after);
-      // ponytail: comment counters have a 5s/10,000-discussion budget. Larger
-      // repositories keep stored counters; articles never depend on this API.
+      // 조회가 5초 또는 토론 10,000개를 넘으면 기존에 저장된 댓글 수를 사용한다.
       if (after && cursors.size >= 100) return {};
     } while (after);
     return counts;

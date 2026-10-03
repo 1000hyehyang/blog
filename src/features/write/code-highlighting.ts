@@ -33,7 +33,7 @@ export const CodeHighlighting = Extension.create({
               if (node.type.name !== "codeBlock" || !node.attrs.language)
                 return;
               const code = node.textContent;
-              // ponytail: Skip very large blocks; tokenize them if editor performance needs it.
+              // 긴 코드 블록의 구문 강조로 편집이 느려지는 것을 막는다.
               if (code.length > 20_000) return;
               blocks.push({
                 code,
@@ -72,7 +72,7 @@ export const CodeHighlighting = Extension.create({
                   }
                 }
               } catch {
-                // A missing grammar leaves editable, uncolored code.
+                // 구문 강조에 실패해도 코드 편집은 계속할 수 있도록 한다.
                 spans.length = 0;
               }
             }

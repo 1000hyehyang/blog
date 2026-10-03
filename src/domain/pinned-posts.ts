@@ -38,8 +38,8 @@ export function samePinnedOrder(a: string[], b: string[]) {
   return a.length === b.length && a.every((slug, index) => slug === b[index]);
 }
 
-// Keep deliberate local removals, discard remotely removed posts, and append
-// remote additions. Applying local ordering is an explicit conflict resolution.
+// 로컬 순서를 우선하되 어느 쪽에서든 해제한 고정은 복원하지 않는다.
+// 원격에서 새로 고정한 글은 끝에 붙인다.
 export function rebasePinnedOrder(
   base: string[],
   order: string[],

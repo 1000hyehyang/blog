@@ -40,7 +40,7 @@ function draftKeys() {
   return keys;
 }
 
-// An unreadable draft still owns its URL; never overwrite it with a new post.
+// 손상된 임시 저장본도 새 글로 덮어쓰지 않도록 주소를 예약한다.
 export function reservedDraftSlugs(): string[] {
   return draftKeys()
     .map((key) => key.slice(prefix.length))

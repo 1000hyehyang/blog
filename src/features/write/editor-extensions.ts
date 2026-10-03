@@ -29,8 +29,7 @@ const SafeTable = Table.extend({
   markdownTokenizer: { ...Table.config.markdownTokenizer!, start: () => -1 },
 });
 
-// Tiptap's default Markdown link parser applies marks only to text. Images are
-// block nodes here, so their link belongs to the image's own document attributes.
+// 기본 링크 파서는 텍스트만 처리하므로 블록 이미지의 링크는 노드 속성에 저장한다.
 const ImageAwareLink = Link.extend({
   parseMarkdown(token, helpers) {
     const attrs = { href: token.href, title: token.title || null };

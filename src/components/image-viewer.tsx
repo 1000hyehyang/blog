@@ -27,7 +27,6 @@ function getImages(root: HTMLElement) {
   ).filter((image) => image.getAttribute("src") && !image.closest("a, button"));
 }
 
-/** Enhance the existing images without changing their layout or linked images. */
 export function ImageViewer({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -353,7 +352,7 @@ function ViewerFrame({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.2 }}
         >
-          {/* Original URLs keep external hosts, animated images and full resolution available. */}
+          {/* 외부 이미지의 애니메이션과 해상도를 유지하기 위해 원본 URL을 사용한다. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className={styles.image}
