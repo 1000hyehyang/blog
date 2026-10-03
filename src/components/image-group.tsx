@@ -138,6 +138,7 @@ export function ImageGroupDisplay({
       ref={groupRef}
       className={`${styles.group} ${className}`}
       data-layout={layout}
+      data-image-caption={caption || undefined}
       style={
         slideHeight
           ? ({ "--slide-height": `${slideHeight}px` } as CSSProperties)

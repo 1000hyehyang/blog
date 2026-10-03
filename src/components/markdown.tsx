@@ -21,6 +21,7 @@ import { parseYouTubeUrl } from "@/lib/youtube";
 import { hasImageSettings, readImageMetadata } from "@/lib/image-metadata";
 import { readImageGroup } from "@/lib/image-group";
 import { ImageGroupDisplay } from "./image-group";
+import { ImageViewer } from "./image-viewer";
 
 function getHeadingText(children: ReactNode) {
   return getReactNodeText(children).replace(/\s+/g, " ").trim();
@@ -97,6 +98,7 @@ function MarkdownImage({ src, alt, title }: ComponentProps<"img">) {
       src={src ?? ""}
       alt={alt ?? ""}
       title={settings.title ?? undefined}
+      data-image-caption={settings.caption || undefined}
       loading="lazy"
     />
   );
@@ -168,13 +170,13 @@ const markdownComponents = {
 
 export function MarkdownContent({ source }: { source: string }) {
   return (
-    <div className="prose">
+    <ImageViewer>
       <ReactMarkdown
         remarkPlugins={markdownPlugins}
         components={markdownComponents}
       >
         {source}
       </ReactMarkdown>
-    </div>
+    </ImageViewer>
   );
 }

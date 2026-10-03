@@ -135,7 +135,7 @@ html.theme-circle-transition::view-transition-new(root) {
 
 *::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb);
-  border-radius: 999px;
+  border-radius: 0;
 }
 
 *::-webkit-scrollbar-thumb:hover {
@@ -372,6 +372,13 @@ button:not(:disabled):hover {
 .prose .markdown-image {
   max-width: 100%;
   margin-inline: auto;
+}
+.prose img[role="button"] {
+  cursor: zoom-in;
+}
+.prose img[role="button"]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
 }
 .prose .markdown-image-frame {
   display: block;
