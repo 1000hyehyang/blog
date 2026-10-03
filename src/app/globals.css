@@ -34,7 +34,7 @@ html.theme-circle-transition::view-transition-new(root) {
   --code-block-background: #f3f4f6;
   --code-block-foreground: #1e293b;
   --code-inline-background: #fff7ed;
-  --code-inline-foreground: #fb923c;
+  --code-inline-foreground: #fdba74;
   --selection-background: #fed7aa;
   --selection-foreground: #1e293b;
   --background: oklch(1 0 0);
@@ -72,7 +72,6 @@ html.theme-circle-transition::view-transition-new(root) {
   --code-block-background: #18181b;
   --code-block-foreground: #f4f4f5;
   --code-inline-background: #2d2a2a;
-  --code-inline-foreground: #fdba74;
   --selection-background: #fdba74;
   --selection-foreground: #ffffff;
   --background: oklch(0.145 0 0);

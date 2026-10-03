@@ -8,7 +8,59 @@ import {
   getRecentPosts,
   getRelatedPosts,
   toPostPreview,
+  summarizeSeries,
 } from "./post-queries";
+
+it("summarizes only published posts in each configured category series", () => {
+  const category = {
+    category: "essay",
+    label: "Essay",
+    tagline: "",
+    series: [
+      { slug: "daily", label: "일상" },
+      { slug: "empty", label: "빈 시리즈" },
+    ],
+  };
+  const essay = { name: "Essay", slug: "essay" };
+  const posts = [
+    basePost({
+      number: 1,
+      category: essay,
+      series: "daily",
+      coverImage: { src: "" },
+    }),
+    basePost({
+      number: 2,
+      category: essay,
+      series: "daily",
+      lastEditedAt: "2026-08-01T00:00:00Z",
+    }),
+    basePost({ number: 3, category: essay, series: "daily", published: false }),
+    basePost({
+      number: 4,
+      category: { name: "Art", slug: "art" },
+      series: "daily",
+    }),
+    basePost({ number: 5, category: essay, series: "unknown" }),
+    basePost({ number: 6, category: essay }),
+  ];
+  expect(summarizeSeries(posts, category)).toEqual([
+    {
+      slug: "daily",
+      label: "일상",
+      postCount: 2,
+      coverImage: { src: "/og-default.png" },
+      updatedAt: "2026-08-01T00:00:00Z",
+    },
+    {
+      slug: "empty",
+      label: "빈 시리즈",
+      postCount: 0,
+      coverImage: { src: "" },
+      updatedAt: null,
+    },
+  ]);
+});
 
 const basePost = (
   overrides: Partial<Post> & { number: number; category: Post["category"] },

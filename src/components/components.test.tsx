@@ -58,7 +58,7 @@ describe("PostGrid image loading", () => {
         eagerImageSource={post.coverImage.src}
       />,
     );
-    const images = container.querySelectorAll("img");
+    const images = container.querySelectorAll('img[alt=""]');
 
     expect(images[0]).toHaveAttribute("loading", "eager");
     expect(images[1]).toHaveAttribute("loading", "eager");
@@ -166,7 +166,7 @@ describe("포스트 UI", () => {
       title: "두 번째 포스트",
     };
     const { container } = render(<FeaturedPosts posts={[post, second]} />);
-    const images = container.querySelectorAll("img");
+    const images = container.querySelectorAll('img[alt=""]');
 
     expect(screen.getByText("Featured")).toBeVisible();
     expect(screen.getByText(post.title)).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import type { Post } from "@/domain/post";
+import type { PostSummary } from "@/domain/post";
 
 const DEFAULT_RELATED_POST_LIMIT = 3;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
@@ -17,7 +17,7 @@ type RelatedPostOptions = {
 };
 
 type ScoredPost = {
-  post: Post;
+  post: PostSummary;
   totalScore: number;
   createdAtTimestamp: number | null;
 };
@@ -108,7 +108,10 @@ function normalizeLimit(limit: number): number {
   return Math.floor(limit);
 }
 
-function getCandidates(posts: Post[], current: Post): Post[] {
+function getCandidates(
+  posts: PostSummary[],
+  current: PostSummary,
+): PostSummary[] {
   const seenPostSlugs = new Set<string>();
 
   return posts.filter((post) => {
@@ -126,13 +129,13 @@ function getCandidates(posts: Post[], current: Post): Post[] {
 }
 
 export function rankRelatedPosts(
-  posts: Post[],
-  current: Post,
+  posts: PostSummary[],
+  current: PostSummary,
   {
     limit = DEFAULT_RELATED_POST_LIMIT,
     now = new Date(),
   }: RelatedPostOptions = {},
-): Post[] {
+): PostSummary[] {
   const normalizedLimit = normalizeLimit(limit);
   if (normalizedLimit === 0) return [];
   const nowTimestamp = now.getTime();

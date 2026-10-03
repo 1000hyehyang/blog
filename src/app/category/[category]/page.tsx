@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
-import { ArtGallery } from "@/features/post/art-gallery";
-import { EmptyState } from "@/features/post/empty-state";
-import { PostGrid } from "@/features/post/post-grid";
-import { getAllPosts } from "@/infrastructure/github/posts";
+import { PostListing } from "@/features/post/post-listing";
+import { SeriesGrid } from "@/features/post/series-grid";
+import { summarizeSeries } from "@/features/post/post-queries";
+import { getAllPosts, getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
 
 type CategoryPageProps = {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ cursor?: string; tab?: string }>;
 };
 
 export function generateStaticParams() {
@@ -18,23 +20,26 @@ export function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
   const navigation = getCategoryNavigation(category);
   if (!navigation) notFound();
+  const { cursor } = await searchParams;
+  const canonical = `${routes.category(category)}${cursor ? `?${new URLSearchParams({ cursor })}` : ""}`;
 
   const description = `${siteConfig.name}의 ${navigation.label} 글 모음. ${navigation.tagline}`;
 
   return {
     title: `${navigation.label} 카테고리`,
     description,
-    alternates: { canonical: routes.category(category) },
+    alternates: { canonical },
     openGraph: {
       type: "website",
       locale: "ko_KR",
       title: `${navigation.label} 카테고리`,
       description,
-      url: routes.category(category),
+      url: canonical,
       images: [siteConfig.defaultImage],
       siteName: siteConfig.name,
     },
@@ -47,32 +52,48 @@ export async function generateMetadata({
   };
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: CategoryPageProps) {
   const { category } = await params;
   const navigation = getCategoryNavigation(category);
   if (!navigation) notFound();
 
-  const posts = await getAllPosts({ category });
-  const eagerImageSource =
-    category === "art"
-      ? posts
-          .map((post) => post.galleryImage ?? post.coverImage)
-          .find((image) => image.src)?.src
-      : posts.find((post) => post.coverImage.src)?.coverImage.src;
+  const { cursor, tab } = await searchParams;
+  const [result, seriesPosts] = await Promise.all([
+    getPosts({ category, after: cursor }),
+    navigation.series.length ? getAllPosts({ category }) : Promise.resolve([]),
+  ]);
+  const series = summarizeSeries(seriesPosts, navigation);
 
   return (
     <div className="page-shell">
       <h1 className="page-title">{navigation.label}</h1>
       <p className="mb-12 mt-2 text-sm text-secondary">{navigation.tagline}</p>
-      {posts.length ? (
-        category === "art" ? (
-          <ArtGallery posts={posts} eagerImageSource={eagerImageSource} />
-        ) : (
-          <PostGrid posts={posts} eagerImageSource={eagerImageSource} />
-        )
-      ) : (
-        <EmptyState />
-      )}
+      <Tabs
+        key={`${category}:${cursor ?? ""}:${tab ?? ""}`}
+        defaultValue={tab === "series" ? "series" : "all"}
+      >
+        <TabsList label={`${navigation.label} 글 보기`}>
+          <TabsTrigger value="all">전체</TabsTrigger>
+          <TabsTrigger value="series">시리즈</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all">
+          <PostListing
+            posts={result.posts}
+            category={category}
+            nextHref={
+              result.pageInfo.endCursor
+                ? `${routes.category(category)}?${new URLSearchParams({ cursor: result.pageInfo.endCursor })}`
+                : undefined
+            }
+          />
+        </TabsContent>
+        <TabsContent value="series">
+          <SeriesGrid category={category} series={series} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

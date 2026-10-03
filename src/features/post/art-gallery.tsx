@@ -1,14 +1,14 @@
 import { Heart, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
-import type { Post } from "@/domain/post";
+import type { PostSummary } from "@/domain/post";
 import { routes } from "@/lib/routes";
 
 import { ArtworkFrame } from "./artwork-frame";
 import { RevealGrid } from "./reveal-grid";
 
 type ArtGalleryProps = {
-  posts: Post[];
+  posts: PostSummary[];
   eagerImageSource?: string;
 };
 

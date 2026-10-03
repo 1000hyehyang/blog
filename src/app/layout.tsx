@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { ClickRipple } from "@/components/click-ripple";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
@@ -63,11 +64,21 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
-          <ScrollToTop />
+          <Suspense fallback={null}>
+            <ScrollToTop />
+          </Suspense>
           <ClickRipple />
-          <SiteFrame header={<SiteHeader />} footer={<SiteFooter />}>
-            {children}
-          </SiteFrame>
+          <Suspense
+            fallback={
+              <main className="flex-1 pt-[var(--header-height)]">
+                {children}
+              </main>
+            }
+          >
+            <SiteFrame header={<SiteHeader />} footer={<SiteFooter />}>
+              {children}
+            </SiteFrame>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

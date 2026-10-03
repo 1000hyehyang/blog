@@ -1,15 +1,31 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { Images, LayoutGrid, GalleryHorizontal } from "lucide-react";
 import type { GroupImage, ImageGroupLayout } from "@/lib/image-group";
 import styles from "./writer.module.css";
 
 export type PendingImage = {
   file: File;
-  preview: string;
   uploaded?: GroupImage;
 };
+
+function ImagePreview({ file }: { file: File }) {
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    ref.current!.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      ref={ref}
+      alt=""
+      onLoad={(event) => (event.currentTarget.dataset.loaded = "true")}
+    />
+  );
+}
 
 export function ImageLayoutDialog({
   dialogRef,
@@ -76,15 +92,7 @@ export function ImageLayoutDialog({
           >
             <span className={styles.imageLayoutExample} data-layout={value}>
               {images.slice(0, 4).map((image, index) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={index}
-                  src={image.preview}
-                  alt=""
-                  onLoad={(event) =>
-                    (event.currentTarget.dataset.loaded = "true")
-                  }
-                />
+                <ImagePreview key={index} file={image.file} />
               ))}
             </span>
             <Icon size={22} aria-hidden="true" />

@@ -57,7 +57,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <div>
           <h1 className="page-title">All Posts</h1>
           <p className="mt-2 text-sm text-secondary">
-            {posts.length}개의 포스트를 찾았습니다.
+            {posts.length}개의 포스트
           </p>
         </div>
         <div className="flex gap-3 text-xs">

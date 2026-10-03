@@ -4,6 +4,7 @@ import { parsePostFile } from "@/lib/content/post-file";
 import { withCommentCounts } from "./comment-counts";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();

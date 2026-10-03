@@ -19,7 +19,8 @@ const remote = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({
-  unstable_cache: (loader: unknown) => loader,
+  cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
 }));
 vi.mock("@/infrastructure/github/posts", () => ({ getPost: vi.fn() }));
 vi.mock("node:dns/promises", () => ({

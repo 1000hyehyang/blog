@@ -14,12 +14,12 @@ import {
   toPostPreview,
 } from "@/features/post/post-queries";
 import { getAllPosts } from "@/infrastructure/github/posts";
+import { withCommentCounts } from "@/infrastructure/github/comment-counts";
 import { routes } from "@/lib/routes";
 import { buildWebsiteJsonLd, serializeJsonLd } from "@/lib/seo";
 
 const RECENT_POSTS_COUNT = 9;
 const RECENT_ART_COUNT = 8;
-
 export const metadata: Metadata = {
   alternates: { canonical: routes.home },
 };
@@ -27,8 +27,10 @@ export const metadata: Metadata = {
 export default async function Home() {
   const posts = await getAllPosts();
   const featured = getFeaturedPosts(posts).map(toPostPreview);
-  const recent = getRecentPosts(posts, RECENT_POSTS_COUNT);
-  const recentArt = getRecentArtPosts(posts, RECENT_ART_COUNT);
+  const [recent, recentArt] = await Promise.all([
+    withCommentCounts(getRecentPosts(posts, RECENT_POSTS_COUNT)),
+    withCommentCounts(getRecentArtPosts(posts, RECENT_ART_COUNT)),
+  ]);
   const eagerImageSource =
     featured[0]?.coverImage.src ||
     recent.find((post) => post.coverImage.src)?.coverImage.src ||

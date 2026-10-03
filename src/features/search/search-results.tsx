@@ -1,17 +1,17 @@
-import type { Post } from "@/domain/post";
+import type { PostSummary } from "@/domain/post";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostGrid } from "@/features/post/post-grid";
-import { filterPosts } from "@/features/search/filter-posts";
 
 export function SearchResults({
   posts,
   query = "",
+  totalCount = posts.length,
 }: {
-  posts: Post[];
+  posts: PostSummary[];
   query?: string;
+  totalCount?: number;
 }) {
   const normalizedQuery = query.trim();
-  const results = filterPosts(posts, normalizedQuery);
 
   return (
     <div aria-live="polite">
@@ -20,15 +20,15 @@ export function SearchResults({
           title="검색어를 입력하세요"
           description="헤더 검색창에서 검색어를 입력하고 Enter를 눌러 주세요."
         />
-      ) : results.length ? (
+      ) : posts.length ? (
         <>
           <p className="mb-6 text-xs text-secondary">
-            &lsquo;{normalizedQuery}&rsquo; 검색 결과 {results.length}개
+            &lsquo;{normalizedQuery}&rsquo; 검색 결과 {totalCount}개
           </p>
           <PostGrid
-            posts={results}
+            posts={posts}
             eagerImageSource={
-              results.find((post) => post.coverImage.src)?.coverImage.src
+              posts.find((post) => post.coverImage.src)?.coverImage.src
             }
           />
         </>

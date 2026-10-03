@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: "글 관리",
   robots: { index: false, follow: false },
 };
-export const dynamic = "force-dynamic";
 export default async function ManagePage({
   searchParams,
 }: { searchParams?: Promise<{ tab?: string }> } = {}) {

@@ -1,7 +1,8 @@
 import { Heart, MessageCircle } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
-import type { Post } from "@/domain/post";
+import type { PostSummary } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { PostCoverImage } from "./post-cover-image";
 
 type PostCardProps = {
-  post: Post;
+  post: PostSummary;
   variant?: "default" | "compact";
   imageLoading?: "eager" | "lazy";
 };
@@ -70,9 +71,18 @@ export function PostCard({
                 <Heart size={12} />
                 {post.reactionsCount}
               </span>
-              <time className="ml-auto" dateTime={post.createdAt}>
-                {formatDate(post.createdAt)}
-              </time>
+              <span className="ml-auto flex items-center gap-2">
+                <Image
+                  src="/blog-profile.jpg"
+                  alt="블로그 프로필"
+                  width={20}
+                  height={20}
+                  className="size-5 shrink-0 rounded-full object-cover"
+                />
+                <time dateTime={post.createdAt}>
+                  {formatDate(post.createdAt)}
+                </time>
+              </span>
             </div>
           )}
         </div>

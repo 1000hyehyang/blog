@@ -70,6 +70,9 @@ export function invalidatePosts() {
   revalidatePath("/posts", "page");
   revalidatePath("/[postId]", "page");
   revalidatePath("/category/[category]", "page");
+  revalidatePath("/category/[category]/series/[series]", "page");
+  revalidatePath("/manage", "page");
+  revalidatePath("/write", "page");
   revalidatePath("/search", "page");
   revalidatePath("/sitemap.xml");
   revalidatePath("/feed.xml");

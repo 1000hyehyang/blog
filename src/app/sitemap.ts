@@ -55,5 +55,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...categoryRoutes, ...postRoutes];
+  const seriesRoutes = siteConfig.navigation.flatMap((category) =>
+    category.series.map((series) => {
+      const lastModified = getLatestModifiedDate(
+        posts.filter(
+          (post) =>
+            post.category.slug === category.category &&
+            post.series === series.slug,
+        ),
+      );
+      return {
+        url: absoluteUrl(routes.series(category.category, series.slug)),
+        ...(lastModified && { lastModified }),
+      };
+    }),
+  );
+
+  return [...staticRoutes, ...categoryRoutes, ...seriesRoutes, ...postRoutes];
 }

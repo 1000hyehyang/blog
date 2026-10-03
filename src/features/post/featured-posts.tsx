@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -141,6 +142,13 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
                       {post.excerpt}
                     </p>
                     <div className="mt-5 flex items-center gap-3 text-[10px] text-tertiary">
+                      <Image
+                        src="/blog-profile.jpg"
+                        alt="블로그 프로필"
+                        width={20}
+                        height={20}
+                        className="size-5 shrink-0 rounded-full object-cover"
+                      />
                       <time dateTime={post.createdAt}>
                         {formatDate(post.createdAt)}
                       </time>

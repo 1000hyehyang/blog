@@ -180,8 +180,11 @@
   flex-direction: column;
   min-width: 0;
 }
-.category {
-  width: 12rem;
+.categorySelectors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: min(100%, 24.75rem);
   margin-bottom: 1.5rem;
 }
 .titleField {
@@ -1152,8 +1155,8 @@
     margin-top: 2rem;
     padding-bottom: 9rem;
   }
-  .category {
-    width: 10rem;
+  .categorySelectors {
+    width: min(100%, 20.75rem);
   }
   .editor :global(.tiptap),
   .editorPlaceholder {
@@ -1222,8 +1225,12 @@
   min-width: 6rem;
   border-radius: var(--radius-md);
 }
-.category .selectTrigger {
+.categorySelectors .selectTrigger {
   width: 100%;
+}
+.categorySelectors .selectTrigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .selectTrigger > span:last-child {
   display: flex;
@@ -1251,6 +1258,9 @@
   font-size: 0.85rem;
   text-align: left;
   color: var(--muted-foreground);
+}
+.selectMenu button + button {
+  margin-top: 2px;
 }
 .selectMenu button[data-active="true"],
 .selectMenu button[aria-selected="true"] {

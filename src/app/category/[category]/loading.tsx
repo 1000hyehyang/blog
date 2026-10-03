@@ -1,9 +1,20 @@
 "use client";
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { PostGridSkeleton } from "@/features/post/post-grid-skeleton";
 
 export default function CategoryLoading() {
+  return (
+    <Suspense fallback={<CategorySkeleton />}>
+      <CategoryLoadingContent />
+    </Suspense>
+  );
+}
+function CategoryLoadingContent() {
   const art = usePathname() === "/category/art";
+  return <CategorySkeleton art={art} />;
+}
+function CategorySkeleton({ art = false }: { art?: boolean }) {
   return (
     <div
       className="page-shell animate-pulse"
@@ -15,21 +26,7 @@ export default function CategoryLoading() {
         className="mb-12 mt-2 h-5 w-64 max-w-full rounded bg-muted"
         aria-hidden="true"
       />
-      {art ? (
-        <div
-          className="columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4"
-          aria-hidden="true"
-        >
-          {Array.from({ length: 8 }, (_, index) => (
-            <div
-              key={index}
-              className="mb-3 aspect-[4/5] break-inside-avoid rounded-[var(--radius-md)] bg-muted sm:mb-4"
-            />
-          ))}
-        </div>
-      ) : (
-        <PostGridSkeleton />
-      )}
+      <PostGridSkeleton gallery={art} count={art ? 8 : 6} />
     </div>
   );
 }

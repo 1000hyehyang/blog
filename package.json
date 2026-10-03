@@ -15,7 +15,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "writer:credentials": "node scripts/create-writer-secret.mjs"
+    "writer:credentials": "node scripts/create-writer-secret.mjs",
+    "content:index": "node --conditions=react-server --experimental-transform-types scripts/rebuild-post-index.mjs --write",
+    "content:index:check": "node --conditions=react-server --experimental-transform-types scripts/rebuild-post-index.mjs --check"
   },
   "overrides": {
     "postcss": "^8.5.28",

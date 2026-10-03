@@ -8,6 +8,7 @@ import {
   writerRequest,
 } from "@/lib/writer-api";
 type Context = { params: Promise<{ slug: string }> };
+export const maxDuration = 300;
 const version = z.string().regex(/^[a-f0-9]{40}$/);
 
 export async function PUT(request: Request, context: Context) {

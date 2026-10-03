@@ -265,10 +265,8 @@ describe("writer data preservation", () => {
         Response.json({ message: "충돌입니다" }, { status: 409 }),
       );
     vi.stubGlobal("fetch", fetchMock);
-    const createObjectURL = vi
-      .fn()
-      .mockReturnValueOnce("blob:first")
-      .mockReturnValueOnce("blob:second");
+    let preview = 0;
+    const createObjectURL = vi.fn(() => `blob:preview-${++preview}`);
     const revokeObjectURL = vi.fn();
     vi.stubGlobal(
       "URL",
@@ -314,7 +312,9 @@ describe("writer data preservation", () => {
       "data-layout",
       "collage",
     );
-    expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+    expect(revokeObjectURL.mock.calls.map(([url]) => url).sort()).toEqual(
+      createObjectURL.mock.results.map(({ value }) => value).sort(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));

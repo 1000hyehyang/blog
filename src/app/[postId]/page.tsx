@@ -9,7 +9,11 @@ import { PostHero } from "@/features/post/post-hero";
 import { PostTags } from "@/features/post/post-tags";
 import { PostTableOfContents } from "@/features/post/post-table-of-contents";
 import { RelatedPosts } from "@/features/post/related-posts";
-import { getAllPosts, getPost } from "@/infrastructure/github/posts";
+import {
+  getAllPosts,
+  getPost,
+  getPostSummary,
+} from "@/infrastructure/github/posts";
 import { extractHeadings, resolvePostModifiedAt } from "@/lib/content";
 import { getRelatedPosts } from "@/features/post/post-queries";
 import { routes } from "@/lib/routes";
@@ -22,7 +26,7 @@ type PostPageProps = {
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
-  const post = await getPost((await params).postId);
+  const post = await getPostSummary((await params).postId);
   if (!post?.published) notFound();
 
   const images = [post.coverImage.src || siteConfig.defaultImage];

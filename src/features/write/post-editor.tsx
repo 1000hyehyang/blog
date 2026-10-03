@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { siteConfig } from "@/config/site";
+import { getCategoryNavigation, siteConfig } from "@/config/site";
 import {
   readDrafts,
   saveDraft,
@@ -50,6 +50,7 @@ const emptyFields = {
   coverImage: { src: "" },
   galleryImage: { src: "" },
   category: { name: "Development", slug: "development" },
+  series: undefined as string | undefined,
   featured: false,
   featuredOrder: undefined as number | undefined,
   published: false,
@@ -107,7 +108,6 @@ export function PostEditor({
   const [publishMode, setPublishMode] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const imageLayoutDialog = useRef<HTMLDialogElement>(null);
-  const previewUrls = useRef(new Set<string>());
   const [pendingImages, setPendingImages] = useState<{
     items: PendingImage[];
     layout: ImageGroupLayout;
@@ -203,12 +203,6 @@ export function PostEditor({
   useEffect(() => {
     editor?.setEditable(!busy && !unsupported);
   }, [editor, busy, unsupported]);
-  useEffect(
-    () => () => {
-      for (const url of previewUrls.current) URL.revokeObjectURL(url);
-    },
-    [],
-  );
   useEffect(() => {
     if (!dirty && !busy) return;
     const warn = (event: BeforeUnloadEvent) => {
@@ -335,11 +329,7 @@ export function PostEditor({
       setMessage("사진은 한 번에 50장까지 첨부할 수 있습니다.");
       return;
     }
-    const items = files.map((file) => {
-      const preview = URL.createObjectURL(file);
-      previewUrls.current.add(preview);
-      return { file, preview };
-    });
+    const items = files.map((file) => ({ file }));
     const selection = editor?.state.selection;
     setPendingImages({
       items,
@@ -576,6 +566,8 @@ export function PostEditor({
     publishDialog.current?.showModal();
   }
   const formattingDisabled = !editor || unsupported;
+  const categorySeries =
+    getCategoryNavigation(fields.category.slug)?.series ?? [];
   const toolbar = (
     <fieldset className={styles.toolbar} disabled={busy} aria-label="본문 서식">
       <IconButton
@@ -696,7 +688,7 @@ export function PostEditor({
       <WriterHeader onLogout={logout}>{toolbar}</WriterHeader>
       <div className={styles.canvas}>
         <fieldset disabled={busy} className={styles.composition}>
-          <div className={styles.category}>
+          <div className={styles.categorySelectors}>
             <WriterSelect
               label="카테고리"
               value={fields.category.slug}
@@ -719,6 +711,7 @@ export function PostEditor({
               ]}
               onChange={(value) =>
                 update({
+                  series: undefined,
                   category: {
                     slug: value,
                     name:
@@ -729,6 +722,30 @@ export function PostEditor({
                 })
               }
             />
+            {categorySeries.length > 0 && (
+              <WriterSelect
+                label="시리즈"
+                value={fields.series ?? ""}
+                disabled={busy}
+                options={[
+                  { value: "", label: "None" },
+                  ...(!categorySeries.some(
+                    (item) => item.slug === fields.series,
+                  ) && fields.series
+                    ? [{ value: fields.series, label: fields.series }]
+                    : []),
+                  ...categorySeries.map((item) => ({
+                    value: item.slug,
+                    label: item.label,
+                  })),
+                ]}
+                onChange={(value) =>
+                  update({
+                    series: value || undefined,
+                  })
+                }
+              />
+            )}
           </div>
           <label className={styles.titleField}>
             <span className="sr-only">제목</span>
@@ -797,11 +814,7 @@ export function PostEditor({
           )
         }
         onConfirm={() => void uploadPendingImages()}
-        onClose={() => {
-          for (const url of previewUrls.current) URL.revokeObjectURL(url);
-          previewUrls.current.clear();
-          setPendingImages(null);
-        }}
+        onClose={() => setPendingImages(null)}
       />
 
       <footer className={styles.bottomBar}>

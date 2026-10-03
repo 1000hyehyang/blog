@@ -4,19 +4,42 @@ import {
   parsePostFile,
   serializePostFile,
   type StoredPost,
+  type FilePost,
 } from "@/lib/content/post-file";
+import {
+  INDEX_PATH,
+  blobSha,
+  buildChunks,
+  chunkPath,
+  decodeChunk,
+  indexBucket,
+  summarize,
+  searchDocument,
+  type IndexManifest,
+} from "@/lib/content/post-index";
 import {
   getAllPosts,
   getPost,
+  getPostSummary,
   getPosts,
+  searchPosts,
   savePost,
   deletePost,
-  getStoredPosts,
   getStoredPostsWithSha,
+  getStoredPosts,
+  rebuildPostIndex,
 } from "./posts";
+import { invalidatePosts } from "@/lib/writer-api";
+import { cacheTag, revalidateTag } from "next/cache";
+import * as site from "@/config/site";
 
 vi.mock("server-only", () => ({}));
-vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
+vi.mock("next/cache", () => ({
+  cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+}));
 vi.mock("./comment-counts", () => ({
   withCommentCounts: (posts: unknown) => posts,
 }));
@@ -37,23 +60,138 @@ const sample: StoredPost = {
 };
 beforeEach(() => {
   vi.stubEnv("CONTENT_SOURCE", "local");
+  vi.clearAllMocks();
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
+
+function githubStore(posts: StoredPost[], indexed = true) {
+  for (const [key, value] of Object.entries({
+    CONTENT_SOURCE: "github",
+    GITHUB_OWNER: "owner",
+    GITHUB_REPO: "repo",
+    GITHUB_TOKEN: "test",
+    GITHUB_CONTENT_BRANCH: "content",
+  }))
+    vi.stubEnv(key, value);
+  const files = new Map(
+    posts.map((post) => [
+      `content/posts/${post.slug}.md`,
+      serializePostFile(post),
+    ]),
+  );
+  if (indexed) {
+    const values = posts.map((post) =>
+      parsePostFile(serializePostFile(post), post.slug),
+    );
+    const catalog = buildChunks(
+      "catalog",
+      values.map((post) => summarize(post, blobSha(serializePostFile(post)))),
+    );
+    const search = buildChunks(
+      "search",
+      values.filter((post) => post.published).map(searchDocument),
+    );
+    const manifest: IndexManifest = {
+      version: 1,
+      catalog: catalog.refs,
+      search: search.refs,
+    };
+    for (const file of [...catalog.files, ...search.files])
+      files.set(file.path, file.content);
+    files.set(INDEX_PATH, JSON.stringify(manifest));
+  }
+  const blobs = new Map(
+    [...files.values()].map((content) => [blobSha(content), content]),
+  );
+  let head = "a".repeat(40);
+  const root = "b".repeat(40);
+  const staged = new Map<string, Map<string, string>>();
+  let pending = files;
+  const state = {
+    conflict: false,
+    invalidTree: false,
+    private: true,
+    treeInput: null as null | {
+      base_tree: string;
+      tree: { path: string; content?: string; sha?: null }[];
+    },
+  };
+  const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
+    const parsed = new URL(url);
+    const route = parsed.pathname.replace("/repos/owner/repo", "");
+    if (!route) return Response.json({ private: state.private });
+    if (route === "/git/ref/heads/content")
+      return Response.json({ object: { sha: head } });
+    if (route.startsWith("/contents/")) {
+      const content = files.get(route.slice("/contents/".length));
+      return content === undefined
+        ? new Response(null, { status: 404 })
+        : Response.json({
+            type: "file",
+            encoding: "base64",
+            content: Buffer.from(content).toString("base64"),
+            sha: blobSha(content),
+          });
+    }
+    if (route.startsWith("/git/blobs/")) {
+      const content = blobs.get(route.split("/").at(-1)!);
+      if (content === undefined) throw new Error(`Missing blob: ${route}`);
+      return Response.json({
+        encoding: "base64",
+        content: Buffer.from(content).toString("base64"),
+      });
+    }
+    if (route === `/git/commits/${head}`)
+      return Response.json({ tree: state.invalidTree ? {} : { sha: root } });
+    if (route === "/git/trees" && init.method === "POST") {
+      state.treeInput = JSON.parse(init.body as string);
+      expect(state.treeInput!.base_tree).toBe(root);
+      pending = new Map(files);
+      for (const file of state.treeInput!.tree) {
+        if (file.sha === null) {
+          expect(pending.has(file.path)).toBe(true);
+          pending.delete(file.path);
+        } else {
+          pending.set(file.path, file.content!);
+          blobs.set(blobSha(file.content!), file.content!);
+        }
+      }
+      return Response.json({ sha: root });
+    }
+    if (route === "/git/commits" && init.method === "POST") {
+      const body = JSON.parse(init.body as string);
+      expect(body.parents).toEqual([head]);
+      const sha = blobSha(JSON.stringify(body) + staged.size);
+      staged.set(sha, pending);
+      return Response.json({ sha });
+    }
+    if (route === "/git/refs/heads/content" && init.method === "PATCH") {
+      const body = JSON.parse(init.body as string);
+      expect(body.force).toBe(false);
+      if (state.conflict) return new Response(null, { status: 422 });
+      head = body.sha;
+      files.clear();
+      for (const [path, content] of staged.get(head)!) files.set(path, content);
+      return Response.json({ object: { sha: head } });
+    }
+    throw new Error(`Unexpected request: ${route}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return { files, blobs, fetchMock, state, head };
+}
+
 describe("Markdown store", () => {
-  it("looks up published posts by ID, not storage slug", async () => {
+  it("looks up published posts by ID rather than storage slug and omits bodies from lists", async () => {
     expect((await getPost("fixture-id-8"))?.slug).toBe("post-8");
     expect(await getPost("post-8")).toBeNull();
-  });
-
-  it("reads all sequential posts and paginates globally", async () => {
+    expect(await getPostSummary("fixture-id-8")).not.toHaveProperty("body");
     const posts = await getAllPosts();
-    expect(posts.length).toBe(8);
-    expect(new Set(posts.map((post) => post.slug))).toEqual(
-      new Set(Array.from({ length: 8 }, (_, index) => `post-${index + 1}`)),
-    );
+    expect(posts).toHaveLength(8);
+    expect(posts.every((post) => !("body" in post))).toBe(true);
     const first = await getPosts({ first: 2, sort: "oldest" });
     const second = await getPosts({
       first: 2,
@@ -61,120 +199,416 @@ describe("Markdown store", () => {
       sort: "oldest",
     });
     expect(
-      new Set([...first.posts, ...second.posts].map((p) => p.slug)).size,
+      new Set([...first.posts, ...second.posts].map((post) => post.slug)).size,
     ).toBe(4);
-    expect(first.posts[0].createdAt <= first.posts[1].createdAt).toBe(true);
   });
-  it("all committed Markdown parses without altering its body", async () => {
+  it("round-trips committed Markdown bodies and optional series metadata", async () => {
     for (const name of await readdir("tests/fixtures/posts")) {
       if (!name.endsWith(".md")) continue;
-      const original = await readFile(`tests/fixtures/posts/${name}`, "utf8");
-      const parsed = parsePostFile(original, name.slice(0, -3));
-      expect(parsePostFile(serializePostFile(parsed), parsed.slug).body).toBe(
-        parsed.body,
+      const post = parsePostFile(
+        await readFile(`tests/fixtures/posts/${name}`, "utf8"),
+        name.slice(0, -3),
+      );
+      expect(parsePostFile(serializePostFile(post), post.slug).body).toBe(
+        post.body,
       );
     }
+    expect(
+      parsePostFile(serializePostFile({ ...sample, series: "react" }), "a"),
+    ).toMatchObject({ series: "react" });
   });
-  it("uses SHA preconditions for changes and refuses remote-to-local fallback", async () => {
-    vi.stubEnv("CONTENT_SOURCE", "github");
-    vi.stubEnv("GITHUB_OWNER", "owner");
-    vi.stubEnv("GITHUB_REPO", "repo");
-    vi.stubEnv("GITHUB_TOKEN", "test");
-    vi.stubEnv("GITHUB_CONTENT_BRANCH", "content");
-    const fetchMock = vi.fn().mockImplementation(async () =>
-      Response.json({
-        type: "file",
-        encoding: "base64",
-        sha: "current",
-        content: Buffer.from(serializePostFile(sample)).toString("base64"),
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-    await expect(savePost("a", sample, "stale")).rejects.toMatchObject({
-      status: 409,
-    });
-    await expect(savePost("a", sample, null)).rejects.toMatchObject({
-      status: 409,
-    });
-    await expect(deletePost("a", "stale")).rejects.toMatchObject({
-      status: 409,
-    });
-    expect(fetchMock.mock.calls.every(([, init]) => !init.method)).toBe(true);
+  it("treats a missing local directory as empty", async () => {
+    vi.stubEnv("LOCAL_CONTENT_PATH", "tests/fixtures/no-posts-directory");
+    expect(await getStoredPostsWithSha()).toEqual([]);
+  });
+  it("requires a real remote branch and never falls back to local data", async () => {
+    const { fetchMock } = githubStore([], false);
     fetchMock.mockImplementation(
       async () => new Response(null, { status: 404 }),
     );
     await expect(getStoredPosts()).rejects.toMatchObject({ status: 503 });
+    await expect(getAllPosts()).rejects.toMatchObject({ status: 503 });
   });
-  it("treats a missing posts directory on an existing branch as an empty blog", async () => {
-    for (const [key, value] of Object.entries({
-      CONTENT_SOURCE: "github",
-      GITHUB_OWNER: "owner",
-      GITHUB_REPO: "repo",
-      GITHUB_TOKEN: "test",
-      GITHUB_CONTENT_BRANCH: "content",
-    }))
-      vi.stubEnv(key, value);
-    const fetchMock = vi.fn(async (url: string) =>
-      url.includes("/git/ref/heads/content")
-        ? Response.json({ object: { sha: "a".repeat(40) } })
-        : new Response(null, { status: 404 }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+  it("supports an existing empty branch", async () => {
+    githubStore([], false);
     expect(await getStoredPostsWithSha()).toEqual([]);
     expect(await getAllPosts()).toEqual([]);
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/git/ref/heads/content"),
-      expect.any(Object),
+  });
+  it("creates the first post and index atomically on an empty branch", async () => {
+    const { files, state } = githubStore([], false);
+    const result = await savePost("first", sample, null);
+    expect(result.post.slug).toBe("first");
+    expect(files.has("content/posts/first.md")).toBe(true);
+    expect(files.has(INDEX_PATH)).toBe(true);
+    expect(state.treeInput!.tree.some(({ path }) => path === INDEX_PATH)).toBe(
+      true,
     );
+    expect((await getAllPosts()).map(({ slug }) => slug)).toEqual(["first"]);
+    expect((await searchPosts("body")).totalCount).toBe(1);
   });
-  it("treats a missing local posts directory as empty", async () => {
-    vi.stubEnv("LOCAL_CONTENT_PATH", "tests/fixtures/no-posts-directory");
+  it("does not scan unindexed Markdown during GitHub reads or searches", async () => {
+    const { fetchMock } = githubStore([sample], false);
+    expect(await getAllPosts()).toEqual([]);
     expect(await getStoredPostsWithSha()).toEqual([]);
+    expect((await searchPosts("body")).totalCount).toBe(0);
+    expect(await getPost(sample.id)).toBeNull();
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        /\/git\/(trees|blobs)\/|\/contents\/content\/posts/.test(url),
+      ),
+    ).toBe(false);
   });
-  it("writes only the chosen slug with the supplied SHA and preserves immutable metadata", async () => {
-    vi.stubEnv("CONTENT_SOURCE", "github");
-    vi.stubEnv("GITHUB_OWNER", "owner");
-    vi.stubEnv("GITHUB_REPO", "repo");
-    vi.stubEnv("GITHUB_TOKEN", "test");
-    vi.stubEnv("GITHUB_CONTENT_BRANCH", "content");
-    const old = sample;
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        Response.json({
-          type: "file",
-          encoding: "base64",
-          sha: "current",
-          content: Buffer.from(serializePostFile(old)).toString("base64"),
-        }),
-      )
-      .mockResolvedValueOnce(Response.json({ content: { sha: "next" } }));
-    vi.stubGlobal("fetch", fetchMock);
+});
+
+describe("indexed reads and immediate writes", () => {
+  it("queries and paginates a full category by series without exposing private posts or bodies", async () => {
+    const category = { name: "Essay", slug: "essay" };
+    const selected = Array.from({ length: 13 }, (_, index) => ({
+      ...sample,
+      category,
+      id: `series-${index}`,
+      slug: `series-${index}`,
+      series: "life-updates",
+    }));
+    const other = Array.from({ length: 13 }, (_, index) => ({
+      ...sample,
+      category,
+      id: `other-${index}`,
+      slug: `other-${index}`,
+      createdAt: "2026-02-01T00:00:00Z",
+    }));
+    githubStore([
+      ...selected,
+      ...other,
+      { ...selected[0], id: "private", slug: "private", published: false },
+    ]);
+    const all = await getPosts({ category: "essay" });
+    expect(all.totalCount).toBe(26);
+    expect(all.posts.every((post) => !post.series)).toBe(true);
+    const first = await getPosts({
+      category: "essay",
+      series: "life-updates",
+    });
+    expect(first.totalCount).toBe(13);
+    expect(first.posts).toHaveLength(12);
+    expect(
+      first.posts.every(
+        (post) => post.series === "life-updates" && !("body" in post),
+      ),
+    ).toBe(true);
+    const second = await getPosts({
+      category: "essay",
+      series: "life-updates",
+      after: first.pageInfo.endCursor!,
+    });
+    expect(second.posts).toHaveLength(1);
+    expect(
+      new Set([...first.posts, ...second.posts].map((post) => post.id)).size,
+    ).toBe(13);
+  });
+  it("lists series posts newest first and supports oldest-first pagination", async () => {
+    const older = { ...sample, series: "life-updates" };
+    const newer = {
+      ...older,
+      id: "newer",
+      slug: "newer",
+      createdAt: "2026-02-01T00:00:00Z",
+    };
+    githubStore([
+      older,
+      newer,
+      { ...newer, id: "other", slug: "other", series: "other-series" },
+    ]);
+    expect(
+      (await getPosts({ series: "life-updates" })).posts.map(
+        ({ slug }) => slug,
+      ),
+    ).toEqual(["newer", "a"]);
+    const first = await getPosts({
+      series: "life-updates",
+      sort: "oldest",
+      first: 1,
+    });
+    expect(first.posts.map(({ slug }) => slug)).toEqual(["a"]);
+    const second = await getPosts({
+      series: "life-updates",
+      sort: "oldest",
+      first: 1,
+      after: first.pageInfo.endCursor!,
+    });
+    expect(second.posts.map(({ slug }) => slug)).toEqual(["newer"]);
+  });
+  it("clears series metadata when omitted after changing category or selecting no series", async () => {
+    const original: StoredPost = {
+      ...sample,
+      category: { slug: "development", name: "Development" },
+      series: "react",
+    };
+    const { files } = githubStore([original]);
+    const saved = await savePost(
+      "a",
+      sample,
+      blobSha(serializePostFile(original)),
+    );
+    expect(saved.post.series).toBeUndefined();
+    expect(
+      parsePostFile(files.get("content/posts/a.md")!, "a").series,
+    ).toBeUndefined();
+    expect(
+      (await getPosts({ category: "development", series: "react" })).posts,
+    ).toEqual([]);
+  });
+  it("lists 5,000 articles, paginates categories, and reads only the selected detail body", async () => {
+    const posts = Array.from({ length: 5000 }, (_, index) => ({
+      ...sample,
+      id: `id-${index}`,
+      slug: `post-${index + 1}`,
+      body: `Body ${index}`,
+    }));
+    const { fetchMock, files } = githubStore(posts);
+    const page = await getPosts({ category: "art" });
+    expect(page.totalCount).toBe(5000);
+    expect(page.posts).toHaveLength(12);
+    expect(page.posts.every((post) => !("body" in post))).toBe(true);
+    const second = await getPosts({
+      category: "art",
+      after: page.pageInfo.endCursor!,
+    });
+    expect(
+      new Set([...page.posts, ...second.posts].map(({ slug }) => slug)).size,
+    ).toBe(24);
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        url.includes("/contents/content/posts"),
+      ),
+    ).toBe(false);
+    const bodyShas = new Set(
+      [...files]
+        .filter(([path]) => path.startsWith("content/posts/"))
+        .map(([, content]) => blobSha(content)),
+    );
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        bodyShas.has(url.split("/").at(-1)!),
+      ),
+    ).toBe(false);
+    const count = fetchMock.mock.calls.length;
+    expect((await getPost("id-4300"))?.body).toBe("Body 4300");
+    expect(
+      fetchMock.mock.calls
+        .slice(count)
+        .filter(([url]) => bodyShas.has(url.split("/").at(-1)!)),
+    ).toHaveLength(1);
+    expect((await getStoredPostsWithSha())[0].post).not.toHaveProperty("body");
+  }, 15_000);
+  it("searches post fields on the server, paginates, and excludes private posts", async () => {
+    const posts = Array.from({ length: 25 }, (_, index) => ({
+      ...sample,
+      id: `id-${index}`,
+      slug: `post-${index + 1}`,
+      body: "ordinary ".repeat(100) + "본문끝 검색어",
+      tags: ["UniqueTag"],
+    }));
+    posts.push({
+      ...sample,
+      id: "private",
+      slug: "private",
+      published: false,
+      body: "본문끝 검색어 private-secret",
+    });
+    const { fetchMock } = githubStore(posts);
+    for (const query of [sample.title, sample.category.name, " UNIQUETAG "])
+      expect((await searchPosts(query)).totalCount).toBe(25);
+    expect((await searchPosts("없는 검색어")).totalCount).toBe(0);
+    expect((await searchPosts("  ")).totalCount).toBe(0);
+    const first = await searchPosts("본문끝 검색어");
+    expect(first.totalCount).toBe(25);
+    expect(first.posts).toHaveLength(12);
+    const second = await searchPosts("본문끝 검색어", {
+      after: first.pageInfo.endCursor!,
+    });
+    expect(
+      new Set([...first.posts, ...second.posts].map(({ slug }) => slug)).size,
+    ).toBe(24);
+    expect((await searchPosts("private-secret")).totalCount).toBe(0);
+    expect(await getPost("private")).toBeNull();
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        url.includes("/contents/content/posts"),
+      ),
+    ).toBe(false);
+    expect(first.posts.every((post) => !("body" in post))).toBe(true);
+  });
+  it("updates title, body, category, series and search with immediate tag invalidation", async () => {
+    const getCategory = site.getCategoryNavigation;
+    vi.spyOn(site, "getCategoryNavigation").mockImplementation((slug) => {
+      const category = getCategory(slug);
+      return category?.category === "development"
+        ? {
+            ...category,
+            series: [{ slug: "fixture-series", label: "테스트 시리즈" }],
+          }
+        : category;
+    });
+    const { files } = githubStore([sample]);
+    await getPosts();
+    await getPost("a");
+    await searchPosts("body");
     const result = await savePost(
       "a",
-      { ...old, title: "changed", id: "forged" },
-      "current",
+      {
+        ...sample,
+        title: "새 제목",
+        body: "완전히 새 본문",
+        category: { slug: "development", name: "forged" },
+        series: "fixture-series",
+      },
+      blobSha(serializePostFile(sample)),
     );
-    expect(result.post).toMatchObject({
-      id: old.id,
-      createdAt: old.createdAt,
-      title: "changed",
-      excerpt: "body",
-    });
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({
-      sha: "current",
-      branch: "content",
-    });
-    expect(fetchMock.mock.calls[1][0]).toBe(
-      "https://api.github.com/repos/owner/repo/contents/content/posts/a.md",
+    invalidatePosts();
+    expect(cacheTag).toHaveBeenCalledWith("posts");
+    expect(revalidateTag).toHaveBeenCalledWith("posts", { expire: 0 });
+    expect(result.post.category.name).toBe("Development");
+    expect((await getPost("a"))?.body).toBe("완전히 새 본문");
+    expect((await getPosts({ category: "art" })).posts).toEqual([]);
+    expect(
+      (await getPosts({ category: "development", series: "fixture-series" }))
+        .posts[0].title,
+    ).toBe("새 제목");
+    expect((await searchPosts("body")).totalCount).toBe(0);
+    expect((await searchPosts("완전히 새 본문")).totalCount).toBe(1);
+    expect(parsePostFile(files.get("content/posts/a.md")!, "a").series).toBe(
+      "fixture-series",
     );
+  });
+  it("removes deleted and unpublished articles from the catalog, detail, search, and cached reads", async () => {
+    const { files } = githubStore([sample]);
+    await getPost("a");
+    await searchPosts("body");
+    const unpublished = await savePost(
+      "a",
+      { ...sample, published: false },
+      blobSha(serializePostFile(sample)),
+    );
+    invalidatePosts();
+    expect(await getAllPosts()).toEqual([]);
+    expect(await getPost("a")).toBeNull();
+    expect((await searchPosts("body")).totalCount).toBe(0);
+    await deletePost("a", unpublished.sha);
+    invalidatePosts();
+    expect(files.has("content/posts/a.md")).toBe(false);
+    expect(await getStoredPostsWithSha()).toEqual([]);
+  });
+  it("does not read unrelated bodies or rewrite unrelated search groups during an indexed edit", async () => {
+    const other = { ...sample, slug: "b", id: "other" };
+    expect(indexBucket(other.slug)).not.toBe(indexBucket(sample.slug));
+    const { state, files, fetchMock } = githubStore([sample, other]);
+    const before: IndexManifest = JSON.parse(files.get(INDEX_PATH)!);
+    await savePost(
+      "a",
+      { ...sample, body: "edited" },
+      blobSha(serializePostFile(sample)),
+    );
+    const after: IndexManifest = JSON.parse(files.get(INDEX_PATH)!);
+    expect(
+      after.search.filter(({ bucket }) => bucket === indexBucket(other.slug)),
+    ).toEqual(
+      before.search.filter(({ bucket }) => bucket === indexBucket(other.slug)),
+    );
+    expect(
+      state.treeInput!.tree.filter(({ path }) =>
+        path.startsWith("content/posts/"),
+      ),
+    ).toHaveLength(1);
+    const otherSha = blobSha(serializePostFile(other));
+    expect(
+      fetchMock.mock.calls.some(
+        ([url]) =>
+          url.endsWith(`/git/blobs/${otherSha}`) ||
+          url.includes(`/content/posts/${other.slug}.md`),
+      ),
+    ).toBe(false);
+  });
+  it("rejects stale SHA, invalid series, private writes to public repos, and concurrent branch updates", async () => {
+    const { files, fetchMock, state } = githubStore([sample]);
+    const sha = blobSha(serializePostFile(sample));
+    await expect(savePost("a", sample, "f".repeat(40))).rejects.toMatchObject({
+      status: 409,
+    });
+    await expect(deletePost("a", "f".repeat(40))).rejects.toMatchObject({
+      status: 409,
+    });
+    await expect(
+      savePost("a", { ...sample, series: "react" }, sha),
+    ).rejects.toMatchObject({ status: 400 });
+    state.private = false;
+    await expect(
+      savePost("a", { ...sample, published: false }, sha),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(fetchMock.mock.calls.every(([, init]) => !init?.method)).toBe(true);
+    state.conflict = true;
+    await expect(
+      savePost("a", { ...sample, title: "conflict" }, sha),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(parsePostFile(files.get("content/posts/a.md")!, "a").title).toBe(
+      sample.title,
+    );
+    expect(
+      fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH"),
+    ).toHaveLength(1);
+  });
+  it("rebuilds over 1,000 files from a checkout while preserving original blob hashes", async () => {
+    const posts = Array.from({ length: 1001 }, (_, index) => ({
+      ...sample,
+      id: `id-${index}`,
+      slug: `post-${index + 1}`,
+    }));
+    const store = githubStore(posts, false);
+    const original = store.files.get("content/posts/post-1.md")!;
+    const reformatted = original.replace('  "id":', '    "id":');
+    store.files.set("content/posts/post-1.md", reformatted);
+    store.blobs.set(blobSha(reformatted), reformatted);
+    const result = await rebuildPostIndex({
+      ref: store.head,
+      posts: [...store.files].map(([filePath, content]) => ({
+        post: parsePostFile(content, filePath.split("/").at(-1)!.slice(0, -3)),
+        sha: blobSha(content),
+      })),
+    });
+    expect(result.posts).toBe(1001);
+    const entry = (await getStoredPostsWithSha()).find(
+      ({ post }) => post.slug === "post-1",
+    )!;
+    expect(entry.sha).toBe(blobSha(reformatted));
+    expect(store.files.get("content/posts/post-1.md")).toBe(reformatted);
+    expect(
+      store.fetchMock.mock.calls.some(([url]) =>
+        url.includes("/contents/content/posts?"),
+      ),
+    ).toBe(false);
+  });
+  it("builds an index from a Git checkout snapshot without requesting individual Markdown blobs", async () => {
+    const { head, files, fetchMock } = githubStore([sample], false);
+    const content = files.get("content/posts/a.md")!;
+    expect(
+      await rebuildPostIndex({
+        ref: head,
+        posts: [{ post: parsePostFile(content, "a"), sha: blobSha(content) }],
+      }),
+    ).toEqual({ posts: 1, published: 1 });
+    expect(
+      fetchMock.mock.calls.some(
+        ([url]) =>
+          url.includes("/git/blobs/") ||
+          url.includes("/contents/content/posts"),
+      ),
+    ).toBe(false);
+    expect(files.get("content/posts/a.md")).toBe(content);
+    expect((await getPost("a"))?.body).toBe(sample.body);
   });
 });
 
 describe("atomic pinned ordering", () => {
-  const head = "a".repeat(40),
-    tree = "b".repeat(40),
-    next = "c".repeat(40);
   const first = { ...sample, featured: true, featuredOrder: 0 };
   const second = {
     ...sample,
@@ -184,144 +618,86 @@ describe("atomic pinned ordering", () => {
     featuredOrder: 1,
     body: "# 원문\n\n그대로 보존\n",
   };
-  let conflict: boolean;
-  let invalidTree: boolean;
-  let treeInput: {
-    base_tree: string;
-    tree: { path: string; content: string }[];
-  };
-  let fetchMock: ReturnType<typeof vi.fn>;
-  beforeEach(() => {
-    for (const [key, value] of Object.entries({
-      CONTENT_SOURCE: "github",
-      GITHUB_OWNER: "owner",
-      GITHUB_REPO: "repo",
-      GITHUB_TOKEN: "test",
-      GITHUB_CONTENT_BRANCH: "content",
-    }))
-      vi.stubEnv(key, value);
-    conflict = false;
-    invalidTree = false;
-    fetchMock = vi.fn(async (url: string, init: RequestInit) => {
-      const pathname = new URL(url).pathname.replace("/repos/owner/repo", "");
-      if (pathname === "/git/ref/heads/content")
-        return Response.json({ object: { sha: head } });
-      if (pathname === `/git/commits/${head}`)
-        return Response.json({ tree: invalidTree ? {} : { sha: tree } });
-      if (pathname === "/contents/content/posts")
-        return Response.json(
-          ["a", "b"].map((slug) => ({ type: "file", name: `${slug}.md` })),
-        );
-      if (pathname.startsWith("/contents/content/posts/")) {
-        expect(new URL(url).searchParams.get("ref")).toBe(head);
-        const post = pathname.endsWith("/a.md") ? first : second;
-        return Response.json({
-          type: "file",
-          encoding: "base64",
-          sha: head,
-          content: Buffer.from(serializePostFile(post)).toString("base64"),
-        });
-      }
-      if (pathname === "/git/trees") {
-        treeInput = JSON.parse(init.body as string);
-        return Response.json({ sha: tree });
-      }
-      if (pathname === "/git/commits") {
-        expect(JSON.parse(init.body as string)).toMatchObject({
-          parents: [head],
-          tree,
-        });
-        return Response.json({ sha: next });
-      }
-      if (pathname === "/git/refs/heads/content") {
-        expect(init.method).toBe("PATCH");
-        expect(JSON.parse(init.body as string)).toEqual({
-          sha: next,
-          force: false,
-        });
-        return conflict
-          ? new Response(null, { status: 422 })
-          : Response.json({ object: { sha: next } });
-      }
-      throw new Error(`Unexpected request: ${pathname}`);
-    });
-    vi.stubGlobal("fetch", fetchMock);
-  });
-  it("commits edited content and all changed ranks together, preserving other bodies and the base tree", async () => {
+  it("commits edited content, changed ranks, catalog and search together while preserving other bodies", async () => {
+    const { files, state, fetchMock } = githubStore([first, second]);
     const result = await savePost(
       "a",
-      {
-        ...first,
-        title: "수정",
-        body: "새 **본문**",
-      },
-      head,
+      { ...first, title: "수정", body: "새 **본문**" },
+      blobSha(serializePostFile(first)),
       { base: ["a", "b"], order: ["b", "a"] },
     );
-    expect(result.post).toMatchObject({
-      slug: "a",
-      excerpt: "새 본문",
-      featuredOrder: 1,
-    });
+    expect(result.post).toMatchObject({ excerpt: "새 본문", featuredOrder: 1 });
     expect(result.sha).toMatch(/^[a-f0-9]{40}$/);
-    expect(treeInput.base_tree).toBe(tree);
-    expect(treeInput.tree).toHaveLength(2);
-    expect(
-      parsePostFile(
-        treeInput.tree.find((entry) => entry.path === "content/posts/b.md")!
-          .content,
-        "b",
-      ),
-    ).toMatchObject({
+    expect(parsePostFile(files.get("content/posts/b.md")!, "b")).toMatchObject({
       body: second.body,
       featuredOrder: 0,
       lastEditedAt: second.lastEditedAt,
     });
+    expect(state.treeInput!.tree.some(({ path }) => path === INDEX_PATH)).toBe(
+      true,
+    );
     expect(
-      fetchMock.mock.calls.filter(([, init]) => init.method === "PATCH"),
+      fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH"),
     ).toHaveLength(1);
-  });
-  it("unpins a selected post in the same commit", async () => {
-    const result = await savePost("a", first, head, {
-      base: ["a", "b"],
-      order: ["a"],
-    });
-    expect(result.pinned).toEqual(["a"]);
     expect(
-      parsePostFile(
-        treeInput.tree.find((entry) => entry.path === "content/posts/b.md")!
-          .content,
-        "b",
-      ),
-    ).toMatchObject({
+      (await getPosts()).posts.find(({ slug }) => slug === "b")?.featuredOrder,
+    ).toBe(0);
+  });
+  it("unpins selected posts without changing their body", async () => {
+    const { files } = githubStore([first, second]);
+    const result = await savePost(
+      "a",
+      first,
+      blobSha(serializePostFile(first)),
+      { base: ["a", "b"], order: ["a"] },
+    );
+    expect(result.pinned).toEqual(["a"]);
+    expect(parsePostFile(files.get("content/posts/b.md")!, "b")).toMatchObject({
       body: second.body,
       featured: false,
     });
   });
-  it("rejects stale lists, duplicate/unknown cards and unsafe base trees before any writes", async () => {
+  it("rejects stale/duplicate/unknown pinned lists and invalid base trees before writes", async () => {
+    const { state, fetchMock } = githubStore([first, second]);
     for (const pinned of [
       { base: ["b", "a"], order: ["a", "b"] },
       { base: ["a", "b"], order: ["b"] },
       { base: ["a", "b"], order: ["a", "a"] },
       { base: ["a", "b"], order: ["a", "unknown"] },
-    ]) {
-      await expect(savePost("a", first, head, pinned)).rejects.toMatchObject({
-        status: pinned.base[0] === "b" ? 409 : 400,
-      });
-    }
-    invalidTree = true;
+    ])
+      await expect(
+        savePost("a", first, blobSha(serializePostFile(first)), pinned),
+      ).rejects.toMatchObject({ status: pinned.base[0] === "b" ? 409 : 400 });
+    state.invalidTree = true;
     await expect(
-      savePost("a", first, head, { base: ["a", "b"], order: ["b", "a"] }),
+      savePost("a", first, blobSha(serializePostFile(first)), {
+        base: ["a", "b"],
+        order: ["b", "a"],
+      }),
     ).rejects.toMatchObject({ status: 502 });
-    expect(fetchMock.mock.calls.every(([, init]) => !init.method)).toBe(true);
+    expect(fetchMock.mock.calls.every(([, init]) => !init?.method)).toBe(true);
   });
-  it("refuses a concurrent branch update without force-pushing or retrying", async () => {
-    conflict = true;
-    await expect(
-      savePost("a", first, head, { base: ["a", "b"], order: ["b", "a"] }),
-    ).rejects.toMatchObject({ status: 409 });
+});
+
+it("splits large search groups into bounded cache entries even with long Korean bodies", () => {
+  const posts: FilePost[] = [];
+  for (let index = 0; posts.length < 3; index++) {
+    const slug = `post-${index + 1}`;
+    if (indexBucket(slug) === indexBucket("a"))
+      posts.push({
+        ...sample,
+        slug,
+        id: slug,
+        body: "한".repeat(200_000),
+        excerpt: "한",
+      });
+  }
+  const search = buildChunks("search", posts.map(searchDocument));
+  expect(search.refs).toHaveLength(3);
+  for (const file of search.files) {
     expect(
-      fetchMock.mock.calls.filter(([, init]) => init.method === "PATCH"),
-    ).toHaveLength(1);
-  });
+      Buffer.byteLength(JSON.stringify(decodeChunk(file.content))),
+    ).toBeLessThanOrEqual(750_000);
+    expect(file.path).toBe(chunkPath("search", blobSha(file.content)));
+  }
 });

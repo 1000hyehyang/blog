@@ -16,7 +16,8 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => ({ value: state.cookie }) }),
 }));
 vi.mock("next/cache", () => ({
-  unstable_cache: (fn: unknown) => fn,
+  cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
 }));

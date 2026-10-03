@@ -1,10 +1,10 @@
-import type { Post } from "@/domain/post";
+import type { PostSummary } from "@/domain/post";
 
 import { PostCard } from "./post-card";
 import { RevealGrid } from "./reveal-grid";
 
 type PostGridProps = {
-  posts: Post[];
+  posts: PostSummary[];
   eagerImageSource?: string;
 };
 

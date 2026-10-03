@@ -2,7 +2,7 @@ import "server-only";
 
 import { lookup } from "node:dns/promises";
 
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { Agent, fetch as undiciFetch } from "undici";
 
 import { siteConfig } from "@/config/site";
@@ -190,6 +190,13 @@ async function readLimitedBytes(
 }
 
 async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
+  "use cache";
+  cacheLife({
+    stale: 30,
+    revalidate: CACHE_SECONDS,
+    expire: CACHE_SECONDS * 7,
+  });
+  if (new URL(url).origin === new URL(siteConfig.url).origin) cacheTag("posts");
   const initialUrl = parseExternalHttpUrl(url);
   if (!initialUrl) return {};
 
@@ -212,12 +219,6 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
   return parseLinkPreviewHtml(html, finalUrl);
 }
 
-const getCachedRemoteMetadata = unstable_cache(
-  loadRemoteMetadata,
-  ["external-link-preview-v5"],
-  { revalidate: CACHE_SECONDS },
-);
-
 export async function getLinkPreview(
   value: string,
 ): Promise<LinkPreview | null> {
@@ -232,7 +233,7 @@ export async function getLinkPreview(
   };
 
   try {
-    const metadata = await getCachedRemoteMetadata(url.href);
+    const metadata = await loadRemoteMetadata(url.href);
     return { ...fallback, ...metadata, icon: metadata.icon ?? fallback.icon };
   } catch (error) {
     console.warn(

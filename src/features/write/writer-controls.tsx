@@ -31,6 +31,7 @@ export function WriterSelect({
   const trigger = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<CSSProperties | null>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [active, setActive] = useState(0);
   const reduced = useReducedMotion();
   const open = Boolean(position) && !disabled;
@@ -38,6 +39,7 @@ export function WriterSelect({
     index = options.findIndex((option) => option.value === value),
   ) {
     const rect = trigger.current!.getBoundingClientRect();
+    setPortalTarget(trigger.current!.closest("dialog") ?? document.body);
     setActive(Math.max(0, index));
     const below = window.innerHeight - rect.bottom;
     const opensUp =
@@ -84,7 +86,7 @@ export function WriterSelect({
       list.current?.children[active]?.scrollIntoView?.({ block: "nearest" });
   }, [active, open]);
   const opensUp = position?.bottom !== undefined;
-  const edge = open ? [10, 0, 10] : 10;
+  const edge = open && !reduced ? [10, 0, 10] : 10;
   return (
     <>
       <motion.button
@@ -99,16 +101,12 @@ export function WriterSelect({
         disabled={disabled}
         className={styles.selectTrigger}
         initial={false}
-        animate={
-          reduced
-            ? undefined
-            : {
-                borderTopLeftRadius: opensUp ? edge : 10,
-                borderTopRightRadius: opensUp ? edge : 10,
-                borderBottomLeftRadius: opensUp ? 10 : edge,
-                borderBottomRightRadius: opensUp ? 10 : edge,
-              }
-        }
+        animate={{
+          borderTopLeftRadius: opensUp ? edge : 10,
+          borderTopRightRadius: opensUp ? edge : 10,
+          borderBottomLeftRadius: opensUp ? 10 : edge,
+          borderBottomRightRadius: opensUp ? 10 : edge,
+        }}
         transition={{ duration: reduced ? 0 : 0.45, times: [0, 0.4, 1] }}
         onClick={() => (open ? setPosition(null) : expand())}
         onBlur={() => setPosition(null)}
@@ -235,7 +233,7 @@ export function WriterSelect({
               </motion.div>
             )}
           </AnimatePresence>,
-          document.body,
+          portalTarget ?? document.body,
         )}
     </>
   );

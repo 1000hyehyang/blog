@@ -528,7 +528,8 @@ test("management is separate and authentication preserves the edit destination",
   await expect(page.getByRole("heading", { name: "글 수정" })).toBeAttached();
   await page.getByRole("link", { name: "Blog STUDIO" }).click();
   await expect(page).toHaveURL("/manage");
-  await expect(page.locator("main ul > li")).toHaveCount(6);
+  const rows = page.getByRole("listitem");
+  await expect(rows).toHaveCount(6);
   const edit = page.getByRole("link", { name: / 수정$/ }).first();
   await expect(edit.locator("svg")).toBeVisible();
   expect(await edit.textContent()).toBe("");
@@ -537,21 +538,21 @@ test("management is separate and authentication preserves the edit destination",
   expect(await remove.textContent()).toBe("");
   await expect(page.locator('main a[href^="/post-"]')).toHaveCount(0);
   await page.getByRole("button", { name: "다음 페이지", exact: true }).click();
-  await expect(page.locator("main ul > li")).toHaveCount(2);
+  await expect(rows).toHaveCount(2);
   await page.getByRole("button", { name: "이전 페이지", exact: true }).click();
   const categoryFilter = page.getByRole("combobox", {
     name: "카테고리 필터",
   });
   await categoryFilter.click();
   await page.getByRole("option", { name: "Art", exact: true }).click();
-  await expect(page.locator("main ul > li")).toHaveCount(0);
+  await expect(rows).toHaveCount(0);
   await categoryFilter.click();
   await page.getByRole("option", { name: "Development", exact: true }).click();
-  await expect(page.locator("main ul > li")).toHaveCount(6);
+  await expect(rows).toHaveCount(6);
   const sort = page.getByRole("combobox", { name: "정렬" });
   await sort.click();
   await page.getByRole("option", { name: "오래된순", exact: true }).click();
-  const dates = await page.locator("main ul > li time").allTextContents();
+  const dates = await rows.locator("time").allTextContents();
   expect(dates).toEqual([...dates].sort());
   await expect(page.getByRole("textbox", { name: "본문 편집기" })).toHaveCount(
     0,
@@ -575,7 +576,7 @@ test("management is separate and authentication preserves the edit destination",
   });
   await page.evaluate(() => window.scrollTo(0, 0));
   const tagsBox = await page.getByLabel("태그", { exact: true }).boundingBox();
-  const footerBox = await page.locator("footer").boundingBox();
+  const footerBox = await page.locator("footer:visible").boundingBox();
   expect(tagsBox!.y + tagsBox!.height).toBeLessThanOrEqual(footerBox!.y);
   await page.evaluate(() => document.documentElement.classList.add("dark"));
   await page.screenshot({

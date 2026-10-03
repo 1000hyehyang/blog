@@ -5,8 +5,6 @@ import {
   getLinkPreview,
 } from "@/infrastructure/link-preview/link-preview";
 
-export const runtime = "nodejs";
-
 const CACHE_SECONDS = 24 * 60 * 60;
 
 function errorResponse(status: number) {

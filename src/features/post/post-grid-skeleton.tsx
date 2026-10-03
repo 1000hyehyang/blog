@@ -2,9 +2,25 @@ const DEFAULT_CARD_COUNT = 6;
 
 export function PostGridSkeleton({
   count = DEFAULT_CARD_COUNT,
+  gallery = false,
 }: {
   count?: number;
+  gallery?: boolean;
 }) {
+  if (gallery)
+    return (
+      <div
+        className="columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4"
+        aria-hidden="true"
+      >
+        {Array.from({ length: count }, (_, index) => (
+          <div
+            key={index}
+            className="mb-3 aspect-[4/5] break-inside-avoid rounded-[var(--radius-md)] bg-muted sm:mb-4"
+          />
+        ))}
+      </div>
+    );
   return (
     <div
       className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
@@ -26,7 +42,10 @@ export function PostGridSkeleton({
             <div className="mt-4 flex items-center gap-3">
               <div className="h-3 w-8 rounded bg-muted" />
               <div className="h-3 w-8 rounded bg-muted" />
-              <div className="ml-auto h-3 w-16 rounded bg-muted" />
+              <div className="ml-auto flex items-center gap-2">
+                <div className="size-5 rounded-full bg-muted" />
+                <div className="h-3 w-16 rounded bg-muted" />
+              </div>
             </div>
           </div>
         </article>

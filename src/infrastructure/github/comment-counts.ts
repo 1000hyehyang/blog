@@ -1,5 +1,6 @@
 import "server-only";
-import type { FilePost } from "@/lib/content/post-file";
+import { cacheLife, cacheTag } from "next/cache";
+import type { FilePostSummary } from "@/lib/content/post-file";
 import { routes } from "@/lib/routes";
 
 type DiscussionCounts = {
@@ -8,22 +9,22 @@ type DiscussionCounts = {
   comments: { totalCount: number };
   reactions: { totalCount: number };
 };
+type Counts = Pick<FilePostSummary, "commentsCount" | "reactionsCount">;
 
-export async function withCommentCounts(
-  posts: FilePost[],
-): Promise<FilePost[]> {
-  const [owner, name] = (process.env.NEXT_PUBLIC_GISCUS_REPO ?? "").split("/");
-  const token = process.env.GITHUB_TOKEN;
-  if (!owner || !name || !token || !posts.length) return posts;
+async function fetchCounts(owner: string, name: string, category: string) {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 300, expire: 3600 });
+  cacheTag("comment-counts");
+  const counts: Record<string, Counts | null> = {};
+  const cursors = new Set<string>();
+  const signal = AbortSignal.timeout(5000);
+  let after: string | null = null;
   try {
-    const discussions: DiscussionCounts[] = [];
-    const cursors = new Set<string>();
-    let after: string | null = null;
     do {
       const response: Response = await fetch("https://api.github.com/graphql", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -36,7 +37,7 @@ export async function withCommentCounts(
           variables: { owner, name, after },
         }),
         cache: "no-store",
-        signal: AbortSignal.timeout(5000),
+        signal,
       });
       const payload: {
         errors?: unknown;
@@ -50,33 +51,42 @@ export async function withCommentCounts(
         };
       } = await response.json();
       if (!response.ok || payload.errors || !payload.data?.repository)
-        return posts;
+        return {};
       const page = payload.data.repository.discussions;
-      discussions.push(...page.nodes);
+      for (const discussion of page.nodes) {
+        if (category && discussion.category.id !== category) continue;
+        counts[discussion.title] =
+          discussion.title in counts
+            ? null
+            : {
+                commentsCount: discussion.comments.totalCount,
+                reactionsCount: discussion.reactions.totalCount,
+              };
+      }
       after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
       if (page.pageInfo.hasNextPage && (!after || cursors.has(after)))
-        return posts;
+        return {};
       if (after) cursors.add(after);
-      // Discussion이 1,000개를 넘으면 저장된 댓글 수를 사용한다.
-      if (after && discussions.length >= 1000) return posts;
+      // ponytail: comment counters have a 5s/10,000-discussion budget. Larger
+      // repositories keep stored counters; articles never depend on this API.
+      if (after && cursors.size >= 100) return {};
     } while (after);
-    return posts.map((post) => {
-      const matches = discussions.filter(
-        (discussion) =>
-          discussion.title === routes.post(post.id) &&
-          (!process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID ||
-            discussion.category.id ===
-              process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID),
-      );
-      if (matches.length !== 1) return post;
-      return {
-        ...post,
-        commentsCount: matches[0].comments.totalCount,
-        reactionsCount: matches[0].reactions.totalCount,
-      };
-    });
+    return counts;
   } catch {
-    // 댓글 조회에 실패해도 글은 표시한다.
-    return posts;
+    return {};
   }
+}
+
+export async function withCommentCounts<T extends FilePostSummary>(
+  posts: T[],
+): Promise<T[]> {
+  const [owner, name] = (process.env.NEXT_PUBLIC_GISCUS_REPO ?? "").split("/");
+  if (!owner || !name || !process.env.GITHUB_TOKEN || !posts.length)
+    return posts;
+  const category = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID ?? "";
+  const counts = await fetchCounts(owner, name, category);
+  return posts.map((post) => {
+    const value = counts[routes.post(post.id)];
+    return value ? { ...post, ...value } : post;
+  });
 }

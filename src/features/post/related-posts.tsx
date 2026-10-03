@@ -1,4 +1,4 @@
-import type { Post } from "@/domain/post";
+import type { PostSummary } from "@/domain/post";
 
 import { PostCard } from "./post-card";
 
@@ -7,7 +7,7 @@ export function RelatedPosts({
   embedded = false,
   eagerImageSource,
 }: {
-  posts: Post[];
+  posts: PostSummary[];
   embedded?: boolean;
   eagerImageSource?: string;
 }) {

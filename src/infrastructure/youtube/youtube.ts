@@ -1,6 +1,6 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { cacheLife } from "next/cache";
 import { z } from "zod";
 
 import { buildYouTubeWatchUrl } from "@/lib/youtube";
@@ -25,6 +25,12 @@ function normalizeMetadataText(value: string, maxLength: number): string {
 async function loadYouTubeMetadata(
   videoId: string,
 ): Promise<YouTubeMetadata | null> {
+  "use cache";
+  cacheLife({
+    stale: 30,
+    revalidate: CACHE_SECONDS,
+    expire: CACHE_SECONDS * 7,
+  });
   const watchUrl = buildYouTubeWatchUrl(videoId);
   if (!watchUrl) return null;
 
@@ -61,17 +67,11 @@ async function loadYouTubeMetadata(
   return title ? { title } : null;
 }
 
-const getCachedYouTubeMetadata = unstable_cache(
-  loadYouTubeMetadata,
-  ["youtube-oembed-v1"],
-  { revalidate: CACHE_SECONDS },
-);
-
 export async function getYouTubeMetadata(
   videoId: string,
 ): Promise<YouTubeMetadata | null> {
   try {
-    return await getCachedYouTubeMetadata(videoId);
+    return await loadYouTubeMetadata(videoId);
   } catch (error) {
     console.warn(`[youtube] Failed to load metadata for ${videoId}.`, error);
     return null;

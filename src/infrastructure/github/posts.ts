@@ -1,10 +1,12 @@
 import "server-only";
 
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { unstable_cache } from "next/cache";
+import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { withCommentCounts } from "./comment-counts";
+import { getCategoryNavigation } from "@/config/site";
 import { createExcerpt } from "@/lib/content/excerpt";
 import {
   pinnedPosts,
@@ -18,6 +20,25 @@ import {
   postFieldsSchema,
   type FilePost,
 } from "@/lib/content/post-file";
+import {
+  INDEX_PATH,
+  manifestSchema,
+  catalogSchema,
+  searchSchema,
+  gitShaSchema,
+  blobSha,
+  summarize,
+  searchDocument,
+  indexBucket,
+  buildChunks,
+  chunkPath,
+  decodeChunk,
+  assertUniquePosts,
+  type IndexManifest,
+  type CatalogEntry,
+  type SearchDocument,
+  type IndexFile,
+} from "@/lib/content/post-index";
 
 export class PostStoreError extends Error {
   constructor(
@@ -71,7 +92,7 @@ async function request(endpoint: string, init: RequestInit = {}) {
   });
   if (response.status === 409 || response.status === 422)
     throw new PostStoreError(
-      "다른 변경이 먼저 저장되었습니다. 현재 내용을 복사해 보관한 뒤 글을 다시 열어 주세요.",
+      "다른 변경이 먼저 저장되었습니다. 현재 내용을 보관하고 글을 다시 열어 주세요.",
       409,
     );
   if (!response.ok && response.status !== 404)
@@ -81,153 +102,379 @@ async function request(endpoint: string, init: RequestInit = {}) {
     );
   return response;
 }
-function endpoint(slug?: string) {
-  return `/contents/content/posts${slug ? `/${slugSchema.parse(slug)}.md` : ""}`;
+async function gitJson(endpoint: string, init?: RequestInit) {
+  const response = await request(endpoint, init);
+  if (!response.ok)
+    throw new PostStoreError("콘텐츠 브랜치를 찾을 수 없습니다.", 503);
+  return response.json();
 }
-export async function getStoredPost(
-  slug: string,
-  ref?: string,
-  signal?: AbortSignal,
-): Promise<{ post: FilePost; sha: string } | null> {
-  if (!slugSchema.safeParse(slug).success) return null;
-  if (!usesGitHubStorage()) {
-    try {
-      return {
-        post: parsePostFile(
-          await readFile(localPostsPath(`${slug}.md`), "utf8"),
-          slug,
-        ),
-        sha: "local",
-      };
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-      throw error;
-    }
-  }
+async function headRef() {
+  const sha = (await gitJson(`/git/ref/heads/${branchPath()}`)).object?.sha;
+  if (!gitShaSchema.safeParse(sha).success)
+    throw new PostStoreError("콘텐츠 브랜치를 확인할 수 없습니다.", 502);
+  return sha as string;
+}
+async function readContent(filePath: string, ref: string) {
   const response = await request(
-    `${endpoint(slug)}?ref=${encodeURIComponent(ref ?? config().branch)}`,
-    { signal },
+    `/contents/${filePath}?ref=${encodeURIComponent(ref)}`,
   );
   if (response.status === 404) return null;
   const file = await response.json();
   if (file.type !== "file" || file.encoding !== "base64")
     throw new PostStoreError("지원하지 않는 콘텐츠 파일입니다.", 502);
   return {
-    post: parsePostFile(
-      Buffer.from(file.content, "base64").toString("utf8"),
-      slug,
-    ),
-    sha: String(file.sha),
+    content: Buffer.from(file.content, "base64").toString("utf8"),
+    sha: gitShaSchema.parse(file.sha),
   };
 }
-
-export async function getStoredPostsWithSha(
-  ref?: string,
-): Promise<{ post: FilePost; sha: string }[]> {
-  const signal = AbortSignal.timeout(15_000);
-  let names: string[];
-  if (usesGitHubStorage()) {
-    const response = await request(
-      `${endpoint()}?ref=${encodeURIComponent(ref ?? config().branch)}`,
-      { signal },
-    );
-    if (response.status === 404) {
-      const refResponse = await request(`/git/ref/heads/${branchPath()}`, {
-        signal,
-      });
-      if (refResponse.status === 404)
-        throw new PostStoreError("콘텐츠 브랜치를 찾을 수 없습니다.", 503);
-      return [];
-    }
-    const files = await response.json();
-    if (!Array.isArray(files) || files.length >= 1000)
-      throw new PostStoreError("콘텐츠 목록을 안전하게 읽을 수 없습니다.", 502);
-    names = files.filter((f) => f.type === "file").map((f) => String(f.name));
-  } else {
-    try {
-      names = await readdir(localPostsPath());
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-      names = [];
-    }
-  }
-  const posts: { post: FilePost; sha: string }[] = [];
-  // GitHub API에 요청이 몰리지 않도록 8개씩 읽는다.
-  const slugs = names
-    .filter((n) => n.endsWith(".md"))
-    .map((n) => n.slice(0, -3));
-  for (let i = 0; i < slugs.length; i += 8) {
-    const batch = await Promise.all(
-      slugs.slice(i, i + 8).map((slug) => getStoredPost(slug, ref, signal)),
-    );
-    for (const value of batch) {
-      if (!value)
-        throw new PostStoreError(
-          "목록이 변경되었습니다. 다시 시도해 주세요.",
-          409,
-        );
-      posts.push(value);
-    }
-  }
-  return posts.sort(
+async function readBlob(sha: string) {
+  const file = await gitJson(`/git/blobs/${gitShaSchema.parse(sha)}`);
+  if (file.encoding !== "base64")
+    throw new PostStoreError("콘텐츠를 읽을 수 없습니다.", 502);
+  const content = Buffer.from(file.content, "base64").toString("utf8");
+  if (blobSha(content) !== sha)
+    throw new PostStoreError("콘텐츠 무결성 확인에 실패했습니다.", 502);
+  return content;
+}
+async function batches<T, R>(
+  values: T[],
+  read: (value: T) => Promise<R>,
+): Promise<R[]> {
+  const result: R[] = [];
+  for (let i = 0; i < values.length; i += 8)
+    result.push(...(await Promise.all(values.slice(i, i + 8).map(read))));
+  return result;
+}
+function sortCatalog(entries: CatalogEntry[]) {
+  assertUniquePosts(entries);
+  return entries.sort(
     (a, b) =>
       Date.parse(b.post.createdAt) - Date.parse(a.post.createdAt) ||
       a.post.slug.localeCompare(b.post.slug, "en", { numeric: true }),
   );
 }
-export async function getStoredPosts(ref?: string): Promise<FilePost[]> {
+
+export async function getStoredPost(
+  slug: string,
+  ref?: string,
+): Promise<{ post: FilePost; sha: string } | null> {
+  if (!slugSchema.safeParse(slug).success) return null;
+  if (!usesGitHubStorage()) {
+    try {
+      const content = await readFile(localPostsPath(`${slug}.md`), "utf8");
+      return { post: parsePostFile(content, slug), sha: blobSha(content) };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      throw error;
+    }
+  }
+  const file = await readContent(
+    `content/posts/${slug}.md`,
+    ref ?? config().branch,
+  );
+  return file
+    ? { post: parsePostFile(file.content, slug), sha: file.sha }
+    : null;
+}
+
+async function readLocalPosts() {
+  let names: string[];
+  try {
+    names = await readdir(localPostsPath());
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+  return batches(
+    names.filter((name) => name.endsWith(".md")),
+    async (name) => {
+      const slug = slugSchema.parse(name.slice(0, -3));
+      const stored = await getStoredPost(slug);
+      if (!stored)
+        throw new PostStoreError(
+          "목록이 변경되었습니다. 다시 시도해 주세요.",
+          409,
+        );
+      return stored;
+    },
+  );
+}
+async function readManifest(ref: string) {
+  const file = await readContent(INDEX_PATH, ref);
+  return file ? manifestSchema.parse(JSON.parse(file.content)) : null;
+}
+const publicManifest = cache(async () => {
+  if (!usesGitHubStorage()) return null;
+  return cachedManifest();
+});
+async function cachedManifest(): Promise<IndexManifest> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 60, expire: 300 });
+  cacheTag("posts");
+  const manifest = await readManifest(config().branch);
+  if (manifest) return manifest;
+  await headRef();
+  return { version: 1, catalog: [], search: [] };
+}
+async function readCatalogChunk(sha: string) {
+  return catalogSchema.parse(decodeChunk(await readBlob(sha)));
+}
+async function readSearchChunk(sha: string) {
+  return searchSchema.parse(decodeChunk(await readBlob(sha)));
+}
+async function publicCatalogChunk(sha: string) {
+  "use cache";
+  cacheLife("max");
+  return (await readCatalogChunk(sha)).filter(({ post }) => post.published);
+}
+async function publicSearchChunk(sha: string) {
+  "use cache";
+  cacheLife("max");
+  return readSearchChunk(sha);
+}
+async function publicBody(slug: string, sha: string) {
+  "use cache";
+  cacheLife("max");
+  const post = parsePostFile(await readBlob(sha), slug);
+  return post.published ? post : null;
+}
+const publicCatalog = cache(async () => {
+  const manifest = await publicManifest();
+  if (manifest)
+    return sortCatalog(
+      (
+        await batches(manifest.catalog, ({ sha }) => publicCatalogChunk(sha))
+      ).flat(),
+    );
+  return sortCatalog(
+    (await readLocalPosts())
+      .filter(({ post }) => post.published)
+      .map(({ post, sha }) => summarize(post, sha)),
+  );
+});
+
+async function snapshot(ref: string) {
+  const manifest = (await readManifest(ref)) ?? {
+    version: 1 as const,
+    catalog: [],
+    search: [],
+  };
+  const entries = sortCatalog(
+    (
+      await batches(manifest.catalog, ({ sha }) => readCatalogChunk(sha))
+    ).flat(),
+  );
+  return { manifest, entries };
+}
+export async function getStoredPostsWithSha(ref?: string) {
+  if (!usesGitHubStorage())
+    return sortCatalog(
+      (await readLocalPosts()).map(({ post, sha }) => summarize(post, sha)),
+    );
+  return (await snapshot(ref ?? (await headRef()))).entries;
+}
+export async function getStoredPosts(ref?: string) {
   return (await getStoredPostsWithSha(ref)).map(({ post }) => post);
 }
-// 비공개 글은 공용 캐시에 넣지 않는다.
-const publishedPosts = unstable_cache(
-  async () =>
-    withCommentCounts((await getStoredPosts()).filter((p) => p.published)),
-  [
-    "markdown-posts-v1",
-    process.env.CONTENT_SOURCE ?? "local",
-    process.env.LOCAL_CONTENT_PATH ?? "content/posts",
-    process.env.GITHUB_OWNER ?? "",
-    process.env.GITHUB_REPO ?? "",
-    process.env.GITHUB_CONTENT_BRANCH ?? "",
-    process.env.NEXT_PUBLIC_GISCUS_REPO ?? "",
-    process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID ?? "",
-  ],
-  { revalidate: 60, tags: ["posts"] },
-);
-export async function getAllPosts(options: { category?: string } = {}) {
-  return (await publishedPosts()).filter(
-    (p) => !options.category || p.category.slug === options.category,
-  );
+export async function getAllPosts(
+  options: { category?: string; series?: string } = {},
+) {
+  return (await publicCatalog())
+    .map(({ post }) => ({
+      ...post,
+      category: {
+        ...post.category,
+        name:
+          getCategoryNavigation(post.category.slug)?.label ??
+          post.category.name,
+      },
+    }))
+    .filter(
+      (post) =>
+        (!options.category || post.category.slug === options.category) &&
+        (!options.series || post.series === options.series),
+    );
 }
-export async function getPost(postId: string) {
+export async function getPostSummary(postId: string) {
   return (await getAllPosts()).find((post) => post.id === postId) ?? null;
 }
-export async function getPosts(
-  options: {
-    first?: number;
-    after?: string;
-    sort?: "latest" | "oldest";
-  } = {},
+export const getPost = cache(async (postId: string) => {
+  const entry = (await publicCatalog()).find(({ post }) => post.id === postId);
+  if (!entry) return null;
+  const post = usesGitHubStorage()
+    ? await publicBody(entry.post.slug, entry.sha)
+    : (await getStoredPost(entry.post.slug))?.post;
+  return post?.published && post.id === postId
+    ? (
+        await withCommentCounts([
+          {
+            ...post,
+            category: {
+              ...post.category,
+              name:
+                getCategoryNavigation(post.category.slug)?.label ??
+                post.category.name,
+            },
+          },
+        ])
+      )[0]
+    : null;
+});
+function paginate<T extends { slug: string }>(
+  posts: T[],
+  options: { first?: number; after?: string },
 ) {
-  const posts = await getAllPosts();
-  if (options.sort === "oldest") posts.reverse();
   const start = options.after
-    ? Math.max(0, posts.findIndex((p) => p.slug === options.after) + 1)
+    ? Math.max(0, posts.findIndex((post) => post.slug === options.after) + 1)
     : 0;
-  const page = posts.slice(
-    start,
-    start + Math.max(1, Math.min(options.first ?? 12, 50)),
-  );
+  const count = Number.isFinite(options.first)
+    ? Math.max(1, Math.min(Math.floor(options.first!), 50))
+    : 12;
+  const page = posts.slice(start, start + count);
   const hasNextPage = start + page.length < posts.length;
   return {
     posts: page,
+    totalCount: posts.length,
     pageInfo: {
       hasNextPage,
       endCursor: hasNextPage ? page.at(-1)!.slug : null,
     },
   };
 }
+export async function getPosts(
+  options: {
+    first?: number;
+    after?: string;
+    sort?: "latest" | "oldest";
+    category?: string;
+    series?: string;
+  } = {},
+) {
+  const posts = await getAllPosts(options);
+  if (options.sort === "oldest") posts.reverse();
+  const result = paginate(posts, options);
+  return { ...result, posts: await withCommentCounts(result.posts) };
+}
+export async function searchPosts(
+  query: string,
+  options: { first?: number; after?: string } = {},
+) {
+  const normalized = query.trim().toLocaleLowerCase();
+  if (!normalized) return paginate([], options);
+  const manifest = await publicManifest();
+  const matches = new Set<string>();
+  if (manifest) {
+    // Retain matching slugs, never the aggregate of all decoded bodies.
+    await batches(manifest.search, async ({ sha }) => {
+      for (const value of await publicSearchChunk(sha))
+        if (value.text.includes(normalized)) matches.add(value.slug);
+    });
+  } else {
+    for (const { post } of await readLocalPosts())
+      if (post.published && searchDocument(post).text.includes(normalized))
+        matches.add(post.slug);
+  }
+  const result = paginate(
+    (await getAllPosts()).filter((post) => matches.has(post.slug)),
+    options,
+  );
+  return { ...result, posts: await withCommentCounts(result.posts) };
+}
 
+type Snapshot = Awaited<ReturnType<typeof snapshot>>;
+async function indexChanges(
+  state: Snapshot,
+  changed: FilePost[],
+  removed: string[] = [],
+) {
+  const edited = new Set([...removed, ...changed.map((post) => post.slug)]);
+  const entries = [
+    ...state.entries.filter(({ post }) => !edited.has(post.slug)),
+    ...changed.map((post) => summarize(post, blobSha(serializePostFile(post)))),
+  ];
+  assertUniquePosts(entries);
+  const catalog = buildChunks("catalog", entries);
+  const buckets = new Set([...edited].map(indexBucket));
+  const documents: SearchDocument[] = (
+    await batches(
+      state.manifest.search.filter(({ bucket }) => buckets.has(bucket)),
+      ({ sha }) => readSearchChunk(sha),
+    )
+  )
+    .flat()
+    .filter(({ slug }) => !edited.has(slug));
+  documents.push(
+    ...changed.filter((post) => post.published).map(searchDocument),
+  );
+  const search = buildChunks("search", documents);
+  const manifest: IndexManifest = {
+    version: 1,
+    catalog: catalog.refs,
+    search: [
+      ...state.manifest.search.filter(({ bucket }) => !buckets.has(bucket)),
+      ...search.refs,
+    ].sort(
+      (a, b) => a.bucket.localeCompare(b.bucket) || a.sha.localeCompare(b.sha),
+    ),
+  };
+  const oldFiles = new Set([
+    ...state.manifest.catalog.map(({ sha }) => chunkPath("catalog", sha)),
+    ...state.manifest.search.map(({ sha }) => chunkPath("search", sha)),
+  ]);
+  const currentFiles = new Set([
+    ...manifest.catalog.map(({ sha }) => chunkPath("catalog", sha)),
+    ...manifest.search.map(({ sha }) => chunkPath("search", sha)),
+  ]);
+  return {
+    files: [...catalog.files, ...search.files]
+      .filter(({ path }) => !oldFiles.has(path))
+      .concat({ path: INDEX_PATH, content: JSON.stringify(manifest) }),
+    removed: [...oldFiles].filter((file) => !currentFiles.has(file)),
+  };
+}
+async function commitFiles(
+  ref: string,
+  files: IndexFile[],
+  removed: string[],
+  message: string,
+) {
+  const parent = await gitJson(`/git/commits/${ref}`);
+  if (!gitShaSchema.safeParse(parent.tree?.sha).success)
+    throw new PostStoreError("기존 콘텐츠 트리를 확인할 수 없습니다.", 502);
+  const tree = await gitJson("/git/trees", {
+    method: "POST",
+    body: JSON.stringify({
+      base_tree: parent.tree.sha,
+      tree: [
+        ...files.map(({ path, content }) => ({
+          path,
+          mode: "100644",
+          type: "blob",
+          content,
+        })),
+        ...removed.map((path) => ({
+          path,
+          mode: "100644",
+          type: "blob",
+          sha: null,
+        })),
+      ],
+    }),
+  });
+  const commit = await gitJson("/git/commits", {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      tree: gitShaSchema.parse(tree.sha),
+      parents: [ref],
+    }),
+  });
+  // A concurrent writer makes this non-fast-forward and receives 409. Never force.
+  await gitJson(`/git/refs/heads/${branchPath()}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha: gitShaSchema.parse(commit.sha), force: false }),
+  });
+}
 export async function savePost(
   slug: string,
   input: unknown,
@@ -236,33 +483,32 @@ export async function savePost(
 ) {
   if (!usesGitHubStorage())
     throw new PostStoreError(
-      "쓰기 기능을 사용하려면 CONTENT_SOURCE=github 설정이 필요합니다.",
+      "글을 저장하려면 CONTENT_SOURCE=github 설정이 필요합니다.",
       503,
     );
   slugSchema.parse(slug);
   const fields = postFieldsSchema.parse(input);
   if (fields.published && !fields.body.trim())
     throw new PostStoreError("본문을 입력해 주세요.", 400);
+  const navigation = getCategoryNavigation(fields.category.slug);
+  if (
+    fields.series &&
+    !navigation?.series.some((series) => series.slug === fields.series)
+  )
+    throw new PostStoreError("카테고리에 등록된 시리즈를 선택해 주세요.", 400);
   const ordering = pinned ? pinnedOrderSchema.parse(pinned) : undefined;
-  const branch = branchPath();
-  const head = ordering ? await gitJson(`/git/ref/heads/${branch}`) : undefined;
-  const ref = head?.object?.sha;
-  if (ordering && !/^[a-f0-9]{40}$/.test(ref ?? ""))
-    throw new PostStoreError("콘텐츠 브랜치를 확인할 수 없습니다.", 502);
+  const ref = await headRef();
   const previous = await getStoredPost(slug, ref);
   if ((previous?.sha ?? null) !== sha)
     throw new PostStoreError(
-      "글이 변경되었거나 같은 주소가 이미 존재합니다. 내용을 복사해 보관하고 다시 열어 주세요.",
+      "글이 변경되었거나 같은 주소가 이미 존재합니다. 내용을 보관하고 다시 열어 주세요.",
       409,
     );
-  if (!fields.published) {
-    const repo = await (await request("")).json();
-    if (!repo.private)
-      throw new PostStoreError(
-        "공개 저장소에는 비공개 상태로 저장할 수 없습니다. 임시 저장은 이 브라우저에 보관해 주세요.",
-        400,
-      );
-  }
+  if (!fields.published && !(await gitJson("")).private)
+    throw new PostStoreError(
+      "공개 저장소에는 비공개로 저장할 수 없습니다. 임시 저장을 사용해 주세요.",
+      400,
+    );
   const now = new Date().toISOString();
   const post: FilePost = {
     ...(previous?.post ?? {
@@ -272,118 +518,136 @@ export async function savePost(
       reactionsCount: 0,
     }),
     ...fields,
+    series: fields.series,
+    category: {
+      slug: fields.category.slug,
+      name: navigation?.label ?? fields.category.name,
+    },
     excerpt: createExcerpt(fields.body),
     slug,
     lastEditedAt: previous ? now : null,
   };
+  const state = await snapshot(ref);
+  const changed: FilePost[] = [post];
   if (ordering) {
-    // 조회 중 브랜치가 바뀌어도 검증 기준은 같은 커밋으로 유지한다.
-    const posts = await getStoredPosts(ref);
-    const current = pinnedPosts(posts).map((post) => post.slug);
+    const current = pinnedPosts(state.entries.map(({ post }) => post)).map(
+      ({ slug }) => slug,
+    );
     if (JSON.stringify(current) !== JSON.stringify(ordering.base))
       throw new PostStoreError(
-        "Pinned 목록이 변경되었습니다. 작성 내용을 복사해 보관한 뒤 다시 열어 주세요.",
+        "Pinned 목록이 변경되었습니다. 작성 내용을 보관하고 다시 열어 주세요.",
         409,
       );
     const allowed = new Set(current);
     allowed.delete(slug);
     const currentPinned = post.featured && post.published;
     if (currentPinned) allowed.add(slug);
-    const orderIndex = new Map(
-      ordering.order.map((value, index) => [value, index]),
-    );
+    const ranks = new Map(ordering.order.map((slug, index) => [slug, index]));
     if (
-      orderIndex.size !== ordering.order.length ||
-      ordering.order.some((value) => !allowed.has(value)) ||
-      orderIndex.has(slug) !== currentPinned
+      ranks.size !== ordering.order.length ||
+      ordering.order.some((slug) => !allowed.has(slug)) ||
+      ranks.has(slug) !== currentPinned
     )
       throw new PostStoreError("Pinned 목록이 올바르지 않습니다.", 400);
-    post.featuredOrder = currentPinned ? orderIndex.get(slug) : undefined;
-    const changed: FilePost[] = [post];
-    for (const value of posts) {
-      if (value.slug === slug) continue;
-      const index = orderIndex.get(value.slug);
-      if (value.featured && index === undefined)
-        changed.push({ ...value, featured: false, featuredOrder: undefined });
-      else if (index !== undefined && value.featuredOrder !== index)
-        changed.push({ ...value, featuredOrder: index });
+    post.featuredOrder = currentPinned ? ranks.get(slug) : undefined;
+    for (const { post: summary, sha: storedSha } of state.entries) {
+      if (summary.slug === slug) continue;
+      const rank = ranks.get(summary.slug);
+      if (
+        !summary.featured ||
+        (rank !== undefined && summary.featuredOrder === rank)
+      )
+        continue;
+      const stored = await getStoredPost(summary.slug, ref);
+      if (!stored || stored.sha !== storedSha)
+        throw new PostStoreError(
+          "Pinned 글이 변경되었습니다. 인덱스를 다시 생성해 주세요.",
+          409,
+        );
+      changed.push({
+        ...stored.post,
+        featured: rank !== undefined,
+        featuredOrder: rank,
+      });
     }
-    const parent = await gitJson(`/git/commits/${ref}`);
-    if (!/^[a-f0-9]{40}$/.test(parent.tree?.sha ?? ""))
-      throw new PostStoreError("기존 콘텐츠 트리를 확인할 수 없습니다.", 502);
-    const tree = await gitJson("/git/trees", {
-      method: "POST",
-      body: JSON.stringify({
-        base_tree: parent.tree.sha,
-        tree: changed.map((value) => ({
-          path: `content/posts/${value.slug}.md`,
-          mode: "100644",
-          type: "blob",
-          content: serializePostFile(value),
-        })),
-      }),
-    });
-    if (!/^[a-f0-9]{40}$/.test(tree.sha ?? ""))
-      throw new PostStoreError("저장할 글을 확인할 수 없습니다.", 502);
-    const content = Buffer.from(serializePostFile(post));
-    const savedSha = createHash("sha1")
-      .update(`blob ${content.length}\0`)
-      .update(content)
-      .digest("hex");
-    const commit = await gitJson("/git/commits", {
-      method: "POST",
-      body: JSON.stringify({
-        message: `${previous ? "Update" : "Publish"} post and pinned order: ${slug}`,
-        tree: tree.sha,
-        parents: [ref],
-      }),
-    });
-    if (!/^[a-f0-9]{40}$/.test(commit.sha ?? ""))
-      throw new PostStoreError("저장할 커밋을 확인할 수 없습니다.", 502);
-    await gitJson(`/git/refs/heads/${branch}`, {
-      method: "PATCH",
-      body: JSON.stringify({ sha: commit.sha, force: false }),
-    });
-    return { post, sha: savedSha, pinned: ordering.order };
   }
-  const response = await request(endpoint(slug), {
-    method: "PUT",
-    body: JSON.stringify({
-      branch: config().branch,
-      sha: sha ?? undefined,
-      message: `${previous ? "Update" : "Publish"} post: ${slug}`,
-      content: Buffer.from(serializePostFile(post)).toString("base64"),
-    }),
-  });
-  if (response.status === 404)
-    throw new PostStoreError("콘텐츠 브랜치를 찾을 수 없습니다.", 502);
-  const result = await response.json();
-  return { post, sha: String(result.content.sha) };
+  const index = await indexChanges(state, changed);
+  await commitFiles(
+    ref,
+    [
+      ...changed.map((value) => ({
+        path: `content/posts/${value.slug}.md`,
+        content: serializePostFile(value),
+      })),
+      ...index.files,
+    ],
+    index.removed,
+    `${previous ? "Update" : "Publish"} post and index: ${slug}`,
+  );
+  return {
+    post,
+    sha: blobSha(serializePostFile(post)),
+    ...(ordering && { pinned: ordering.order }),
+  };
 }
 export async function deletePost(slug: string, sha: string) {
   if (!usesGitHubStorage())
-    throw new PostStoreError("GitHub 쓰기 설정이 필요합니다.", 503);
-  const previous = await getStoredPost(slug);
+    throw new PostStoreError("GitHub 글쓰기 설정이 필요합니다.", 503);
+  slugSchema.parse(slug);
+  const ref = await headRef();
+  const previous = await getStoredPost(slug, ref);
   if (!previous || previous.sha !== sha)
     throw new PostStoreError(
       "글이 변경되었습니다. 다시 열어 확인해 주세요.",
       409,
     );
-  const response = await request(endpoint(slug), {
-    method: "DELETE",
-    body: JSON.stringify({
-      sha,
-      branch: config().branch,
-      message: `Delete post: ${slug}`,
-    }),
-  });
-  if (response.status === 404)
-    throw new PostStoreError("글을 찾을 수 없습니다.", 404);
+  const index = await indexChanges(await snapshot(ref), [], [slug]);
+  await commitFiles(
+    ref,
+    index.files,
+    [...index.removed, `content/posts/${slug}.md`],
+    `Delete post and index: ${slug}`,
+  );
 }
-
-async function gitJson(endpoint: string, init?: RequestInit) {
-  const response = await request(endpoint, init);
-  if (!response.ok)
-    throw new PostStoreError("콘텐츠 브랜치를 확인할 수 없습니다.", 502);
-  return response.json();
+export async function rebuildPostIndex(source: {
+  ref: string;
+  posts: { post: FilePost; sha: string }[];
+}) {
+  if (!usesGitHubStorage())
+    throw new PostStoreError("GitHub 콘텐츠 설정이 필요합니다.", 503);
+  const ref = gitShaSchema.parse(source.ref);
+  const manifest = await readManifest(ref);
+  const entries = source.posts.map(({ post, sha }) => summarize(post, sha));
+  assertUniquePosts(entries);
+  const catalog = buildChunks("catalog", entries);
+  const search = buildChunks(
+    "search",
+    source.posts
+      .filter(({ post }) => post.published)
+      .map(({ post }) => searchDocument(post)),
+  );
+  const next: IndexManifest = {
+    version: 1,
+    catalog: catalog.refs,
+    search: search.refs,
+  };
+  const previous = new Set([
+    ...(manifest?.catalog.map(({ sha }) => chunkPath("catalog", sha)) ?? []),
+    ...(manifest?.search.map(({ sha }) => chunkPath("search", sha)) ?? []),
+  ]);
+  const files = [...catalog.files, ...search.files];
+  const current = new Set(files.map(({ path }) => path));
+  await commitFiles(
+    ref,
+    [
+      ...files.filter(({ path }) => !previous.has(path)),
+      { path: INDEX_PATH, content: JSON.stringify(next) },
+    ],
+    [...previous].filter((path) => !current.has(path)),
+    "Rebuild post catalog and search index",
+  );
+  return {
+    posts: source.posts.length,
+    published: source.posts.filter(({ post }) => post.published).length,
+  };
 }

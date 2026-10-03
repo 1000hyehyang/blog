@@ -22,6 +22,7 @@ export const postFieldsSchema = z.object({
     name: z.string().trim().min(1).max(100),
     slug: z.string().regex(/^[a-z0-9-]+$/),
   }),
+  series: slugSchema.optional(),
   tags: z.array(z.string().trim().min(1).max(80)).max(30),
   coverImage: z.object({ src: imageUrl }),
   galleryImage: z.object({ src: imageUrl }).optional(),
@@ -39,6 +40,7 @@ export const postFileSchema = postFieldsSchema.extend({
 });
 export type StoredPost = z.infer<typeof postFileSchema>;
 export type FilePost = StoredPost & { excerpt: string };
+export type FilePostSummary = Omit<FilePost, "body">;
 
 export function nextPostSlug(slugs: string[]) {
   let latest = 0;

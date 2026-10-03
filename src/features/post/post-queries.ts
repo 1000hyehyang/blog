@@ -1,8 +1,48 @@
-import type { Post, PostPreview } from "@/domain/post";
+import type { PostSummary, PostPreview } from "@/domain/post";
+import type { BlogCategory, BlogSeries } from "@/config/categories";
+import { resolvePostModifiedAt } from "@/lib/content";
 
 import { rankRelatedPosts } from "./related-post-ranking";
 
-export function getFeaturedPosts(posts: Post[]) {
+export type SeriesSummary = BlogSeries & {
+  postCount: number;
+  coverImage: PostSummary["coverImage"];
+  updatedAt: string | null;
+};
+
+export function summarizeSeries(
+  posts: PostSummary[],
+  category: BlogCategory,
+): SeriesSummary[] {
+  const series = new Map<string, SeriesSummary>(
+    category.series.map((item) => [
+      item.slug,
+      { ...item, postCount: 0, coverImage: { src: "" }, updatedAt: null },
+    ]),
+  );
+  for (const post of posts) {
+    if (
+      !post.published ||
+      post.category.slug !== category.category ||
+      !post.series
+    )
+      continue;
+    const summary = series.get(post.series);
+    if (!summary) continue;
+    summary.postCount++;
+    if (!summary.coverImage.src && post.coverImage.src)
+      summary.coverImage = post.coverImage;
+    const updatedAt = resolvePostModifiedAt(post);
+    if (
+      !summary.updatedAt ||
+      Date.parse(updatedAt) > Date.parse(summary.updatedAt)
+    )
+      summary.updatedAt = updatedAt;
+  }
+  return [...series.values()];
+}
+
+export function getFeaturedPosts(posts: PostSummary[]) {
   return posts
     .filter((post) => post.featured)
     .sort((a, b) => {
@@ -16,7 +56,7 @@ export function getFeaturedPosts(posts: Post[]) {
     });
 }
 
-export function toPostPreview(post: Post): PostPreview {
+export function toPostPreview(post: PostSummary): PostPreview {
   return {
     id: post.id,
     slug: post.slug,
@@ -29,7 +69,7 @@ export function toPostPreview(post: Post): PostPreview {
 }
 
 export function getRecentPosts(
-  posts: Post[],
+  posts: PostSummary[],
   limit: number,
   excludedCategory = "art",
 ) {
@@ -38,14 +78,14 @@ export function getRecentPosts(
     .slice(0, limit);
 }
 
-export function getRecentArtPosts(posts: Post[], limit: number) {
+export function getRecentArtPosts(posts: PostSummary[], limit: number) {
   return posts.filter((post) => post.category.slug === "art").slice(0, limit);
 }
 
 export function getRelatedPosts(
-  posts: Post[],
-  current: Post,
+  posts: PostSummary[],
+  current: PostSummary,
   limit = 3,
-): Post[] {
+): PostSummary[] {
   return rankRelatedPosts(posts, current, { limit });
 }
