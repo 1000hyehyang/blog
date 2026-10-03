@@ -54,7 +54,6 @@ export function WriteSkeleton() {
         </div>
       </div>
       <footer className={styles.bottomBar}>
-        <Bone width="8rem" />
         <div className={styles.bottomActions} aria-hidden="true">
           <Bone width="7rem" height="3rem" />
           <Bone width="7rem" height="3rem" />

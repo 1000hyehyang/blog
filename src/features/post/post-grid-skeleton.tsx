@@ -39,11 +39,12 @@ export function PostGridSkeleton({
               <div className="h-4 w-full rounded bg-muted" />
               <div className="h-4 w-10/12 rounded bg-muted" />
             </div>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
               <div className="h-3 w-8 rounded bg-muted" />
               <div className="h-3 w-8 rounded bg-muted" />
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 <div className="size-5 rounded-full bg-muted" />
+                <div className="h-3 w-9 rounded bg-muted" />
                 <div className="h-3 w-16 rounded bg-muted" />
               </div>
             </div>

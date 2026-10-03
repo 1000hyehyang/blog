@@ -2,6 +2,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { siteConfig } from "@/config/site";
 import type { PostSummary } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 import { routes } from "@/lib/routes";
@@ -62,7 +63,7 @@ export function PostCard({
             {post.excerpt}
           </p>
           {!isCompact && (
-            <div className="mt-4 flex items-center gap-3 text-xs text-tertiary">
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-tertiary">
               <span className="flex items-center gap-1">
                 <MessageCircle size={12} />
                 {post.commentsCount}
@@ -71,7 +72,7 @@ export function PostCard({
                 <Heart size={12} />
                 {post.reactionsCount}
               </span>
-              <span className="ml-auto flex items-center gap-2">
+              <span className="ml-auto flex shrink-0 items-center gap-2">
                 <Image
                   src="/blog-profile.jpg"
                   alt="블로그 프로필"
@@ -79,6 +80,9 @@ export function PostCard({
                   height={20}
                   className="size-5 shrink-0 rounded-full object-cover"
                 />
+                <span className="text-secondary">
+                  {siteConfig.author.nickname}
+                </span>
                 <time dateTime={post.createdAt}>
                   {formatDate(post.createdAt)}
                 </time>

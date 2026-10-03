@@ -12,6 +12,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { PostCoverImage } from "@/features/post/post-cover-image";
+import { siteConfig } from "@/config/site";
 import type { PostPreview } from "@/domain/post";
 import { formatDate } from "@/lib/content";
 import { routes } from "@/lib/routes";
@@ -149,6 +150,9 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
                         height={20}
                         className="size-5 shrink-0 rounded-full object-cover"
                       />
+                      <span className="text-secondary">
+                        {siteConfig.author.nickname}
+                      </span>
                       <time dateTime={post.createdAt}>
                         {formatDate(post.createdAt)}
                       </time>

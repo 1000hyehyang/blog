@@ -374,7 +374,6 @@ export function PostEditor({
       if (!editor.commands.insertContentAt(pendingImages.range, content))
         throw new Error("사진을 본문에 삽입하지 못했습니다.");
       imageLayoutDialog.current?.close();
-      setMessage("이미지를 추가했습니다. 글을 저장해 주세요.");
     } catch (error) {
       setPendingImages((current) =>
         current
@@ -401,7 +400,6 @@ export function PostEditor({
       const image = await uploadImageFile(file);
       if (target === "body") editor.chain().focus().setImage(image).run();
       else update({ [target]: { src: image.src } });
-      setMessage("이미지를 추가했습니다. 글을 저장해 주세요.");
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -445,7 +443,6 @@ export function PostEditor({
       setPinnedBase(data.pinned ?? order);
       setFields(data.post);
       setDirty(false);
-      setMessage("저장했습니다.");
       if (draftVersion) {
         try {
           removeDraft(slug, draftVersion);
@@ -498,7 +495,6 @@ export function PostEditor({
       saveDraft(value, draftVersion);
       setDraftVersion(now);
       setDirty(false);
-      setMessage("임시 저장했습니다.");
       await showSuccess("draft");
       publishDialog.current?.close();
       router.replace(`/write?draft=${encodeURIComponent(slug)}`);
@@ -818,14 +814,11 @@ export function PostEditor({
       />
 
       <footer className={styles.bottomBar}>
-        <p role="status" aria-live="polite" className={styles.saveStatus}>
-          {message ||
-            (!writable
-              ? "현재 발행할 수 없습니다"
-              : dirty
-                ? "저장하지 않은 변경사항"
-                : "모든 변경사항 저장됨")}
-        </p>
+        {message && (
+          <p role="status" aria-live="polite" className={styles.saveStatus}>
+            {message}
+          </p>
+        )}
         <div className={styles.bottomActions}>
           <button
             type="button"

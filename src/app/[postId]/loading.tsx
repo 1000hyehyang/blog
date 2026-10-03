@@ -22,7 +22,11 @@ export default function PostDetailLoading() {
             <div className="col-start-1 row-start-1 aspect-[16/10]" />
             <div className="relative col-start-1 row-start-1 flex min-w-0 flex-col justify-end p-6 pt-24 sm:p-8 sm:pt-28">
               <div className="h-8 w-4/5 max-w-xl rounded bg-background/20 sm:h-9" />
-              <div className="mt-4 h-3 w-28 rounded bg-background/15" />
+              <div className="mt-4 flex items-center gap-3" aria-hidden="true">
+                <div className="size-7 shrink-0 rounded-full bg-background/20" />
+                <div className="h-3 w-9 rounded bg-background/15" />
+                <div className="h-3 w-16 rounded bg-background/15" />
+              </div>
             </div>
           </header>
 

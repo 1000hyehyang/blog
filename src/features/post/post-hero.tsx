@@ -1,3 +1,6 @@
+import Image from "next/image";
+
+import { siteConfig } from "@/config/site";
 import { PostCoverImage } from "@/features/post/post-cover-image";
 import type { Post } from "@/domain/post";
 import { formatDate } from "@/lib/content";
@@ -29,7 +32,17 @@ export function PostHero({ post }: PostHeroProps) {
         <h1 className="wrap-break-word text-2xl font-semibold leading-snug tracking-tight text-white sm:text-3xl lg:text-4xl">
           {post.title}
         </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/75">
+        <div className="mt-4 flex items-center gap-3 text-xs text-white/75">
+          <Image
+            src="/blog-profile.jpg"
+            alt="블로그 프로필"
+            width={28}
+            height={28}
+            className="size-7 shrink-0 rounded-full object-cover"
+          />
+          <span className="font-medium text-white">
+            {siteConfig.author.nickname}
+          </span>
           <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
         </div>
       </div>

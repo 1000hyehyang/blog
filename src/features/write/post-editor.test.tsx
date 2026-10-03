@@ -244,10 +244,9 @@ describe("writer data preservation", () => {
       }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "이미지를 추가했습니다. 글을 저장해 주세요.",
-      ),
+      expect(editor).toHaveAttribute("contenteditable", "true"),
     );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     mocks.upload.mockRejectedValueOnce(new Error("업로드 실패"));
     fireEvent.paste(editor, {
       clipboardData: { files: [file], getData: () => "" },

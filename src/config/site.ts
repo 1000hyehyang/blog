@@ -10,7 +10,7 @@ export const siteConfig = {
   title: "1000hyehyang's Blog",
   description: "배우고, 만들고, 살아가며 남기는 기록",
   url: siteUrl,
-  author: { name: "1000hyehyang" },
+  author: { name: "1000hyehyang", nickname: "천혜향" },
   navigation: categories,
   socialLinks: {
     github: "https://github.com/1000hyehyang",

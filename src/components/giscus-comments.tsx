@@ -13,15 +13,7 @@ export function GiscusComments({ postId }: GiscusCommentsProps) {
   const { resolvedTheme } = useTheme();
   const theme = resolvedTheme === "dark" ? "dark" : "light";
 
-  if (!giscusConfig.enabled) {
-    return (
-      <p className="py-8 text-center text-sm text-tertiary">
-        Giscus 환경 변수가 설정되지 않았습니다.{" "}
-        <code className="text-secondary">NEXT_PUBLIC_GISCUS_*</code> 값을 확인해
-        주세요.
-      </p>
-    );
-  }
+  if (!giscusConfig.enabled) return null;
 
   return (
     <Giscus
