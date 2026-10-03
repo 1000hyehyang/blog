@@ -21,7 +21,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
 import {
-  readDrafts,
+  reservedDraftSlugs,
   saveDraft,
   removeDraft,
   type LocalDraft,
@@ -29,7 +29,8 @@ import {
 import { nextPostSlug, type StoredPost } from "@/lib/content/post-file";
 import { motion } from "framer-motion";
 import { PinnedCards, WriterCheckbox, WriterSelect } from "./writer-controls";
-import type { PinnedPost } from "./pinned-posts";
+import { pinnedConflictSchema, type PinnedPost } from "@/domain/pinned-posts";
+import { usePinnedOrder } from "./use-pinned-order";
 import { TagInput } from "./tag-input";
 import { IconButton } from "./icon-button";
 import { EditorBodySkeleton } from "./writer-skeleton";
@@ -83,14 +84,13 @@ export function PostEditor({
   const [fields, setFields] = useState({ ...emptyFields, ...initial });
   const generatedSlug = useRef(initial?.slug ?? "");
   const currentPin = initial?.slug ?? "__current__";
-  const [pinnedBase, setPinnedBase] = useState(pinned.map((post) => post.slug));
-  const [pinnedOrder, setPinnedOrder] = useState(() => {
-    if (draft) return draft.order;
-    const order = pinned.map((post) => post.slug);
-    return initial?.featured && !order.includes(currentPin)
-      ? [...order, currentPin]
-      : order;
-  });
+  const pins = usePinnedOrder(
+    pinned,
+    currentPin,
+    Boolean(initial?.featured),
+    draft,
+  );
+  const { order: pinnedOrder, setOrder: setPinnedOrder } = pins;
   const [tags, setTags] = useState(
     initial?.tags.length ? `${initial.tags.join(",")},` : "",
   );
@@ -284,7 +284,7 @@ export function PostEditor({
     try {
       generatedSlug.current = nextPostSlug([
         ...postSlugs,
-        ...readDrafts().map(({ post }) => post.slug),
+        ...reservedDraftSlugs(),
       ]);
       return generatedSlug.current;
     } catch {
@@ -416,7 +416,7 @@ export function PostEditor({
   }
 
   async function save(published: boolean) {
-    if (!editor || !start("publish")) return;
+    if (!editor || pins.conflict || !start("publish")) return;
     try {
       // 저장에 실패해도 재시도할 때 같은 글 주소를 사용한다.
       const slug = allocateSlug();
@@ -433,14 +433,18 @@ export function PostEditor({
           body: JSON.stringify({
             post: { ...currentFields(), published },
             sha,
-            pinned: { base: pinnedBase, order },
+            pinned: { base: pins.base, order },
           }),
         },
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      if (!response.ok) {
+        const conflict = pinnedConflictSchema.safeParse(data.conflict);
+        if (response.status === 409 && conflict.success)
+          pins.setConflict(conflict.data.posts);
+        throw new Error(data.message);
+      }
       setSha(data.sha);
-      setPinnedBase(data.pinned ?? order);
       setFields(data.post);
       setDirty(false);
       if (draftVersion) {
@@ -487,7 +491,7 @@ export function PostEditor({
         },
         sha,
         savedAt: now,
-        pinned,
+        pinned: pins.posts,
         order: pinnedOrder.map((value) =>
           value === currentPin ? slug : value,
         ),
@@ -922,9 +926,40 @@ export function PostEditor({
                   }}
                 />
               </div>
+              {pins.conflict && (
+                <div className={styles.notice} role="alert">
+                  <p>
+                    Pinned 목록이 변경되었습니다. 본문은 유지됩니다. 최신 목록을
+                    사용하거나 내 순서·해제 변경을 반영한 뒤 확인해 주세요. 새로
+                    고정된 글은 유지하고 해제된 글은 제외합니다.
+                  </p>
+                  <div className={styles.recoveryActions}>
+                    {(
+                      [
+                        ["latest", "최신 고정 목록 사용"],
+                        ["draft", "내 고정 변경 반영"],
+                      ] as const
+                    ).map(([choice, label]) => (
+                      <button
+                        key={choice}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          pins.resolve(choice, fields.featured);
+                          setDirty(true);
+                          setMessage("");
+                          setFeedback(null);
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <PinnedCards
                 posts={[
-                  ...pinned.filter((post) => post.slug !== currentPin),
+                  ...pins.posts.filter((post) => post.slug !== currentPin),
                   {
                     slug: currentPin,
                     title: fields.title,
@@ -970,7 +1005,11 @@ export function PostEditor({
             className={styles.primary}
             type="button"
             onClick={() => (publishMode ? save(true) : storeDraft())}
-            disabled={busy || (publishMode && !writable) || !editor}
+            disabled={
+              busy ||
+              (publishMode && (!writable || Boolean(pins.conflict))) ||
+              !editor
+            }
             state={buttonState(publishMode ? "publish" : "draft")}
             label={
               publishMode ? (initialSha ? "수정 완료" : "발행") : "임시 저장"

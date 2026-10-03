@@ -53,6 +53,9 @@ export async function writerRequest(
           : 502;
     return NextResponse.json(
       {
+        ...(error instanceof PostStoreError && error.conflict
+          ? { conflict: error.conflict }
+          : {}),
         message:
           error instanceof PostStoreError
             ? error.message

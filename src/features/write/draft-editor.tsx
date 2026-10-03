@@ -6,8 +6,10 @@ import { PostEditor } from "./post-editor";
 import { readDraft } from "./local-drafts";
 import { WriteSkeleton } from "./writer-skeleton";
 import styles from "./writer.module.css";
+import type { PinnedPost } from "@/domain/pinned-posts";
 
-export function DraftEditor(props: { id: string; writable: boolean }) {
+type Props = { id: string; writable: boolean; pinned: PinnedPost[] | null };
+export function DraftEditor(props: Props) {
   const hydrated = useHydrated();
   return hydrated ? (
     <LoadedDraftEditor key={props.id} {...props} />
@@ -15,13 +17,7 @@ export function DraftEditor(props: { id: string; writable: boolean }) {
     <WriteSkeleton />
   );
 }
-function LoadedDraftEditor({
-  id,
-  writable,
-}: {
-  id: string;
-  writable: boolean;
-}) {
+function LoadedDraftEditor({ id, writable, pinned }: Props) {
   const [draft] = useState(() => {
     try {
       return readDraft(id);
@@ -41,12 +37,20 @@ function LoadedDraftEditor({
       </div>
     );
   return (
-    <PostEditor
-      initial={draft.post}
-      initialSha={draft.sha}
-      writable={writable}
-      pinned={draft.pinned}
-      draft={draft}
-    />
+    <>
+      {pinned === null && (
+        <p role="alert">
+          최신 고정 목록을 불러오지 못했습니다. 본문 편집과 임시 저장은
+          가능합니다. 발행하려면 연결 복구 후 다시 열어 주세요.
+        </p>
+      )}
+      <PostEditor
+        initial={draft.post}
+        initialSha={draft.sha}
+        writable={writable && pinned !== null}
+        pinned={pinned ?? draft.pinned}
+        draft={draft}
+      />
+    </>
   );
 }

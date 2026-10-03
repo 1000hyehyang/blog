@@ -12,7 +12,9 @@ import {
   pinnedPosts,
   pinnedOrderSchema,
   type PinnedOrder,
-} from "@/features/write/pinned-posts";
+  type PinnedPost,
+  samePinnedOrder,
+} from "@/domain/pinned-posts";
 import {
   parsePostFile,
   serializePostFile,
@@ -44,6 +46,7 @@ export class PostStoreError extends Error {
   constructor(
     message: string,
     public status: number,
+    public conflict?: { kind: "pinned"; posts: PinnedPost[] },
   ) {
     super(message);
   }
@@ -499,7 +502,23 @@ export async function savePost(
   const ordering = pinned ? pinnedOrderSchema.parse(pinned) : undefined;
   const ref = await headRef();
   const previous = await getStoredPost(slug, ref);
-  if ((previous?.sha ?? null) !== sha)
+  let matchingVersion = (previous?.sha ?? null) === sha;
+  if (!matchingVersion && previous && sha && ordering) {
+    // Reordering another pinned post rewrites ranks in this file too. Rebase
+    // only those fields; an actual article edit must still fail the SHA check.
+    try {
+      const original = parsePostFile(await readBlob(sha), slug);
+      matchingVersion =
+        serializePostFile({
+          ...original,
+          featured: previous.post.featured,
+          featuredOrder: previous.post.featuredOrder,
+        }) === serializePostFile(previous.post);
+    } catch {
+      matchingVersion = false;
+    }
+  }
+  if (!matchingVersion)
     throw new PostStoreError(
       "글이 변경되었거나 같은 주소가 이미 존재합니다. 내용을 보관하고 다시 열어 주세요.",
       409,
@@ -530,13 +549,13 @@ export async function savePost(
   const state = await snapshot(ref);
   const changed: FilePost[] = [post];
   if (ordering) {
-    const current = pinnedPosts(state.entries.map(({ post }) => post)).map(
-      ({ slug }) => slug,
-    );
-    if (JSON.stringify(current) !== JSON.stringify(ordering.base))
+    const currentPosts = pinnedPosts(state.entries.map(({ post }) => post));
+    const current = currentPosts.map(({ slug }) => slug);
+    if (!samePinnedOrder(current, ordering.base))
       throw new PostStoreError(
-        "Pinned 목록이 변경되었습니다. 작성 내용을 보관하고 다시 열어 주세요.",
+        "Pinned 목록이 변경되었습니다. 적용할 목록을 선택해 주세요. 작성 내용은 유지됩니다.",
         409,
+        { kind: "pinned", posts: currentPosts },
       );
     const allowed = new Set(current);
     allowed.delete(slug);

@@ -2,7 +2,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { readDrafts, removeDraft, type LocalDraft } from "./local-drafts";
+import {
+  readDrafts,
+  removeDraft,
+  type LocalDraft,
+  type DamagedDraft,
+} from "./local-drafts";
+import { DamagedDrafts } from "./damaged-drafts";
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { FilePost } from "@/lib/content/post-file";
 import { siteConfig } from "@/config/site";
@@ -31,6 +37,7 @@ export function ManagePosts({
   const [sort, setSort] = useState("latest");
   const [page, setPage] = useState(1);
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
+  const [damaged, setDamaged] = useState<DamagedDraft[]>([]);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [removed, setRemoved] = useState<string[]>([]);
@@ -38,10 +45,12 @@ export function ManagePosts({
   useEffect(() => {
     function refresh() {
       try {
-        setDrafts(readDrafts());
+        const snapshot = readDrafts();
+        setDrafts(snapshot.drafts);
+        setDamaged(snapshot.damaged);
         setError("");
       } catch {
-        setError("일부 임시 저장 글을 불러오지 못했습니다.");
+        setError("브라우저의 임시 저장소에 접근하지 못했습니다.");
       }
     }
     refresh();
@@ -182,6 +191,7 @@ export function ManagePosts({
         />
       </div>
       {error && <p role="alert">{error}</p>}
+      {tab === "drafts" && <DamagedDrafts drafts={damaged} />}
       {filtered.length > 0 && (
         <div className={styles.managementSelection}>
           <WriterCheckbox

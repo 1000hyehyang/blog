@@ -7,7 +7,7 @@ import {
   usesGitHubStorage,
 } from "@/infrastructure/github/posts";
 import { PostEditor } from "@/features/write/post-editor";
-import { pinnedPosts } from "@/features/write/pinned-posts";
+import { pinnedPosts } from "@/domain/pinned-posts";
 import { DraftEditor } from "@/features/write/draft-editor";
 import { slugSchema } from "@/lib/content/post-file";
 
@@ -32,8 +32,22 @@ export default async function WritePage({
   }
   if (draft) {
     if (!slugSchema.safeParse(draft).success) notFound();
+    let pinned = null;
+    try {
+      pinned = pinnedPosts(await getStoredPosts());
+    } catch (error) {
+      console.warn(
+        "[writer] Failed to load current pinned posts for a local draft.",
+        error,
+      );
+    }
     return (
-      <DraftEditor key={draft} id={draft} writable={usesGitHubStorage()} />
+      <DraftEditor
+        key={draft}
+        id={draft}
+        writable={usesGitHubStorage()}
+        pinned={pinned}
+      />
     );
   }
   const stored = slug ? await getStoredPost(slug) : null;

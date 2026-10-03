@@ -9,6 +9,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PostEditor } from "./post-editor";
 import type { StoredPost } from "@/lib/content/post-file";
+import { readDraft, saveDraft, type LocalDraft } from "./local-drafts";
+import { DraftEditor } from "./draft-editor";
 
 const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
@@ -61,9 +63,132 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 describe("writer data preservation", () => {
+  const oldPins = [
+    { slug: "first", title: "First", coverImage: { src: "" } },
+    { slug: "second", title: "Second", coverImage: { src: "" } },
+  ];
+  const latestPins = [
+    oldPins[0],
+    { slug: "third", title: "Third", coverImage: { src: "" } },
+  ];
+
+  it("reopens an old draft, resolves pinned conflicts and persists the new baseline without losing content", async () => {
+    const draft: LocalDraft = {
+      post: { ...initial, published: false },
+      sha: null,
+      savedAt: "2026-01-01T00:00:00Z",
+      pinned: oldPins,
+      order: ["second", "first"],
+    };
+    saveDraft(draft, null);
+    const view = render(
+      <DraftEditor id={draft.post.slug} writable pinned={latestPins} />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    expect(screen.getByRole("button", { name: "발행" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "내 고정 변경 반영" }));
+    expect(screen.getByRole("button", { name: "발행" })).toBeEnabled();
+    expect(
+      within(screen.getByRole("dialog"))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["First", "Third"]);
+    fireEvent.click(screen.getByRole("button", { name: "발행 설정 닫기" }));
+    fireEvent.click(screen.getByRole("button", { name: "임시 저장" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "임시 저장",
+      }),
+    );
+    await waitFor(() =>
+      expect(readDraft(draft.post.slug)?.pinned).toEqual(latestPins),
+    );
+    expect(readDraft(draft.post.slug)?.post.body).toBe(initial.body);
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalled());
+    view.unmount();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ post: draft.post, sha: "b".repeat(40) }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<DraftEditor id={draft.post.slug} writable pinned={latestPins} />);
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    expect(
+      screen.queryByRole("button", { name: "내 고정 변경 반영" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "발행" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+      post: { body: initial.body },
+      pinned: { base: ["first", "third"], order: ["first", "third"] },
+    });
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
+  });
+
+  it("resolves a pinned conflict returned during publishing and retries the same content", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            message: "목록 충돌",
+            conflict: { kind: "pinned", posts: latestPins },
+          },
+          { status: 409 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ post: initial, sha: "b".repeat(40) }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor
+        initial={initial}
+        initialSha={"a".repeat(40)}
+        writable
+        pinned={oldPins}
+      />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.change(screen.getByLabelText("제목"), {
+      target: { value: "My unsaved edit" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "최신 고정 목록 사용" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({
+      sha: "a".repeat(40),
+      post: { title: "My unsaved edit", body: initial.body },
+      pinned: { base: ["first", "third"], order: ["first", "third"] },
+    });
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
+  });
+
+  it("allocates a new URL without reading or overwriting damaged draft bodies", async () => {
+    localStorage.setItem("blog:writer:draft:post-12", "{");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ message: "test" }, { status: 400 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PostEditor initial={null} initialSha={null} writable />);
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "발행" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/write/posts/post-13");
+    expect(localStorage.getItem("blog:writer:draft:post-12")).toBe("{");
+  });
   it("shows a preview card when a standalone Markdown URL is pasted", async () => {
     const url = "https://github.com/1000hyehyang";
     vi.stubGlobal(

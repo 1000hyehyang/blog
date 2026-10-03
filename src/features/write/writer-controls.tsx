@@ -10,7 +10,7 @@ import {
 import { Check, ChevronDown, GripVertical, ImageIcon, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import type { PinnedPost } from "./pinned-posts";
+import type { PinnedPost } from "@/domain/pinned-posts";
 import { IconButton } from "./icon-button";
 import styles from "./writer.module.css";
 

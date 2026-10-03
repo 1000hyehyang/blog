@@ -22,24 +22,59 @@ const draftSchema = z
     return order.every((slug) => known.has(slug));
   }, "Pinned 순서를 읽을 수 없습니다.");
 export type LocalDraft = z.infer<typeof draftSchema>;
+export type DamagedDraft = { key: string; raw: string };
 
-export function readDraft(id: string): LocalDraft | null {
-  const raw = localStorage.getItem(prefix + slugSchema.parse(id));
-  if (!raw) return null;
+function parseDraft(raw: string, id: string): LocalDraft {
   const draft = draftSchema.parse(JSON.parse(raw));
-  if (draft.post.slug !== id)
+  if (draft.post.slug !== slugSchema.parse(id))
     throw new Error("임시 저장한 글을 읽을 수 없습니다.");
   return draft;
 }
-export function readDrafts(): LocalDraft[] {
-  const result: LocalDraft[] = [];
+
+function draftKeys() {
+  const keys: string[] = [];
   for (let index = 0; index < localStorage.length; index++) {
-    const key = localStorage.key(index)!;
-    if (!key.startsWith(prefix)) continue;
-    const draft = readDraft(key.slice(prefix.length));
-    if (draft) result.push(draft);
+    const key = localStorage.key(index);
+    if (key?.startsWith(prefix)) keys.push(key);
   }
-  return result;
+  return keys;
+}
+
+// An unreadable draft still owns its URL; never overwrite it with a new post.
+export function reservedDraftSlugs(): string[] {
+  return draftKeys()
+    .map((key) => key.slice(prefix.length))
+    .filter((slug) => slugSchema.safeParse(slug).success);
+}
+
+export function readDraft(id: string): LocalDraft | null {
+  const raw = localStorage.getItem(prefix + slugSchema.parse(id));
+  if (raw === null) return null;
+  return parseDraft(raw, id);
+}
+export function readDrafts(): {
+  drafts: LocalDraft[];
+  damaged: DamagedDraft[];
+} {
+  const drafts: LocalDraft[] = [];
+  const damaged: DamagedDraft[] = [];
+  for (const key of draftKeys()) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) continue;
+    try {
+      drafts.push(parseDraft(raw, key.slice(prefix.length)));
+    } catch {
+      damaged.push({ key, raw });
+    }
+  }
+  return { drafts, damaged };
+}
+
+export function removeDamagedDraft({ key, raw }: DamagedDraft) {
+  if (!key.startsWith(prefix) || localStorage.getItem(key) !== raw)
+    throw new Error("임시 저장본이 변경되었습니다. 다시 확인해 주세요.");
+  localStorage.removeItem(key);
+  window.dispatchEvent(new Event("writer-drafts"));
 }
 export function saveDraft(draft: LocalDraft, expected: string | null) {
   const value = draftSchema.parse(draft);

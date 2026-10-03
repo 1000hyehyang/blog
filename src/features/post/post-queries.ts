@@ -1,6 +1,7 @@
 import type { PostSummary, PostPreview } from "@/domain/post";
 import type { BlogCategory, BlogSeries } from "@/config/categories";
 import { resolvePostModifiedAt } from "@/lib/content";
+import { compareFeaturedPosts } from "@/domain/pinned-posts";
 
 import { rankRelatedPosts } from "./related-post-ranking";
 
@@ -43,17 +44,7 @@ export function summarizeSeries(
 }
 
 export function getFeaturedPosts(posts: PostSummary[]) {
-  return posts
-    .filter((post) => post.featured)
-    .sort((a, b) => {
-      const orderDiff = (a.featuredOrder ?? 999) - (b.featuredOrder ?? 999);
-      if (orderDiff !== 0) return orderDiff;
-
-      return (
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() ||
-        a.slug.localeCompare(b.slug, "en", { numeric: true })
-      );
-    });
+  return posts.filter((post) => post.featured).sort(compareFeaturedPosts);
 }
 
 export function toPostPreview(post: PostSummary): PostPreview {

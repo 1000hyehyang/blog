@@ -22,6 +22,91 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("preserves linked images and link titles through body edits and HTML paste", () => {
+    const source =
+      '[![photo](https://example.com/photo.png "image title")](https://example.com/target "link title")\n\nEdit here';
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: source,
+      contentType: "markdown",
+    });
+    editor.commands.insertContentAt(editor.state.doc.content.size, {
+      type: "paragraph",
+      content: [{ type: "text", text: "Added" }],
+    });
+    const output = editor.getMarkdown();
+    const link = rendered(output).querySelector("a:has(img)");
+    expect(link).toHaveAttribute("href", "https://example.com/target");
+    expect(link).toHaveAttribute("title", "link title");
+    expect(link?.querySelector("img")).toHaveAttribute("title", "image title");
+    const html = editor.getHTML();
+    editor.commands.setContent(html);
+    expect(
+      rendered(editor.getMarkdown()).querySelector("a:has(img)"),
+    ).toHaveAttribute("href", "https://example.com/target");
+    editor.commands.setContent(output, { contentType: "markdown" });
+    expect(
+      rendered(editor.getMarkdown()).querySelector("a:has(img)"),
+    ).toHaveAttribute("title", "link title");
+    editor.destroy();
+  });
+
+  it("edits footnotes without losing references, paragraphs, lists or code", () => {
+    const source =
+      "Text[^note] and again[^note].\n\n[^note]: **Important** [source](https://example.com)\n\n    Second paragraph.\n\n    - first\n    - second\n\n    ```ts\n    const value = 1;\n    ```\n\nAfter";
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: source,
+      contentType: "markdown",
+    });
+    expect(
+      editor
+        .getJSON()
+        .content?.filter((node) => node.type === "footnoteDefinition"),
+    ).toHaveLength(1);
+    let position = 0;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === "Second paragraph.") position = pos;
+    });
+    expect(position).toBeGreaterThan(0);
+    editor.commands.insertContentAt(position, "Edited ");
+    const output = editor.getMarkdown();
+    expect(output).toContain("[^note]:");
+    const view = rendered(output);
+    expect(view.querySelectorAll("[data-footnote-ref]")).toHaveLength(2);
+    expect(view.querySelector("[data-footnotes]")).toHaveTextContent(
+      "Edited Second paragraph.",
+    );
+    expect(view.querySelector("[data-footnotes] ul")?.children).toHaveLength(2);
+    expect(view.querySelector("[data-footnotes] pre code")).toHaveTextContent(
+      "const value = 1;",
+    );
+    expect(
+      view.querySelector('[data-footnotes] a[href="https://example.com"]'),
+    ).toBeTruthy();
+    const before = editor.getJSON();
+    editor.commands.setContent(output, { contentType: "markdown" });
+    expect(editor.getJSON()).toEqual(before);
+    editor.destroy();
+  });
+
+  it("keeps escaped footnote-like text and code literal", () => {
+    const source = "\\[^literal] and `[^code]`\n\n```md\n[^code]: example\n```";
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: source,
+      contentType: "markdown",
+    });
+    expect(rendered(editor.getMarkdown()).textContent).toBe(
+      rendered(source).textContent,
+    );
+    expect(
+      editor
+        .getJSON()
+        .content?.some((node) => node.type === "footnoteDefinition"),
+    ).toBe(false);
+    editor.destroy();
+  });
   it("saves underlines and renders them in posts", () => {
     const editor = new Editor({
       extensions: editorExtensions(),

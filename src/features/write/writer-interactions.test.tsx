@@ -147,7 +147,7 @@ it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwri
     order: [],
   };
   saveDraft(draft, null);
-  expect(readDrafts()).toEqual([draft]);
+  expect(readDrafts()).toEqual({ drafts: [draft], damaged: [] });
   expect(() =>
     saveDraft({ ...draft, post: { ...draft.post, body: "overwrite" } }, null),
   ).toThrow();
@@ -164,7 +164,43 @@ it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwri
   expect(readDraft("draft-test")).toEqual(updated);
   set.mockRestore();
   removeDraft(draft.post.slug, updated.savedAt);
-  expect(readDrafts()).toEqual([]);
+  expect(readDrafts()).toEqual({ drafts: [], damaged: [] });
+});
+
+it("lists healthy drafts alongside recoverable damaged entries and exports their original bytes", () => {
+  const post = {
+    id: "id",
+    slug: "healthy",
+    title: "Healthy draft",
+    body: "Saved body",
+    category: { name: "Art", slug: "art" },
+    tags: [],
+    coverImage: { src: "" },
+    featured: false,
+    published: false,
+    createdAt: "2026-01-01T00:00:00Z",
+    lastEditedAt: null,
+    commentsCount: 0,
+    reactionsCount: 0,
+  };
+  saveDraft(
+    { post, sha: null, savedAt: post.createdAt, pinned: [], order: [] },
+    null,
+  );
+  const raw = '{"body":"보존할 원문';
+  localStorage.setItem("blog:writer:draft:damaged", raw);
+  render(<ManagePosts posts={[]} initialTab="drafts" />);
+  expect(
+    screen.getByRole("link", { name: "Healthy draft" }),
+  ).toBeInTheDocument();
+  const download = screen.getByRole("link", { name: "원문 내려받기" });
+  expect(decodeURIComponent(download.getAttribute("href")!.split(",")[1])).toBe(
+    raw,
+  );
+  vi.stubGlobal("confirm", () => true);
+  fireEvent.click(screen.getByRole("button", { name: "손상된 저장본 삭제" }));
+  expect(localStorage.getItem("blog:writer:draft:damaged")).toBeNull();
+  expect(readDraft("healthy")?.post.body).toBe("Saved body");
 });
 
 it("deletes a published post with its current SHA", async () => {

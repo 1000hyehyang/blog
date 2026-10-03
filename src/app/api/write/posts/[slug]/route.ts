@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { deletePost, savePost } from "@/infrastructure/github/posts";
 import { slugSchema } from "@/lib/content/post-file";
-import { pinnedOrderSchema } from "@/features/write/pinned-posts";
+import { pinnedOrderSchema } from "@/domain/pinned-posts";
 import {
   invalidatePosts,
   readWriterJson,

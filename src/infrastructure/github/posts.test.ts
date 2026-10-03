@@ -618,6 +618,45 @@ describe("atomic pinned ordering", () => {
     featuredOrder: 1,
     body: "# 원문\n\n그대로 보존\n",
   };
+  it("returns current pins after rank-only SHA changes, then saves after explicit resolution without accepting content conflicts", async () => {
+    const { files, fetchMock } = githubStore([first, second]);
+    const originalSha = blobSha(serializePostFile(second));
+    await savePost("a", first, blobSha(serializePostFile(first)), {
+      base: ["a", "b"],
+      order: ["b", "a"],
+    });
+    const writes = fetchMock.mock.calls.filter(
+      ([, init]) => init?.method === "PATCH",
+    ).length;
+    await expect(
+      savePost("b", { ...second, body: "Local edited body" }, originalSha, {
+        base: ["a", "b"],
+        order: ["b", "a"],
+      }),
+    ).rejects.toMatchObject({
+      status: 409,
+      conflict: { kind: "pinned", posts: [{ slug: "b" }, { slug: "a" }] },
+    });
+    expect(
+      fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH"),
+    ).toHaveLength(writes);
+    await savePost("b", { ...second, body: "Local edited body" }, originalSha, {
+      base: ["b", "a"],
+      order: ["b", "a"],
+    });
+    expect(parsePostFile(files.get("content/posts/b.md")!, "b").body).toBe(
+      "Local edited body",
+    );
+    await expect(
+      savePost("b", { ...second, body: "Stale overwrite" }, originalSha, {
+        base: ["b", "a"],
+        order: ["b", "a"],
+      }),
+    ).rejects.toMatchObject({ status: 409, conflict: undefined });
+    expect(parsePostFile(files.get("content/posts/b.md")!, "b").body).toBe(
+      "Local edited body",
+    );
+  });
   it("commits edited content, changed ranks, catalog and search together while preserving other bodies", async () => {
     const { files, state, fetchMock } = githubStore([first, second]);
     const result = await savePost(

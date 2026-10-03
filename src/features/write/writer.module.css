@@ -224,6 +224,25 @@
 .editor :global(.tiptap):focus {
   outline: none;
 }
+.editor :global([data-footnote-definition]) {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  font-size: 0.9em;
+}
+.editor :global([data-footnote-definition])::before {
+  content: "각주 " attr(data-footnote-definition);
+  color: var(--muted-foreground);
+  font-size: 0.8em;
+}
+.editor :global([data-footnote-definition]) > * + * {
+  margin-top: 0.8em;
+}
+.recoveryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
 .editor
   :global(.tiptap)
   > p:first-child:last-child:has(> br:only-child)::before {
