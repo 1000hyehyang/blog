@@ -22,7 +22,7 @@
   "slug": "post-1",
   "id": "b4300eb9-7058-4f2b-82e0-857745ccc2a9",
   "createdAt": "2026-10-04T17:47:40.379Z",
-  "lastEditedAt": null,
+  "lastEditedAt": "2026-10-04T18:02:29.513Z",
   "commentsCount": 0,
   "reactionsCount": 0
 }
@@ -79,7 +79,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 ![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/7e1f45a0-c54f-49a8-a038-767435158eda-FDQfXUoNZe9w7ofzPKfMEUn9JsrAW2.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A44%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%5C%22%EC%A0%80%EC%9A%94%5C%22%22%7D")
 
-> 개인적으로 쓰려고 만든건데 상공회의소에서 연락오진 않겠죠?   
+> 개인적으로 쓰려고 만든건데 상공회의소에서 연락오진 않겠죠?  
 > 소식 없으면 저 상공회의소한테 고소당해서 빵 들어간거니까 알고 계세요.
 
 
@@ -217,7 +217,6 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 근데 내가 뜬공을 잘 못잡음;; 박해민 존경합니다 ㄹㅇ
 
 > 이 날 캐치볼 하고 오늘은 엘지 욕 안하겠다고 다짐했는데 쓰레기같은 경기 보여줘서 진심 빡돌았습니다  
->
 >
 > 빠따가 3점 내자마자 **김영우**가 3점 주고 톨 승투 날아감.
 >
@@ -398,7 +397,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 
 
-+ 청호씨가 모임에 끼고 싶어했다는 이야기를 굉장히 좋아해줘서 웃겼음.
+- 청호씨가 모임에 끼고 싶어했다는 이야기를 굉장히 좋아해줘서 웃겼음.
 
 진짜 넷이서 피크닉 하러 가야돼!!!!! 개웃기겠다
 
@@ -641,3 +640,12 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 무튼... 웹툰덕에 옛날 생각도 나면서 문득 아련해졌슴다.
 
 그체... 만화책도 엄청 좋아했던 게임이었는데 이제 망겜된 모습을 보니 뭉클... ╯︿╰
+
+
+
+![24041](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/6a51240d-e403-42cc-a019-062b47802b9a-efInPuY8YkqAKOxZf27JjDSPAS3j3o.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A66%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%AC%EC%95%84%EC%9B%8C%20%ED%82%A4%EC%9D%B4%EB%9D%BC%20%EB%A6%AC%EC%95%84%EC%B4%88%EC%BD%94%22%7D")
+
+[https://shop.winc.app/products/14920](https://shop.winc.app/products/14920)
+
+이 렌즈 개이쁨. 구매 추천
+
