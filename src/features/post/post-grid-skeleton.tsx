@@ -1,3 +1,5 @@
+import { resolveArtworkAspectRatio } from "./artwork-layout";
+
 const DEFAULT_CARD_COUNT = 6;
 
 export function PostGridSkeleton({
@@ -16,7 +18,8 @@ export function PostGridSkeleton({
         {Array.from({ length: count }, (_, index) => (
           <div
             key={index}
-            className="mb-3 aspect-[4/5] break-inside-avoid rounded-[var(--radius-md)] bg-muted sm:mb-4"
+            className="mb-3 break-inside-avoid rounded-[var(--radius-md)] bg-muted sm:mb-4"
+            style={{ aspectRatio: resolveArtworkAspectRatio() }}
           />
         ))}
       </div>

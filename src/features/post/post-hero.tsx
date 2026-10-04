@@ -9,7 +9,6 @@ type PostHeroProps = {
   post: Post;
 };
 
-// 좁은 화면에서 가로로 넘치지 않도록 비율과 최소 높이를 별도 요소에 둔다.
 export function PostHero({ post }: PostHeroProps) {
   return (
     <header className="grid min-h-[260px] grid-cols-1 overflow-hidden rounded-[var(--radius-lg)] bg-muted">

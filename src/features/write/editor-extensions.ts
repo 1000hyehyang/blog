@@ -24,12 +24,12 @@ import {
   type ImageMetadata,
 } from "@/lib/image-metadata";
 
-// 기본 토크나이저가 문단 중간을 표로 인식해 셀을 누락하는 문제를 피한다.
+// 문단 중간에서 표 토큰화를 시작하면 셀이 누락된다.
 const SafeTable = Table.extend({
   markdownTokenizer: { ...Table.config.markdownTokenizer!, start: () => -1 },
 });
 
-// 기본 링크 파서는 텍스트만 처리하므로 블록 이미지의 링크는 노드 속성에 저장한다.
+// 블록 이미지에는 링크 마크를 붙일 수 없어 노드 속성에 저장한다.
 const ImageAwareLink = Link.extend({
   parseMarkdown(token, helpers) {
     const attrs = { href: token.href, title: token.title || null };
@@ -265,7 +265,6 @@ export function editorExtensions() {
   ];
 }
 
-// 편집기가 지원하지 않는 HTML이 저장 과정에서 사라지는 것을 막는다.
 export function hasUnsupportedHtml(source: string) {
   const manager = new MarkdownManager();
   let unsupported = false;

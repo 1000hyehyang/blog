@@ -283,6 +283,11 @@ export async function getAllPosts(
   options: { category?: string; series?: string } = {},
 ) {
   return (await publicCatalog())
+    .filter(
+      ({ post }) =>
+        (!options.category || post.category.slug === options.category) &&
+        (!options.series || post.series === options.series),
+    )
     .map(({ post }) => ({
       ...post,
       category: {
@@ -291,12 +296,7 @@ export async function getAllPosts(
           getCategoryNavigation(post.category.slug)?.label ??
           post.category.name,
       },
-    }))
-    .filter(
-      (post) =>
-        (!options.category || post.category.slug === options.category) &&
-        (!options.series || post.series === options.series),
-    );
+    }));
 }
 export async function getPostSummary(postId: string) {
   return (await getAllPosts()).find((post) => post.id === postId) ?? null;
@@ -328,7 +328,7 @@ function paginate<T extends { slug: string }>(
   options: { first?: number; after?: string },
 ) {
   const start = options.after
-    ? Math.max(0, posts.findIndex((post) => post.slug === options.after) + 1)
+    ? posts.findIndex((post) => post.slug === options.after) + 1
     : 0;
   const count = Number.isFinite(options.first)
     ? Math.max(1, Math.min(Math.floor(options.first!), 50))
@@ -367,7 +367,6 @@ export async function searchPosts(
   const manifest = await publicManifest();
   const matches = new Set<string>();
   if (manifest) {
-    // 검색 본문 전체를 메모리에 쌓지 않도록 일치하는 slug만 모은다.
     await batches(manifest.search, async ({ sha }) => {
       for (const value of await publicSearchChunk(sha))
         if (value.text.includes(normalized)) matches.add(value.slug);
@@ -472,7 +471,6 @@ async function commitFiles(
       parents: [ref],
     }),
   });
-  // 동시에 저장된 변경을 덮어쓰지 않도록 강제 갱신을 금지한다.
   await gitJson(`/git/refs/heads/${branchPath()}`, {
     method: "PATCH",
     body: JSON.stringify({ sha: gitShaSchema.parse(commit.sha), force: false }),
@@ -504,8 +502,7 @@ export async function savePost(
   const previous = await getStoredPost(slug, ref);
   let matchingVersion = (previous?.sha ?? null) === sha;
   if (!matchingVersion && previous && sha && ordering) {
-    // 다른 글의 고정 순서를 바꾸면 이 파일의 SHA도 달라질 수 있다.
-    // 고정 정보만 바뀐 경우에 한해 저장을 허용한다.
+    // 고정 순서 변경도 SHA를 바꾸므로, 고정 정보 외의 변경 여부를 비교한다.
     try {
       const original = parsePostFile(await readBlob(sha), slug);
       matchingVersion =

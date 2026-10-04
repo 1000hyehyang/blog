@@ -109,7 +109,7 @@ html.theme-circle-transition::view-transition-new(root) {
   border-color: var(--color-border);
 }
 
-/* 기본 스크롤바 속성이 WebKit 스타일을 덮어쓰지 않도록 분리한다. */
+/* 표준 스크롤바 속성은 WebKit 스타일보다 우선한다. */
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-width: thin;
@@ -146,7 +146,6 @@ html.theme-circle-transition::view-transition-new(root) {
 }
 
 html {
-  /* 스크롤바 유무에 따라 콘텐츠가 좌우로 움직이지 않도록 한다. */
   overflow-y: scroll;
 }
 body {

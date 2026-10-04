@@ -13,14 +13,11 @@ function clampVolume(value: number) {
 export async function fadeAudioVolume(
   audio: HTMLAudioElement,
   to: number,
-  duration = FADE_DURATION_MS,
-  options: FadeOptions = {},
+  { signal, duration = FADE_DURATION_MS }: FadeOptions = {},
 ) {
   const from = audio.volume;
   const target = clampVolume(to);
-  const resolvedDuration = options.duration ?? duration;
-
-  if (resolvedDuration <= 0 || options.signal?.aborted) {
+  if (duration <= 0 || signal?.aborted) {
     audio.volume = target;
     return;
   }
@@ -29,12 +26,12 @@ export async function fadeAudioVolume(
     const start = performance.now();
 
     const step = (now: number) => {
-      if (options.signal?.aborted) {
+      if (signal?.aborted) {
         resolve();
         return;
       }
 
-      const progress = Math.min(1, (now - start) / resolvedDuration);
+      const progress = Math.min(1, (now - start) / duration);
       audio.volume = clampVolume(from + (target - from) * progress);
 
       if (progress < 1) {
@@ -64,16 +61,10 @@ export async function playBackgroundAudio(
   if (options.signal?.aborted) return;
 
   if (audio.paused) {
-    audio.currentTime = audio.currentTime || 0;
     await audio.play();
   }
 
-  await fadeAudioVolume(
-    audio,
-    TARGET_VOLUME,
-    options.duration ?? FADE_DURATION_MS,
-    options,
-  );
+  await fadeAudioVolume(audio, TARGET_VOLUME, options);
 }
 
 export async function pauseBackgroundAudio(
@@ -82,12 +73,7 @@ export async function pauseBackgroundAudio(
 ) {
   if (options.signal?.aborted) return;
 
-  await fadeAudioVolume(
-    audio,
-    0,
-    options.duration ?? FADE_DURATION_MS,
-    options,
-  );
+  await fadeAudioVolume(audio, 0, options);
 
   if (!options.signal?.aborted) {
     audio.pause();

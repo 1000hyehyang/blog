@@ -9,8 +9,7 @@ import {
 } from "./post-file";
 
 export const INDEX_PATH = "content/post-index.json";
-// 압축 해제 후에도 Next.js 캐시 항목당 크기 제한을 넘지 않도록 나눈다.
-// GitHub Contents API의 본문 크기 제한에 맞춰 gzip·base64로 저장한다.
+// 청크의 원문과 gzip·base64 결과 모두 캐시·Contents API 크기 제한 이하여야 한다.
 const CHUNK_BYTES = 750_000;
 export const gitShaSchema = z.string().regex(/^[a-f0-9]{40}$/);
 const chunkRefSchema = z.object({

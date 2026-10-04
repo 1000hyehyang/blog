@@ -3,7 +3,6 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 
-// 여러 문단과 중첩 블록이 있는 각주도 본문 렌더러와 같은 문법으로 해석한다.
 const parser = unified().use(remarkParse).use(remarkGfm);
 
 export const FootnoteReference = Node.create({

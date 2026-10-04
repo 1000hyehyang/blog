@@ -22,6 +22,8 @@ type ManagedPost = Pick<
 const MANAGE_PAGE_SIZE = 6;
 const postKey = (post: ManagedPost) =>
   `${post.localVersion ? "local" : "stored"}:${post.slug}`;
+const canDeletePost = (post: ManagedPost) =>
+  Boolean(post.localVersion || (post.sha && post.sha !== "local"));
 export function ManagePosts({
   posts,
   initialTab = "published",
@@ -98,8 +100,10 @@ export function ManagePosts({
       setDeleting(false);
     }
   }
+  const removedSlugs = new Set(removed);
+  const selectedKeys = new Set(selected);
   const all: ManagedPost[] = [
-    ...posts.filter((post) => !removed.includes(post.slug)),
+    ...posts.filter((post) => !removedSlugs.has(post.slug)),
     ...drafts.map((draft) => ({
       ...draft.post,
       published: false,
@@ -117,11 +121,9 @@ export function ManagePosts({
       const diff = Date.parse(a.createdAt) - Date.parse(b.createdAt);
       return (sort === "oldest" ? diff : -diff) || a.slug.localeCompare(b.slug);
     });
-  const deletable = filtered.filter(
-    (post) => post.localVersion || (post.sha && post.sha !== "local"),
-  );
+  const deletable = filtered.filter(canDeletePost);
   const selectedPosts = deletable.filter((post) =>
-    selected.includes(postKey(post)),
+    selectedKeys.has(postKey(post)),
   );
   const pages = Math.max(1, Math.ceil(filtered.length / MANAGE_PAGE_SIZE));
   const current = Math.min(page, pages);
@@ -226,14 +228,11 @@ export function ManagePosts({
         {filtered
           .slice((current - 1) * MANAGE_PAGE_SIZE, current * MANAGE_PAGE_SIZE)
           .map((post) => (
-            <li key={`${post.localVersion ? "local:" : ""}${post.slug}`}>
+            <li key={postKey(post)}>
               <WriterCheckbox
                 ariaLabel={`${post.title} 선택`}
-                checked={selected.includes(postKey(post))}
-                disabled={
-                  deleting ||
-                  (!post.localVersion && (!post.sha || post.sha === "local"))
-                }
+                checked={selectedKeys.has(postKey(post))}
+                disabled={deleting || !canDeletePost(post)}
                 onChange={(checked) =>
                   setSelected((keys) =>
                     checked
@@ -267,33 +266,23 @@ export function ManagePosts({
                 >
                   <Pencil size={17} aria-hidden="true" />
                 </Link>
-                {post.localVersion ? (
-                  <button
-                    type="button"
-                    aria-label={`${post.title} 임시 저장 삭제`}
-                    title="삭제"
-                    className={styles.editAction}
-                    disabled={deleting}
-                    onClick={() =>
-                      void removePosts([post], "임시 저장한 글을 삭제할까요?")
-                    }
-                  >
-                    <Trash2 size={17} aria-hidden="true" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label={`${post.title} 삭제`}
-                    title="삭제"
-                    className={styles.editAction}
-                    disabled={deleting || !post.sha || post.sha === "local"}
-                    onClick={() =>
-                      void removePosts([post], "이 글을 삭제할까요?")
-                    }
-                  >
-                    <Trash2 size={17} aria-hidden="true" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label={`${post.title}${post.localVersion ? " 임시 저장" : ""} 삭제`}
+                  title="삭제"
+                  className={styles.editAction}
+                  disabled={deleting || !canDeletePost(post)}
+                  onClick={() =>
+                    void removePosts(
+                      [post],
+                      post.localVersion
+                        ? "임시 저장한 글을 삭제할까요?"
+                        : "이 글을 삭제할까요?",
+                    )
+                  }
+                >
+                  <Trash2 size={17} aria-hidden="true" />
+                </button>
               </div>
             </li>
           ))}

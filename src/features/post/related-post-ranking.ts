@@ -158,7 +158,6 @@ export function rankRelatedPosts(
         calculateTitleSimilarity(currentTokens, post.title) *
           SCORING_RULES.titleSimilarity;
       const createdAtTimestamp = parseTimestamp(post.createdAt);
-      // 관련도 없는 글은 최신순으로 빈 자리만 채운다.
       const recencyScore =
         relevanceScore > 0
           ? calculateRecencyScore(createdAtTimestamp, nowTimestamp)

@@ -1,5 +1,5 @@
+// Markdown에서 지원하지 않는 이미지 속성은 title에 저장한다.
 const prefix = "blog-image:v1:";
-// Markdown 이미지 문법에 없는 크기·정렬·캡션·묶음 식별자를 title에 기록한다.
 
 export type ImageAlignment = "left" | "center" | "right";
 export type ImageMetadata = {

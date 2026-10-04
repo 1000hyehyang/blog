@@ -107,7 +107,6 @@ test("본문 이미지 뷰어의 배치, 탐색, 확대, 접근성과 오류 복
         path: `test-results/image-viewer-${isMobile ? "mobile" : "desktop"}.png`,
       });
     }
-    // 이미지 요소 안에서도 사진 바깥 여백을 누르면 뷰어가 닫혀야 한다.
     const image = dialog.getByRole("img");
     await image.click();
     await expect(dialog).toBeVisible();

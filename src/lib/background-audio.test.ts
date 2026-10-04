@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createBackgroundAudio, fadeAudioVolume } from "./background-audio";
+import {
+  createBackgroundAudio,
+  fadeAudioVolume,
+  pauseBackgroundAudio,
+  playBackgroundAudio,
+} from "./background-audio";
 
 const TARGET_VOLUME = 0.22;
 
@@ -9,17 +14,17 @@ afterEach(() => {
 });
 
 describe("background-audio", () => {
-  it("배경음악 오디오를 미리 로드하도록 생성한다", () => {
+  it("배경음악을 반복 재생하되 미리 로드하지 않는다", () => {
     const audio = createBackgroundAudio("/voluntates-fati.mp3");
     expect(audio.loop).toBe(true);
     expect(audio.preload).toBe("none");
     expect(audio.volume).toBe(0);
   });
 
-  it("볼륨을 점진적으로 변경한다", async () => {
+  it("페이드 시간이 0이면 볼륨을 즉시 변경한다", async () => {
     const audio = { volume: 0 } as HTMLAudioElement;
 
-    await fadeAudioVolume(audio, TARGET_VOLUME, 0);
+    await fadeAudioVolume(audio, TARGET_VOLUME, { duration: 0 });
 
     expect(audio.volume).toBe(TARGET_VOLUME);
   });
@@ -43,9 +48,37 @@ describe("background-audio", () => {
       },
     } as HTMLAudioElement;
 
-    await fadeAudioVolume(audio, 0, 450);
+    await fadeAudioVolume(audio, 2, { duration: 450 });
 
+    expect(volumes[0]).toBeGreaterThan(0);
+    expect(volumes[0]).toBeLessThan(1);
     expect(volumes.every((value) => value >= 0 && value <= 1)).toBe(true);
+    expect(audio.volume).toBe(1);
+  });
+
+  it("재생과 일시 정지에 페이드 옵션을 전달하고 취소된 요청은 무시한다", async () => {
+    const audio = {
+      volume: 0,
+      currentTime: 12,
+      paused: true,
+      play: vi.fn().mockResolvedValue(undefined),
+      pause: vi.fn(),
+    } as unknown as HTMLAudioElement;
+
+    await playBackgroundAudio(audio, { duration: 0 });
+    expect(audio.play).toHaveBeenCalledOnce();
+    expect(audio.volume).toBe(TARGET_VOLUME);
+    expect(audio.currentTime).toBe(12);
+
+    const signal = AbortSignal.abort();
+    await pauseBackgroundAudio(audio, { duration: 0, signal });
+    await playBackgroundAudio(audio, { duration: 0, signal });
+    expect(audio.pause).not.toHaveBeenCalled();
+    expect(audio.play).toHaveBeenCalledOnce();
+    expect(audio.volume).toBe(TARGET_VOLUME);
+
+    await pauseBackgroundAudio(audio, { duration: 0 });
+    expect(audio.pause).toHaveBeenCalledOnce();
     expect(audio.volume).toBe(0);
   });
 });

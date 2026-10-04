@@ -21,6 +21,11 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
 import {
+  IMAGE_UPLOAD_EXTENSIONS,
+  IMAGE_UPLOAD_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+} from "@/config/images";
+import {
   reservedDraftSlugs,
   saveDraft,
   removeDraft,
@@ -65,13 +70,6 @@ type Props = {
   draft?: LocalDraft;
 };
 type Action = "publish" | "draft" | "delete";
-const imageTypes: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/gif": "gif",
-  "image/webp": "webp",
-  "image/avif": "avif",
-};
 export function PostEditor({
   initial,
   initialSha,
@@ -293,7 +291,9 @@ export function PostEditor({
   }
 
   function imageFileError(file: File) {
-    return !imageTypes[file.type] || !file.size || file.size > 8 * 1024 * 1024
+    return !IMAGE_UPLOAD_TYPES.includes(file.type) ||
+      !file.size ||
+      file.size > MAX_IMAGE_UPLOAD_BYTES
       ? "8MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요."
       : "";
   }
@@ -301,7 +301,7 @@ export function PostEditor({
     const error = imageFileError(file);
     if (error) throw new Error(error);
     const blob = await upload(
-      `posts/${crypto.randomUUID()}.${imageTypes[file.type]}`,
+      `posts/${crypto.randomUUID()}.${IMAGE_UPLOAD_EXTENSIONS[file.type]}`,
       file,
       {
         access: "public",
@@ -418,7 +418,6 @@ export function PostEditor({
   async function save(published: boolean) {
     if (!editor || pins.conflict || !start("publish")) return;
     try {
-      // 저장에 실패해도 재시도할 때 같은 글 주소를 사용한다.
       const slug = allocateSlug();
       const order = pinnedOrder
         .filter(
@@ -790,7 +789,7 @@ export function PostEditor({
         <input
           ref={fileInput}
           type="file"
-          accept="image/png,image/jpeg,image/gif,image/webp,image/avif"
+          accept={IMAGE_UPLOAD_TYPES.join(",")}
           multiple
           hidden
           aria-label="이미지 파일 선택"

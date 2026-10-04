@@ -28,7 +28,7 @@ try {
   if (error.code !== "ENOENT") throw error;
 }
 
-// 앱의 인덱스 생성 코드를 Node.js에서도 불러올 수 있도록 경로를 해석한다.
+// Node.js에서 TypeScript의 경로 별칭과 생략된 확장자를 해석한다.
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (specifier.startsWith("@/"))
@@ -69,8 +69,7 @@ try {
     )
       throw new Error("GitHub content repository settings are required.");
     checkout = await mkdtemp(path.join(os.tmpdir(), "blog-index-"));
-    // 파일별 API 호출을 줄이기 위해 최신 커밋만 복제한다.
-    // 토큰이 명령 인자나 파일, 로그에 남지 않도록 환경 변수로 전달한다.
+    // 토큰이 명령 인자나 파일에 남지 않도록 환경 변수로 전달한다.
     const credentials = Buffer.from(`x-access-token:${GITHUB_TOKEN}`).toString(
       "base64",
     );

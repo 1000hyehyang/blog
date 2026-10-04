@@ -145,6 +145,120 @@ test("image controls work in a draft on the real writer", async ({
   );
 });
 
+test("photos move by mouse or touch and retain their order after saving a draft", async ({
+  page,
+  isMobile,
+}) => {
+  await page.context().addCookies([
+    {
+      name: "blog-writer",
+      value: createTestSession(),
+      url: "http://127.0.0.1:3100",
+      httpOnly: true,
+      sameSite: "Strict",
+    },
+  ]);
+  await page.addInitScript(() => {
+    if (localStorage.getItem("blog:writer:draft:image-move-e2e")) return;
+    const now = new Date().toISOString();
+    localStorage.setItem(
+      "blog:writer:draft:image-move-e2e",
+      JSON.stringify({
+        post: {
+          slug: "image-move-e2e",
+          id: "image-move-e2e",
+          title: "사진 이동 테스트",
+          body: "![첫 사진](http://127.0.0.1:3100/web-app-manifest-192x192.png?one)\n\n![둘째 사진](http://127.0.0.1:3100/web-app-manifest-192x192.png?two)",
+          category: { name: "Development", slug: "development" },
+          tags: [],
+          excerpt: "",
+          coverImage: {
+            src: "http://127.0.0.1:3100/web-app-manifest-192x192.png?one",
+          },
+          featured: false,
+          published: false,
+          createdAt: now,
+          lastEditedAt: null,
+          commentsCount: 0,
+          reactionsCount: 0,
+        },
+        sha: null,
+        savedAt: now,
+        pinned: [],
+        order: [],
+      }),
+    );
+  });
+  await page.goto("/write?draft=image-move-e2e");
+  const editor = page.getByRole("textbox", { name: "본문 편집기" });
+  const photos = editor.locator("figure img");
+  const figures = editor.locator("figure");
+  await expect(
+    editor.getByRole("button", { name: "사진 위치 이동" }),
+  ).toHaveCount(0);
+  await expect(photos).toHaveCount(2);
+  await expect
+    .poll(() =>
+      photos
+        .last()
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await photos.last().scrollIntoViewIfNeeded();
+  const start = (await photos.last().boundingBox())!;
+  const target = (await photos.first().boundingBox())!;
+  const from = { x: start.x + start.width / 2, y: start.y + start.height / 2 };
+  const to = { x: target.x + target.width / 2, y: target.y + 10 };
+  if (isMobile) {
+    const session = await page.context().newCDPSession(page);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [from],
+    });
+    await expect(figures.last()).toHaveAttribute("data-moving", "");
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [to],
+    });
+    await expect(figures.last()).toHaveAttribute("data-moving", "");
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await session.detach();
+  } else {
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await expect(figures.last()).toHaveAttribute("data-moving", "");
+    await page.mouse.move(to.x, to.y, { steps: 10 });
+    await expect(figures.last()).toHaveAttribute("data-moving", "");
+    await page.mouse.up();
+  }
+  await expect(photos.first()).toHaveAttribute("alt", "둘째 사진");
+  await expect(photos.last()).toHaveAttribute("alt", "첫 사진");
+  await expect(
+    editor.getByRole("button", { name: "대표 이미지로 설정" }).last(),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "실행 취소", exact: true }).click();
+  await expect(photos.first()).toHaveAttribute("alt", "첫 사진");
+  await page.getByRole("button", { name: "다시 실행", exact: true }).click();
+  await expect(photos.first()).toHaveAttribute("alt", "둘째 사진");
+  await figures.first().focus();
+  await figures.first().press("ArrowDown");
+  await expect(photos.first()).toHaveAttribute("alt", "첫 사진");
+  await figures.last().focus();
+  await figures.last().press("ArrowUp");
+  await expect(photos.first()).toHaveAttribute("alt", "둘째 사진");
+  await page.getByRole("button", { name: "임시 저장", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "임시 저장" })
+    .getByRole("button", { name: "임시 저장", exact: true })
+    .click();
+  await page.reload();
+  await expect(photos.first()).toHaveAttribute("alt", "둘째 사진");
+  await expect(photos.last()).toHaveAttribute("alt", "첫 사진");
+});
+
 test("table row and column menus stay open while moving from handle to delete", async ({
   page,
   isMobile,

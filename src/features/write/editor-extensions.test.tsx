@@ -11,6 +11,7 @@ import { remarkUnderline } from "@/lib/markdown-underline";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { nextCoverImageSrc } from "./image-editor";
 import { readImageGroup } from "@/lib/image-group";
+import { moveImage } from "./image-move";
 
 vi.mock("server-only", () => ({}));
 
@@ -22,6 +23,60 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("moves photos both ways, keeps metadata and cover, and restores their order with undo and reopening", () => {
+    let cover = "https://example.com/one.png";
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content:
+        "![one](https://example.com/one.png)\n\nBetween\n\n![two](https://example.com/two.png)",
+      contentType: "markdown",
+      onUpdate: ({ transaction }) => {
+        cover = nextCoverImageSrc(transaction, cover);
+      },
+    });
+    editor.commands.setNodeSelection(0);
+    editor.commands.updateAttributes("image", {
+      caption: "Keep this caption",
+      width: 65,
+      align: "right",
+    });
+    const original = editor.getMarkdown();
+    const first = editor.state.doc.firstChild!;
+    let last = 0;
+    editor.state.doc.forEach((node, offset) => {
+      if (node.type.name === "image") last = offset;
+    });
+    const lastPhoto = () => {
+      let photo = editor.state.doc.firstChild!;
+      editor.state.doc.forEach((node) => {
+        if (node.type.name === "image") photo = node;
+      });
+      return photo;
+    };
+    expect(moveImage(editor, last, 0)).toBe(true);
+    expect(editor.state.doc.firstChild?.attrs.src).toBe(
+      "https://example.com/two.png",
+    );
+    expect(cover).toBe("https://example.com/one.png");
+    expect(moveImage(editor, 0, editor.state.doc.content.size)).toBe(true);
+    expect(editor.getMarkdown()).toBe(original);
+    expect(moveImage(editor, 0, editor.state.doc.content.size)).toBe(true);
+    expect(lastPhoto().attrs).toEqual(first.attrs);
+    const moved = editor.getMarkdown();
+    expect(editor.commands.undo()).toBe(true);
+    expect(editor.getMarkdown()).toBe(original);
+    expect(editor.commands.redo()).toBe(true);
+    expect(editor.getMarkdown()).toBe(moved);
+    editor.commands.setContent(moved, { contentType: "markdown" });
+    expect(lastPhoto().attrs).toEqual(first.attrs);
+    expect(cover).toBe("https://example.com/one.png");
+    expect(moveImage(editor, 0, 1)).toBe(false);
+    expect(moveImage(editor, -1, 0)).toBe(false);
+    expect(moveImage(editor, 0, editor.state.doc.content.size + 1)).toBe(false);
+    editor.setEditable(false);
+    expect(moveImage(editor, editor.state.doc.content.size - 1, 0)).toBe(false);
+    editor.destroy();
+  });
   it("preserves linked images and link titles through body edits and HTML paste", () => {
     const source =
       '[![photo](https://example.com/photo.png "image title")](https://example.com/target "link title")\n\nEdit here';

@@ -39,6 +39,7 @@ import {
 } from "@/lib/image-group";
 import type { ImageAlignment, ImageMetadata } from "@/lib/image-metadata";
 import styles from "./writer.module.css";
+import { useImageMove } from "./image-move";
 
 const ImageContext = createContext<{
   coverImageSrc: string;
@@ -211,6 +212,7 @@ function SingleImageNodeView({
   getPos,
 }: NodeViewProps) {
   const { src, alt, align, width, caption } = node.attrs as ImageAttrs;
+  const movement = useImageMove({ editor, getPos });
   const context = useContext(ImageContext);
   const figure = useRef<HTMLElement>(null);
   const toolbar = useRef<HTMLDivElement>(null);
@@ -326,6 +328,7 @@ function SingleImageNodeView({
   return (
     <NodeViewWrapper
       as="figure"
+      {...movement.wrapperProps}
       ref={figure}
       className={styles.imageFigure}
       data-align={align}
@@ -340,6 +343,7 @@ function SingleImageNodeView({
       contentEditable={false}
       onClick={select}
     >
+      {movement.marker}
       {showControls && editor.isEditable && (
         <div
           ref={toolbar}
@@ -405,12 +409,6 @@ function SingleImageNodeView({
       <div
         className={`${styles.imageFrame} ${photoActionClassName}`}
         data-current={showControls || undefined}
-        onPointerDown={(event) => {
-          if (event.target instanceof Element && event.target.closest("button"))
-            return;
-          event.preventDefault();
-          select();
-        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt ?? ""} draggable={false} />
@@ -483,6 +481,7 @@ function ImageGroupNodeView({
   getPos,
   group,
 }: NodeViewProps & { group: ImageGroup }) {
+  const movement = useImageMove({ editor, getPos });
   const context = useContext(ImageContext);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const showControls = selected && Boolean(context?.active);
@@ -542,11 +541,13 @@ function ImageGroupNodeView({
   return (
     <NodeViewWrapper
       as="figure"
+      {...movement.wrapperProps}
       className={styles.imageGroupFigure}
       data-selected={showControls || undefined}
       contentEditable={false}
       onClick={select}
     >
+      {movement.marker}
       {showControls && editor.isEditable && (
         <div
           className={styles.imageGroupToolbar}

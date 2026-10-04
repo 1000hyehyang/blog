@@ -33,30 +33,72 @@ export function WriteSkeleton() {
       aria-label="글쓰기 화면 불러오는 중"
     >
       <WriterHeader>
-        <div className={styles.toolbar} aria-hidden="true">
-          {Array.from({ length: 13 }, (_, index) => (
-            <Bone key={index} width="2.15rem" height="2.25rem" />
+        <div className={styles.toolbar} aria-hidden="true" inert>
+          <button
+            type="button"
+            className={`${styles.skeleton} ${styles.skeletonControl}`}
+            disabled
+          />
+          <span className={styles.fontLabel}>기본 서체</span>
+          <span className={styles.separator} />
+          {Array.from({ length: 11 }, (_, index) => (
+            <button
+              key={index}
+              type="button"
+              className={`${styles.skeleton} ${styles.skeletonControl}`}
+              disabled
+            />
           ))}
         </div>
       </WriterHeader>
-      <div className={styles.canvas} aria-hidden="true">
+      <div className={styles.canvas} aria-hidden="true" inert>
         <div className={styles.composition}>
-          <div className={styles.category}>
-            <Bone height="2.75rem" />
+          <div className={styles.categorySelectors}>
+            <button
+              type="button"
+              className={`${styles.selectTrigger} ${styles.skeleton} ${styles.skeletonControl}`}
+              disabled
+            >
+              {siteConfig.navigation[0].label}
+            </button>
           </div>
-          <div className={styles.titleField}>
-            <Bone width="75%" height="3.75rem" />
+          <label className={styles.titleField}>
+            <textarea
+              className={`${styles.skeleton} ${styles.skeletonControl}`}
+              style={{ width: "75%" }}
+              rows={1}
+              placeholder=" "
+              value=""
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <div className={styles.editor}>
+            <EditorBodySkeleton />
           </div>
-          <EditorBodySkeleton />
           <div className={styles.tags}>
-            <Bone width="8rem" height="2.75rem" />
+            <input
+              className={`${styles.skeleton} ${styles.skeletonControl}`}
+              style={{ maxWidth: "8rem" }}
+              value=""
+              readOnly
+              tabIndex={-1}
+            />
           </div>
         </div>
       </div>
       <footer className={styles.bottomBar}>
-        <div className={styles.bottomActions} aria-hidden="true">
-          <Bone width="7rem" height="3rem" />
-          <Bone width="7rem" height="3rem" />
+        <div className={styles.bottomActions} aria-hidden="true" inert>
+          {["임시 저장", "완료"].map((label) => (
+            <button
+              key={label}
+              type="button"
+              className={`${styles.skeleton} ${styles.skeletonControl}`}
+              disabled
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </footer>
     </div>

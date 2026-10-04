@@ -2,6 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 import { isWriter, sameOrigin } from "@/lib/writer-auth";
 import { readWriterJson } from "@/lib/writer-api";
+import { IMAGE_UPLOAD_TYPES, MAX_IMAGE_UPLOAD_BYTES } from "@/config/images";
 
 export async function POST(request: Request) {
   try {
@@ -33,14 +34,8 @@ export async function POST(request: Request) {
         )
           throw new Error("Invalid image path");
         return {
-          allowedContentTypes: [
-            "image/png",
-            "image/jpeg",
-            "image/gif",
-            "image/webp",
-            "image/avif",
-          ],
-          maximumSizeInBytes: 8 * 1024 * 1024,
+          allowedContentTypes: IMAGE_UPLOAD_TYPES,
+          maximumSizeInBytes: MAX_IMAGE_UPLOAD_BYTES,
           addRandomSuffix: true,
           validUntil: Date.now() + 5 * 60 * 1000,
         };
