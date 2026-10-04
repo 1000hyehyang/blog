@@ -22,7 +22,7 @@
   "slug": "post-1",
   "id": "b4300eb9-7058-4f2b-82e0-857745ccc2a9",
   "createdAt": "2026-10-04T17:47:40.379Z",
-  "lastEditedAt": "2026-10-04T18:02:29.513Z",
+  "lastEditedAt": "2026-10-04T18:45:02.154Z",
   "commentsCount": 0,
   "reactionsCount": 0
 }
@@ -643,7 +643,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 
 
-![24041](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/6a51240d-e403-42cc-a019-062b47802b9a-efInPuY8YkqAKOxZf27JjDSPAS3j3o.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A66%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%AC%EC%95%84%EC%9B%8C%20%ED%82%A4%EC%9D%B4%EB%9D%BC%20%EB%A6%AC%EC%95%84%EC%B4%88%EC%BD%94%22%7D")
+![24041](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/6a51240d-e403-42cc-a019-062b47802b9a-efInPuY8YkqAKOxZf27JjDSPAS3j3o.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A31%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%AC%EC%95%84%EC%9B%8C%20%ED%82%A4%EC%9D%B4%EB%9D%BC%20%EB%A6%AC%EC%95%84%EC%B4%88%EC%BD%94%22%7D")
 
 [https://shop.winc.app/products/14920](https://shop.winc.app/products/14920)
 
