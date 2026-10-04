@@ -81,6 +81,7 @@ export function PostEditor({
   const router = useRouter();
   const [fields, setFields] = useState({ ...emptyFields, ...initial });
   const generatedSlug = useRef(initial?.slug ?? "");
+  const postId = useRef(initial?.id ?? "");
   const currentPin = initial?.slug ?? "__current__";
   const pins = usePinnedOrder(
     pinned,
@@ -268,6 +269,7 @@ export function PostEditor({
   function currentFields() {
     return {
       ...fields,
+      id: allocateId(),
       tags: [
         ...new Set(
           tags
@@ -277,6 +279,9 @@ export function PostEditor({
         ),
       ],
     };
+  }
+  function allocateId() {
+    return (postId.current ||= crypto.randomUUID());
   }
   function allocateSlug() {
     if (generatedSlug.current) return generatedSlug.current;
@@ -302,7 +307,7 @@ export function PostEditor({
     const error = imageFileError(file);
     if (error) throw new Error(error);
     const blob = await upload(
-      `posts/${crypto.randomUUID()}.${IMAGE_UPLOAD_EXTENSIONS[file.type]}`,
+      `posts/${fields.category.slug}/${allocateId()}/${crypto.randomUUID()}.${IMAGE_UPLOAD_EXTENSIONS[file.type]}`,
       file,
       {
         access: "public",
@@ -479,7 +484,6 @@ export function PostEditor({
       const now = new Date().toISOString();
       const value: LocalDraft = {
         post: {
-          id: initial?.id ?? crypto.randomUUID(),
           createdAt: initial?.createdAt ?? now,
           lastEditedAt: initial?.lastEditedAt ?? null,
           commentsCount: 0,

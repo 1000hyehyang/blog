@@ -12,6 +12,20 @@ import { POST as imageUpload } from "@/app/api/write/images/route";
 import { POST as login, DELETE as logout } from "@/app/api/write/session/route";
 const state = vi.hoisted(() => ({ cookie: "" }));
 vi.mock("server-only", () => ({}));
+vi.mock("@vercel/blob/client", () => ({
+  handleUpload: async ({
+    body,
+    onBeforeGenerateToken,
+  }: Parameters<typeof import("@vercel/blob/client").handleUpload>[0]) => {
+    if (body.type !== "blob.generate-client-token")
+      throw new Error("Unexpected callback");
+    return onBeforeGenerateToken(
+      body.payload.pathname,
+      body.payload.clientPayload,
+      body.payload.multipart,
+    );
+  },
+}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => ({ value: state.cookie }) }),
 }));
@@ -35,6 +49,43 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer trust boundaries", () => {
+  it("accepts post image folders and legacy uploads while rejecting unsafe paths", async () => {
+    state.cookie = createWriterSession();
+    const id = "b4300eb9-7058-4f2b-82e0-857745ccc2a9";
+    const request = (pathname: string) =>
+      new Request("https://blog.example/api/write/images", {
+        method: "POST",
+        headers: {
+          origin: "https://blog.example",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "blob.generate-client-token",
+          payload: { pathname },
+        }),
+      });
+    for (const path of [
+      `posts/essay/${id}/${id}.webp`,
+      `posts/art/legacy-post/${id}.png`,
+      `posts/${id}.jpg`,
+    ]) {
+      const response = await imageUpload(request(path));
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        maximumSizeInBytes: 8 * 1024 * 1024,
+        addRandomSuffix: true,
+      });
+    }
+    for (const path of [
+      `posts/../${id}/${id}.png`,
+      `posts/essay/../${id}.png`,
+      `posts/essay/a%2Fb/${id}.png`,
+      `posts/essay/a\\b/${id}.png`,
+      `posts/essay/${id}/${id}.svg`,
+      `other/essay/${id}/${id}.png`,
+    ])
+      expect((await imageUpload(request(path))).status).toBe(400);
+  });
   it("verifies scrypt and rejects forged, expired, malformed and rotated sessions", async () => {
     expect(await verifyWriterPassword(password)).toBe(true);
     expect(await verifyWriterPassword("incorrect")).toBe(false);

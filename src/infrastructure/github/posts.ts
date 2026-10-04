@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
@@ -528,7 +529,7 @@ export async function savePost(
   const now = new Date().toISOString();
   const post: FilePost = {
     ...(previous?.post ?? {
-      id: randomUUID(),
+      id: z.object({ id: z.uuid().optional() }).parse(input).id ?? randomUUID(),
       createdAt: now,
       commentsCount: 0,
       reactionsCount: 0,

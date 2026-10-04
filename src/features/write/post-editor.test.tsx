@@ -67,6 +67,69 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer data preservation", () => {
+  it("keeps the image folder ID through drafts and publishing, using the category selected for each upload", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ message: "test" }, { status: 400 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <PostEditor initial={null} initialSha={null} writable />,
+    );
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    const file = new File(["image"], "photo.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("이미지 파일 선택"), {
+      target: { files: [file] },
+    });
+    await waitFor(() => expect(editor.querySelector("img")).not.toBeNull());
+    await waitFor(() =>
+      expect(editor).toHaveAttribute("contenteditable", "true"),
+    );
+    const path = mocks.upload.mock.calls[0][0] as string;
+    expect(path).toMatch(
+      /^posts\/development\/[a-f0-9-]{36}\/[a-f0-9-]{36}\.png$/,
+    );
+    const id = path.split("/")[2];
+    fireEvent.click(screen.getByRole("button", { name: "임시 저장" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "임시 저장",
+      }),
+    );
+    await waitFor(() => expect(readDraft("post-1")?.post.id).toBe(id));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalled());
+    view.unmount();
+
+    render(<DraftEditor id="post-1" writable pinned={[]} />);
+    const reopened = await screen.findByRole("textbox", {
+      name: "본문 편집기",
+    });
+    const category = screen.getByRole("combobox", { name: "카테고리" });
+    fireEvent.keyDown(category, { key: "a" });
+    fireEvent.keyDown(category, { key: "Enter" });
+    expect(category).toHaveTextContent("Art");
+    mocks.upload.mockResolvedValueOnce({
+      url: "https://test.public.blob.vercel-storage.com/second.png",
+    });
+    fireEvent.change(screen.getByLabelText("이미지 파일 선택"), {
+      target: { files: [file] },
+    });
+    await waitFor(() =>
+      expect(reopened.querySelector('img[src$="/second.png"]')).not.toBeNull(),
+    );
+    expect(mocks.upload.mock.calls[1][0]).toMatch(
+      new RegExp(`^posts/art/${id}/[a-f0-9-]{36}\\.png$`),
+    );
+    await waitFor(() =>
+      expect(reopened).toHaveAttribute("contenteditable", "true"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "발행" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).post).toMatchObject({
+      id,
+      category: { slug: "art" },
+    });
+  });
   const oldPins = [
     { slug: "first", title: "First", coverImage: { src: "" } },
     { slug: "second", title: "Second", coverImage: { src: "" } },
@@ -361,7 +424,9 @@ describe("writer data preservation", () => {
       ),
     );
     expect(mocks.upload).toHaveBeenCalledWith(
-      expect.stringMatching(/^posts\/.+\.png$/),
+      expect.stringMatching(
+        /^posts\/development\/post-id\/[a-f0-9-]{36}\.png$/,
+      ),
       file,
       expect.objectContaining({
         access: "public",

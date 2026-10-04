@@ -185,6 +185,30 @@ function githubStore(posts: StoredPost[], indexed = true) {
 }
 
 describe("Markdown store", () => {
+  it("publishes with the draft ID, keeps existing IDs immutable and rejects duplicate or invalid new IDs", async () => {
+    const id = "b4300eb9-7058-4f2b-82e0-857745ccc2a9";
+    const { fetchMock } = githubStore([]);
+    const created = await savePost("first", { ...sample, id }, null);
+    expect(created.post.id).toBe(id);
+    const edited = await savePost(
+      "first",
+      { ...sample, id: "changed-id" },
+      created.sha,
+    );
+    expect(edited.post.id).toBe(id);
+    const writes = fetchMock.mock.calls.filter(
+      ([, init]) => init?.method === "PATCH",
+    ).length;
+    await expect(savePost("second", { ...sample, id }, null)).rejects.toThrow(
+      "Duplicate post ID",
+    );
+    await expect(
+      savePost("second", { ...sample, id: "../invalid" }, null),
+    ).rejects.toThrow();
+    expect(
+      fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH"),
+    ).toHaveLength(writes);
+  });
   it("looks up published posts by ID rather than storage slug and omits bodies from lists", async () => {
     expect((await getPost("fixture-id-8"))?.slug).toBe("post-8");
     expect(await getPost("post-8")).toBeNull();
@@ -236,8 +260,9 @@ describe("Markdown store", () => {
   });
   it("creates the first post and index atomically on an empty branch", async () => {
     const { files, state } = githubStore([], false);
-    const result = await savePost("first", sample, null);
+    const result = await savePost("first", { ...sample, id: undefined }, null);
     expect(result.post.slug).toBe("first");
+    expect(result.post.id).toMatch(/^[a-f0-9-]{36}$/);
     expect(files.has("content/posts/first.md")).toBe(true);
     expect(files.has(INDEX_PATH)).toBe(true);
     expect(state.treeInput!.tree.some(({ path }) => path === INDEX_PATH)).toBe(

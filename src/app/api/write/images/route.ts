@@ -30,7 +30,9 @@ export async function POST(request: Request) {
         if (!(await isWriter()) || !sameOrigin(request))
           throw new Error("Unauthorized");
         if (
-          !/^posts\/[a-f0-9-]{36}\.(png|jpg|jpeg|gif|webp|avif)$/.test(pathname)
+          !/^posts\/(?:[a-z0-9-]+\/[a-zA-Z0-9_-]{1,100}\/)?[a-f0-9-]{36}\.(png|jpg|jpeg|gif|webp|avif)$/.test(
+            pathname,
+          )
         )
           throw new Error("Invalid image path");
         return {
