@@ -215,11 +215,12 @@
 .editor :global(.tiptap),
 .editorPlaceholder {
   min-height: max(12rem, calc(100dvh - 32rem));
+  caret-color: var(--foreground);
+}
+.editorPlaceholder {
   color: var(--prose-foreground);
-  overflow-wrap: anywhere;
   font-size: 1.0625rem;
   line-height: 1.95;
-  caret-color: var(--foreground);
 }
 .editor :global(.tiptap):focus {
   outline: none;
@@ -252,91 +253,11 @@
   color: var(--muted-foreground);
   pointer-events: none;
 }
-.editor :global(.tiptap) > * + * {
-  margin-top: 1.1em;
-}
-.editor :global(.tiptap) h1 {
-  font-size: 1.875rem;
-  font-weight: 600;
-  line-height: 1.5;
-}
-.editor :global(.tiptap) h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.5;
-}
-.editor :global(.tiptap) h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.5;
-}
-.editor :global(.tiptap) ul {
-  list-style: disc;
-  padding-left: 1.5rem;
-}
-.editor :global(.tiptap) ol {
-  list-style: decimal;
-  padding-left: 1.5rem;
-}
-.editor :global(.tiptap) ul[data-type="taskList"] {
-  list-style: none;
-  padding-left: 0;
-}
-.editor :global(.tiptap) li[data-type="taskItem"] {
-  display: flex;
-  gap: 0.5rem;
-}
-.editor :global(.tiptap) li[data-type="taskItem"] > div {
-  flex: 1;
-  min-width: 0;
-}
-.editor :global(.tiptap) blockquote {
-  border-left: 3px solid var(--border);
-  padding-left: 1rem;
-  color: var(--muted-foreground);
-}
-.editor :global(.tiptap) pre {
-  background: var(--code-block-background);
-  color: var(--code-block-foreground);
-  padding: 1.25rem;
-  overflow-x: auto;
-  font-family: var(--font-family-code);
-  font-size: 0.875rem;
-  border-radius: var(--radius-sm);
-}
-.editor :global(.tiptap) code {
-  background: var(--code-inline-background);
-  color: var(--code-inline-foreground);
-  padding: 0.1rem 0.25rem;
-  font-family: var(--font-family-code);
-}
-.editor :global(.tiptap) pre code {
-  background: transparent;
-  color: inherit;
-  padding: 0;
-}
-.editor :global(.writer-code-token) {
-  color: var(--shiki-light, var(--code-block-foreground));
-}
-:global(.dark) .editor :global(.writer-code-token) {
-  color: var(--shiki-dark, var(--code-block-foreground));
-}
 .writer .codeLanguage {
   flex: 0 0 12rem;
   width: 12rem;
   padding: 0.3rem 0.5rem;
   font-size: 0.75rem;
-}
-.editor :global(.tiptap) a {
-  text-decoration: underline;
-}
-.editor :global(.tiptap .link-preview-card) {
-  text-decoration: none;
-}
-.editor :global(.standalone-link-widget) {
-  display: block;
-  margin-top: 0.5rem;
-  white-space: normal;
 }
 .editor :global(.tiptap) img {
   max-width: 100%;
@@ -376,16 +297,8 @@
 .editor :global(.tiptap) figure[data-align="right"] {
   margin-right: 0;
 }
-.editor :global(.tiptap) figcaption {
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  text-align: center;
-}
 .editor :global(.tiptap) .imageFigure {
   position: relative;
-  max-width: 100%;
-  margin: 1.5rem auto;
 }
 .editor :global(.tiptap) .imageFigure[data-selected] {
   margin-top: 3.5rem;
@@ -528,11 +441,6 @@
 .imageResize[data-corner$="right"] {
   right: -12px;
 }
-.editor :global(.tiptap) .imageFigcaption {
-  padding-top: 8px;
-  line-height: 1.5;
-  text-align: center;
-}
 .writer .imageFigcaption input,
 .imageFigcaption input {
   width: 100%;
@@ -549,8 +457,6 @@
 }
 .editor :global(.tiptap) .imageGroupFigure {
   position: relative;
-  max-width: 100%;
-  margin: 1.5rem auto;
 }
 .editor :global(.tiptap) .imageGroupFigure[data-selected] {
   margin-top: 4rem;
@@ -721,28 +627,6 @@
   .imageLayoutChoice[data-selected] .imageLayoutExample {
     padding: calc(0.35rem - 1px);
   }
-}
-.editor :global(.tiptap) hr {
-  border-top: 1px solid var(--border);
-}
-.editor :global(.tiptap) table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-}
-.editor :global(.tableWrapper) {
-  width: calc(100% - 2.25rem);
-  margin-bottom: 2.5rem;
-  overflow-x: auto;
-}
-.editor :global(.tiptap) td,
-.editor :global(.tiptap) th {
-  border: 1px solid var(--border);
-  padding: 0.6rem;
-  min-width: 6rem;
-}
-.editor :global(.tiptap) th {
-  background: transparent;
 }
 .tableOverlay {
   position: relative;
@@ -1170,15 +1054,6 @@
   }
 }
 @media (max-width: 640px) {
-  .editor :global(.tableWrapper) {
-    width: calc(100% - 4.75rem);
-    margin-left: 3rem;
-  }
-  .editor :global(.tiptap) td,
-  .editor :global(.tiptap) th {
-    min-width: 4.5rem;
-    padding: 0.5rem;
-  }
   .writer .tableHandle {
     width: 30px;
     height: 30px;
@@ -1200,8 +1075,10 @@
   }
   .editor :global(.tiptap),
   .editorPlaceholder {
-    font-size: 1rem;
     min-height: max(12rem, calc(100dvh - 36rem));
+  }
+  .editorPlaceholder {
+    font-size: 1rem;
   }
   .bottomBar {
     gap: 0.5rem;
@@ -1490,26 +1367,6 @@
   to {
     transform: translateX(0);
   }
-}
-.editor :global(.tiptap) li[data-type="taskItem"] {
-  align-items: flex-start;
-}
-.editor :global(.tiptap) li[data-type="taskItem"] > label {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: flex-start;
-  padding-top: 0.45rem;
-  margin: 0;
-}
-.editor :global(.tiptap) li[data-type="taskItem"] > label input {
-  width: 1rem;
-  height: 1rem;
-  margin: 0;
-  accent-color: var(--foreground);
-}
-.editor :global(.tiptap) li[data-type="taskItem"] > div {
-  text-align: start;
-  margin: 0;
 }
 .tagChip {
   display: inline-flex;

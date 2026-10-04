@@ -23,6 +23,64 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("preserves every empty paragraph through publishing and repeated reopening", () => {
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content:
+        "<p></p><p>앞  문단</p><p></p><p></p><p>뒤<br>문단</p>" +
+        "<blockquote><p>인용</p><p></p><p>다음 인용</p></blockquote>" +
+        "<ul><li><p>목록</p><p></p><p>목록의 다음 문단</p></li></ul><p></p>",
+    });
+    const original = editor.getJSON();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const source = editor.getMarkdown();
+      expect(hasUnsupportedHtml(source)).toBe(false);
+      const div = document.createElement("div");
+      div.innerHTML = renderToStaticMarkup(<MarkdownContent source={source} />);
+      expect(div.querySelectorAll("p")).toHaveLength(12);
+      expect(div.querySelector("blockquote")?.textContent).toContain(
+        "다음 인용",
+      );
+      expect(div.querySelectorAll("br")).toHaveLength(1);
+      editor.commands.setContent(source, { contentType: "markdown" });
+      expect(editor.getJSON()).toEqual(original);
+    }
+    editor.destroy();
+  });
+
+  it.each([
+    "앞\n\n뒤",
+    "앞\n\n\n\n뒤",
+    "\n\n앞\n\n\n\n\n\n뒤\n\n",
+    "앞\r\n\r\n\r\n\r\n뒤",
+    "# 제목\n\n\n\n본문",
+  ])("renders legacy blank paragraphs as the editor does: %j", (source) => {
+    const editor = new Editor({
+      extensions: editorExtensions(),
+      content: source,
+      contentType: "markdown",
+    });
+    const div = document.createElement("div");
+    div.innerHTML = renderToStaticMarkup(<MarkdownContent source={source} />);
+    expect(div.querySelector(".prose")!.children).toHaveLength(
+      editor.state.doc.childCount,
+    );
+    editor.destroy();
+  });
+
+  it("renders nested and loose task lists with the editor's checkbox layout", () => {
+    const div = document.createElement("div");
+    div.innerHTML = renderToStaticMarkup(
+      <MarkdownContent source={"- [x] 완료\n  - [ ] 내부\n\n- [ ] 대기"} />,
+    );
+    expect(div.querySelectorAll('li[data-type="taskItem"]')).toHaveLength(3);
+    expect(div.querySelectorAll("li > label > input[disabled]")).toHaveLength(
+      3,
+    );
+    expect(div.querySelectorAll("input[checked]")).toHaveLength(1);
+    expect(div.querySelector("li > div > p")?.textContent).toBe("완료");
+  });
+
   it("moves photos both ways, keeps metadata and cover, and restores their order with undo and reopening", () => {
     let cover = "https://example.com/one.png";
     const editor = new Editor({
@@ -316,7 +374,7 @@ describe("Tiptap Markdown preservation", () => {
       "right",
     );
     expect(publicView.querySelector(".markdown-image-frame")).toHaveStyle({
-      width: "65%",
+      "--image-width": "65%",
     });
     expect(
       publicView.querySelector(".markdown-image-caption"),
@@ -327,7 +385,8 @@ describe("Tiptap Markdown preservation", () => {
       width: 100,
       caption: "",
     });
-    expect(editor.getMarkdown().trim()).toBe(original.trim());
+    // Tiptap은 이미지 뒤에 입력용 빈 문단을 추가한다.
+    expect(editor.getMarkdown().trim()).toBe(`${original.trim()}\n\n&nbsp;`);
     editor.destroy();
   });
   it("keeps the cover URL in sync when its image URL changes or is removed", () => {
@@ -506,8 +565,8 @@ describe("Tiptap Markdown preservation", () => {
     expect(output).toContain("```ts");
     expect(rendered(output).querySelectorAll("table")).toHaveLength(1);
     editor.commands.setContent(output, { contentType: "markdown" });
-    expect(rendered(editor.getMarkdown()).textContent).toBe(
-      rendered(output).textContent,
+    expect(rendered(editor.getMarkdown()).textContent?.trim()).toBe(
+      rendered(output).textContent?.trim(),
     );
     editor.destroy();
   });

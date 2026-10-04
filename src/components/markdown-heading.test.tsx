@@ -1,4 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MarkdownContent } from "./markdown";
@@ -10,6 +11,18 @@ vi.mock("server-only", () => ({}));
 afterEach(() => cleanup());
 
 describe("MarkdownContent headings", () => {
+  it("keeps headings inside tight lists out of paragraph wrappers", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownContent
+        source={"- 앞 문단\n  ## 첫 제목\n- 다음 문단\n  ### 다음 제목"}
+      />,
+    );
+
+    expect(html).toMatch(/<p>앞 문단\s*<\/p>\s*<h3/);
+    expect(html).toMatch(/<p>다음 문단\s*<\/p>\s*<h4/);
+    expect(html).not.toMatch(/<p>[^<]*<h[1-6]\b/);
+  });
+
   it("preserves the Markdown heading level for visual styling", () => {
     const { container } = render(
       <MarkdownContent

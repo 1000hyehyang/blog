@@ -337,30 +337,25 @@ button:not(:disabled):hover {
 
 .prose {
   color: var(--prose-foreground);
-  font-size: 1rem;
-  line-height: 1.85;
+  overflow-wrap: anywhere;
+  font-size: 1.0625rem;
+  line-height: 1.95;
 }
 .prose > * + * {
-  margin-top: 1.25em;
+  margin-top: 1.1em;
 }
 .prose > :first-child {
   margin-top: 0;
 }
-.prose
-  > p:has(> :is(img, .markdown-image-frame, .markdown-image-group):only-child) {
-  margin-block: 2em;
+.prose .content-image-block {
+  max-width: 100%;
+  margin: 1.5rem auto;
+  white-space: normal;
 }
-.prose
-  > p:has(
-    > :is(img, .markdown-image-frame, .markdown-image-group):only-child
-  ):first-child {
-  margin-top: 0;
-}
-.prose
-  > p:has(
-    > :is(img, .markdown-image-frame, .markdown-image-group):only-child
-  ):last-child {
-  margin-bottom: 0;
+.prose .standalone-link-widget {
+  display: block;
+  margin-top: 0.5rem;
+  white-space: normal;
 }
 .prose img {
   display: block;
@@ -379,8 +374,17 @@ button:not(:disabled):hover {
 }
 .prose .markdown-image-frame {
   display: block;
+  width: var(--image-width);
   max-width: 100%;
   margin-inline: auto;
+}
+.prose .markdown-image-frame[data-width="100"] {
+  width: fit-content;
+}
+@media (max-width: 640px) {
+  .prose .markdown-image-frame:not([data-width="100"]) {
+    width: calc(30% + var(--image-width) * 0.7);
+  }
 }
 .prose .markdown-image-frame .markdown-image {
   width: 100%;
@@ -406,58 +410,51 @@ button:not(:disabled):hover {
 }
 .prose .markdown-image-caption {
   display: block;
+  padding-top: 8px;
   color: var(--muted-foreground);
   font-size: 0.8rem;
   line-height: 1.5;
   text-align: center;
 }
-.prose .markdown-heading {
-  color: var(--foreground);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+/* 발행 본문은 글 제목(h1) 아래에 놓여 제목 태그가 한 단계씩 내려간다. */
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  color: inherit;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+  scroll-margin-top: 6rem;
 }
-.prose .markdown-heading--1 {
-  margin-top: 4rem;
+.prose :is(h1:not(.markdown-heading), .markdown-heading--1) {
   font-size: 1.875rem;
   font-weight: 600;
-  scroll-margin-top: 6rem;
+  line-height: 1.5;
 }
-.prose .markdown-heading--2 {
-  margin-top: 3.5rem;
+.prose :is(h2:not(.markdown-heading), .markdown-heading--2) {
   font-size: 1.5rem;
   font-weight: 600;
-  scroll-margin-top: 6rem;
+  line-height: 1.5;
 }
-.prose .markdown-heading--3 {
-  margin-top: 3rem;
+.prose :is(h3:not(.markdown-heading), .markdown-heading--3) {
   font-size: 1.25rem;
   font-weight: 600;
-  scroll-margin-top: 6rem;
+  line-height: 1.5;
 }
-.prose .markdown-heading--4 {
-  margin-top: 2.5rem;
-  font-size: 1.125rem;
-  font-weight: 600;
+.prose p {
+  white-space: pre-wrap;
 }
-.prose .markdown-heading--5 {
-  margin-top: 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
-.prose .markdown-heading--6 {
-  margin-top: 2rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--prose-foreground);
+.prose :is(p, h1, h2, h3, h4, h5, h6):empty {
+  min-height: 1lh;
 }
 .prose a {
-  color: var(--foreground);
+  color: inherit;
   text-decoration: underline;
+}
+.prose u {
   text-underline-offset: 3px;
 }
-.prose u,
-.tiptap u {
-  text-underline-offset: 3px;
+@media (max-width: 640px) {
+  .prose {
+    font-size: 1rem;
+  }
 }
 .prose .link-preview-card {
   --link-preview-height: 11.5rem;
@@ -601,7 +598,7 @@ button:not(:disabled):hover {
 }
 .prose ul,
 .prose ol {
-  padding-left: 1.625rem;
+  padding-left: 1.5rem;
 }
 .prose ul {
   list-style: disc;
@@ -609,94 +606,121 @@ button:not(:disabled):hover {
 .prose ol {
   list-style: decimal;
 }
-.prose li + li {
-  margin-top: 0.4em;
+.prose :is(ul[data-type="taskList"], .contains-task-list) {
+  list-style: none;
+  padding-left: 0;
+}
+.prose li[data-type="taskItem"] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.prose li[data-type="taskItem"] > div {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  margin: 0;
+}
+.prose li[data-type="taskItem"] > label {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding-top: 0.45rem;
+  margin: 0;
+  font-size: 0.875rem;
+}
+.prose li[data-type="taskItem"] > label input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--foreground);
 }
 .prose blockquote {
   border-left: 3px solid var(--border);
   padding-left: 1rem;
-  color: var(--foreground);
+  color: var(--muted-foreground);
 }
 .prose hr {
-  margin: 1.5em 0;
   border: 0;
   border-top: 1px solid var(--border);
 }
-.prose .markdown-inline-code {
-  border-radius: 4px;
+.prose :is(.markdown-inline-code, code:not(pre code)) {
   background: var(--code-inline-background);
   color: var(--code-inline-foreground);
-  padding: 0.2em 0.4em;
-  font-family: inherit;
-  font-size: 0.9em;
-  font-weight: 500;
-  line-height: 1.4;
+  padding: 0.1rem 0.25rem;
+  font-family: var(--font-family-code);
 }
 .prose .markdown-code-block {
   position: relative;
-  margin: 0.5em 0;
-  overflow: hidden;
+  font-size: 0.875rem;
+}
+.prose pre {
+  overflow-x: auto;
+  padding: 1.25rem;
   border-radius: var(--radius-sm);
   background: var(--code-block-background);
-}
-.prose .markdown-code-block pre {
-  margin: 0;
-  overflow-x: auto;
-  padding: 1.25rem 1.1rem;
-  background: transparent;
-  color: var(--foreground);
+  color: var(--code-block-foreground);
   font-family: var(--font-family-code);
   font-size: 0.875rem;
-  line-height: 1.6;
-  tab-size: 2;
+  line-height: 1.95;
+  tab-size: 4;
 }
-.prose .markdown-code-block pre code {
+.prose pre code {
   background: transparent;
   color: inherit;
   padding: 0;
   font-size: inherit;
 }
-.prose .markdown-code-block .shiki {
-  margin: 0;
-  padding: 1.25rem 1.1rem;
-  overflow-x: auto;
-  background: transparent !important;
-  font-size: 0.875rem;
-  line-height: 1.6;
-}
-.prose .markdown-code-block .shiki,
-.prose .markdown-code-block .shiki span {
+.prose .shiki span,
+.prose .writer-code-token {
   color: var(--shiki-light, var(--code-block-foreground));
 }
-.dark .prose .markdown-code-block .shiki,
-.dark .prose .markdown-code-block .shiki span {
+.dark .prose .shiki span,
+.dark .prose .writer-code-token {
   color: var(--shiki-dark, var(--code-block-foreground));
 }
-.prose .markdown-code-block .markdown-code-language {
+.prose .markdown-code-language {
   position: absolute;
-  left: 1rem;
-  top: 0.65rem;
+  left: 1.25rem;
+  top: 0.35rem;
   z-index: 1;
   font-family: var(--font-family-code);
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.625rem;
+  line-height: 1;
   color: var(--ring);
   text-transform: lowercase;
 }
-.prose .markdown-code-block--with-language pre,
-.prose .markdown-code-block--with-language .shiki {
-  padding-top: 2.25rem;
+.prose .tableWrapper {
+  width: calc(100% - 2.25rem);
+  margin-bottom: 2.5rem;
+  overflow-x: auto;
 }
 .prose table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  display: block;
-  overflow-x: auto;
 }
 .prose th,
 .prose td {
   border: 1px solid var(--border);
   padding: 0.6rem;
+  min-width: 6rem;
+  white-space: pre-wrap;
+}
+.prose th {
+  background: transparent;
+}
+@media (max-width: 640px) {
+  .prose .tableWrapper {
+    width: calc(100% - 4.75rem);
+    margin-left: 3rem;
+  }
+  .prose td,
+  .prose th {
+    min-width: 4.5rem;
+    padding: 0.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

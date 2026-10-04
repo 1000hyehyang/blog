@@ -330,7 +330,7 @@ function SingleImageNodeView({
       as="figure"
       {...movement.wrapperProps}
       ref={figure}
-      className={styles.imageFigure}
+      className={`${styles.imageFigure} content-image-block`}
       data-align={align}
       data-width={dragWidth ?? width}
       data-selected={showControls || undefined}
@@ -451,7 +451,9 @@ function SingleImageNodeView({
           ))}
       </div>
       {(showControls || caption) && (
-        <figcaption className={styles.imageFigcaption}>
+        <figcaption
+          className={`${styles.imageFigcaption} markdown-image-caption`}
+        >
           {showControls && editor.isEditable ? (
             <input
               aria-label="캡션"
@@ -542,7 +544,7 @@ function ImageGroupNodeView({
     <NodeViewWrapper
       as="figure"
       {...movement.wrapperProps}
-      className={styles.imageGroupFigure}
+      className={`${styles.imageGroupFigure} content-image-block`}
       data-selected={showControls || undefined}
       contentEditable={false}
       onClick={select}
@@ -633,7 +635,9 @@ function ImageGroupNodeView({
         onRemoveClick={editor.isEditable ? remove : undefined}
       />
       {(showControls || caption) && (
-        <figcaption className={styles.imageFigcaption}>
+        <figcaption
+          className={`${styles.imageFigcaption} markdown-image-caption`}
+        >
           {showControls && editor.isEditable ? (
             <input
               aria-label="묶음 캡션"

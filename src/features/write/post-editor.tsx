@@ -137,6 +137,7 @@ export function PostEditor({
     },
     editorProps: {
       attributes: {
+        class: "prose",
         role: "textbox",
         "aria-label": "본문 편집기",
         "aria-multiline": "true",

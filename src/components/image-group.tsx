@@ -209,7 +209,7 @@ export function ImageGroupDisplay({
           </span>
         </>
       )}
-      {caption && <span className={styles.caption}>{caption}</span>}
+      {caption && <span className="markdown-image-caption">{caption}</span>}
     </span>
   );
 }
