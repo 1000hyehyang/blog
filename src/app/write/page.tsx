@@ -5,7 +5,7 @@ import {
   getStoredPost,
   getStoredPosts,
   usesGitHubStorage,
-} from "@/infrastructure/github/posts";
+} from "@/infrastructure/github/post-store";
 import { PostEditor } from "@/features/write/post-editor";
 import { pinnedPosts } from "@/domain/pinned-posts";
 import { DraftEditor } from "@/features/write/draft-editor";

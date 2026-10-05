@@ -23,6 +23,29 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it("keeps intrinsic image sizes through Markdown and HTML round trips", () => {
+    const editor = new Editor({ extensions: editorExtensions() });
+    const dimensions = { width: 800, height: 600 };
+    editor.commands.insertContent({
+      type: "image",
+      attrs: { src: "https://example.com/photo.png", alt: "photo", dimensions },
+    });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      editor.commands.setContent(editor.getMarkdown(), {
+        contentType: "markdown",
+      });
+      expect(
+        editor.getJSON().content?.find((node) => node.type === "image")?.attrs
+          ?.dimensions,
+      ).toEqual(dimensions);
+      editor.commands.setContent(editor.getHTML());
+      expect(
+        editor.getJSON().content?.find((node) => node.type === "image")?.attrs
+          ?.dimensions,
+      ).toEqual(dimensions);
+    }
+    editor.destroy();
+  });
   it("preserves every empty paragraph through publishing and repeated reopening", () => {
     const editor = new Editor({
       extensions: editorExtensions(),

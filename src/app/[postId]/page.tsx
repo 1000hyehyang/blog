@@ -1,3 +1,4 @@
+import { extractHeadings } from "@/lib/content/headings";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -11,14 +12,10 @@ import { PostTableOfContents } from "@/features/post/post-table-of-contents";
 import { RelatedPosts } from "@/features/post/related-posts";
 import {
   getAllPosts,
-  getPost,
+  getPostContent,
   getPostSummary,
 } from "@/infrastructure/github/posts";
-import {
-  extractHeadings,
-  resolvePostModifiedAt,
-  resolvePostPublishedAt,
-} from "@/lib/content";
+import { resolvePostModifiedAt, resolvePostPublishedAt } from "@/lib/content";
 import { getRelatedPosts } from "@/features/post/post-queries";
 import { routes } from "@/lib/routes";
 import {
@@ -72,7 +69,7 @@ export async function generateMetadata({
 
 export default async function PostPage({ params }: PostPageProps) {
   const postId = (await params).postId;
-  const post = await getPost(postId);
+  const post = await getPostContent(postId);
   if (!post || !post.published) notFound();
   const posts = await getAllPosts();
   const relatedPosts = getRelatedPosts(posts, post);

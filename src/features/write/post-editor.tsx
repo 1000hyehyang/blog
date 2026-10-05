@@ -1,43 +1,21 @@
 "use client";
 
-import { useEditor, useEditorState } from "@tiptap/react";
-import { upload } from "@vercel/blob/client";
+import { useEditor } from "@tiptap/react";
 import { useRouter } from "next/navigation";
-import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  List,
-  ListOrdered,
-  ListTodo,
-  Quote,
-  Table2,
-  Undo2,
-  Redo2,
-  ImagePlus,
-  X,
-} from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
-import {
-  IMAGE_UPLOAD_EXTENSIONS,
-  IMAGE_UPLOAD_TYPES,
-  MAX_IMAGE_UPLOAD_BYTES,
-} from "@/config/images";
-import {
-  reservedDraftSlugs,
-  saveDraft,
-  removeDraft,
-  type LocalDraft,
-} from "./local-drafts";
-import { nextPostSlug, type StoredPost } from "@/lib/content/post-file";
+import { imageFileError, uploadPostImage } from "./image-upload";
+import { IMAGE_UPLOAD_TYPES } from "@/config/images";
+import type { LocalDraft } from "./local-drafts";
+import type { PostFields, StoredPost } from "@/domain/post";
+import { usePostPersistence } from "./use-post-persistence";
 import { motion } from "framer-motion";
 import { PinnedCards, WriterCheckbox, WriterSelect } from "./writer-controls";
-import { pinnedConflictSchema, type PinnedPost } from "@/domain/pinned-posts";
+import type { PinnedPost } from "@/domain/pinned-posts";
 import { usePinnedOrder } from "./use-pinned-order";
 import { TagInput } from "./tag-input";
-import { IconButton } from "./icon-button";
+import { EditorToolbar } from "./editor-toolbar";
 import { EditorBodySkeleton } from "./writer-skeleton";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { TableOverlay } from "./table-overlay";
@@ -47,7 +25,7 @@ import type { GroupImage, ImageGroupLayout } from "@/lib/image-group";
 import { parseExternalHttpUrl } from "@/lib/link-preview";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
-import { StatefulButton, type ButtonState } from "./stateful-button";
+import { StatefulButton } from "./stateful-button";
 
 const emptyFields = {
   title: "",
@@ -69,7 +47,6 @@ type Props = {
   postSlugs?: string[];
   draft?: LocalDraft;
 };
-type Action = "publish" | "draft" | "delete";
 export function PostEditor({
   initial,
   initialSha,
@@ -79,9 +56,11 @@ export function PostEditor({
   draft,
 }: Props) {
   const router = useRouter();
-  const [fields, setFields] = useState({ ...emptyFields, ...initial });
-  const generatedSlug = useRef(initial?.slug ?? "");
-  const postId = useRef(initial?.id ?? "");
+  const [fields, setFields] = useState<PostFields>({
+    ...emptyFields,
+    ...initial,
+  });
+  const bodyChanged = useRef(false);
   const currentPin = initial?.slug ?? "__current__";
   const pins = usePinnedOrder(
     pinned,
@@ -93,16 +72,7 @@ export function PostEditor({
   const [tags, setTags] = useState(
     initial?.tags.length ? `${initial.tags.join(",")},` : "",
   );
-  const [sha, setSha] = useState(initialSha);
-  const [draftVersion, setDraftVersion] = useState(draft?.savedAt ?? null);
   const [dirty, setDirty] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const busyRef = useRef(false);
-  const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState<{
-    action: Action;
-    state: ButtonState;
-  } | null>(null);
   const publishDialog = useRef<HTMLDialogElement>(null);
   const [publishMode, setPublishMode] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -114,6 +84,33 @@ export function PostEditor({
     error: string;
   } | null>(null);
   const uploadTarget = useRef<"body" | "coverImage" | "galleryImage">("body");
+  const {
+    sha,
+    busy,
+    message,
+    setMessage,
+    setFeedback,
+    start,
+    finish,
+    buttonState,
+    allocateId,
+    save,
+    storeDraft,
+    remove,
+  } = usePostPersistence({
+    initial,
+    initialSha,
+    draft,
+    postSlugs,
+    currentPin,
+    pins,
+    readFields: currentFields,
+    onSaved: (post) => {
+      if (post) setFields(post);
+      setDirty(false);
+      publishDialog.current?.close();
+    },
+  });
   const unsupported = useMemo(
     () => hasUnsupportedHtml(initial?.body ?? ""),
     [initial?.body],
@@ -124,16 +121,17 @@ export function PostEditor({
     content: initial?.body ?? "",
     contentType: "markdown",
     immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
     editable: !unsupported,
-    onUpdate: ({ editor, transaction }) => {
+    onUpdate: ({ transaction }) => {
       if (!transaction.docChanged) return;
-      setFields((current) => ({
-        ...current,
-        body: editor.getMarkdown(),
-        coverImage: {
-          src: nextCoverImageSrc(transaction, current.coverImage.src),
-        },
-      }));
+      bodyChanged.current = true;
+      setFields((current) => {
+        const src = nextCoverImageSrc(transaction, current.coverImage.src);
+        return src === current.coverImage.src
+          ? current
+          : { ...current, coverImage: { src } };
+      });
       setDirty(true);
     },
     editorProps: {
@@ -182,24 +180,6 @@ export function PostEditor({
       },
     },
   });
-  const active = useEditorState({
-    editor,
-    selector: ({ editor }) => {
-      return {
-        bold: editor?.isActive("bold"),
-        italic: editor?.isActive("italic"),
-        underline: editor?.isActive("underline"),
-        strike: editor?.isActive("strike"),
-        bulletList: editor?.isActive("bulletList"),
-        orderedList: editor?.isActive("orderedList"),
-        taskList: editor?.isActive("taskList"),
-        blockquote: editor?.isActive("blockquote"),
-        codeBlock: editor?.isActive("codeBlock"),
-        codeLanguage: editor?.getAttributes("codeBlock").language as
-          string | undefined,
-      };
-    },
-  });
   useEffect(() => {
     editor?.setEditable(!busy && !unsupported);
   }, [editor, busy, unsupported]);
@@ -238,25 +218,6 @@ export function PostEditor({
     };
   }, [dirty, busy]);
 
-  function start(action?: Action) {
-    if (busyRef.current) return false;
-    busyRef.current = true;
-    setBusy(true);
-    setMessage("");
-    setFeedback(action ? { action, state: "loading" } : null);
-    return true;
-  }
-  function finish() {
-    busyRef.current = false;
-    setBusy(false);
-  }
-  async function showSuccess(action: Action) {
-    setFeedback({ action, state: "success" });
-    await new Promise((resolve) => setTimeout(resolve, 450));
-  }
-  function buttonState(action: Action): ButtonState {
-    return feedback?.action === action ? feedback.state : "idle";
-  }
   function update(values: Partial<typeof fields>) {
     setFields((current) => ({ ...current, ...values }));
     setDirty(true);
@@ -267,9 +228,10 @@ export function PostEditor({
     );
   }
   function currentFields() {
+    if (!editor) return null;
     return {
       ...fields,
-      id: allocateId(),
+      body: bodyChanged.current && editor ? editor.getMarkdown() : fields.body,
       tags: [
         ...new Set(
           tags
@@ -280,42 +242,8 @@ export function PostEditor({
       ],
     };
   }
-  function allocateId() {
-    return (postId.current ||= crypto.randomUUID());
-  }
-  function allocateSlug() {
-    if (generatedSlug.current) return generatedSlug.current;
-    try {
-      generatedSlug.current = nextPostSlug([
-        ...postSlugs,
-        ...reservedDraftSlugs(),
-      ]);
-      return generatedSlug.current;
-    } catch {
-      throw new Error("임시 저장 글 번호를 확인하지 못했습니다.");
-    }
-  }
-
-  function imageFileError(file: File) {
-    return !IMAGE_UPLOAD_TYPES.includes(file.type) ||
-      !file.size ||
-      file.size > MAX_IMAGE_UPLOAD_BYTES
-      ? "8MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요."
-      : "";
-  }
-  async function uploadImageFile(file: File): Promise<GroupImage> {
-    const error = imageFileError(file);
-    if (error) throw new Error(error);
-    const blob = await upload(
-      `posts/${fields.category.slug}/${allocateId()}/${crypto.randomUUID()}.${IMAGE_UPLOAD_EXTENSIONS[file.type]}`,
-      file,
-      {
-        access: "public",
-        handleUploadUrl: "/api/write/images",
-        contentType: file.type,
-      },
-    );
-    return { src: blob.url, alt: file.name.replace(/\.[^.]+$/, "") };
+  function uploadImageFile(file: File): Promise<GroupImage> {
+    return uploadPostImage(file, fields.category.slug, allocateId());
   }
   function queueImages(
     files: File[],
@@ -421,135 +349,6 @@ export function PostEditor({
     fileInput.current?.click();
   }
 
-  async function save(published: boolean) {
-    if (!editor || pins.conflict || !start("publish")) return;
-    try {
-      const slug = allocateSlug();
-      const order = pinnedOrder
-        .filter(
-          (value) => value !== currentPin || (fields.featured && published),
-        )
-        .map((value) => (value === currentPin ? slug : value));
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(slug)}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            post: { ...currentFields(), published },
-            sha,
-            pinned: { base: pins.base, order },
-          }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        const conflict = pinnedConflictSchema.safeParse(data.conflict);
-        if (response.status === 409 && conflict.success)
-          pins.setConflict(conflict.data.posts);
-        throw new Error(data.message);
-      }
-      setSha(data.sha);
-      setFields(data.post);
-      setDirty(false);
-      if (draftVersion) {
-        try {
-          removeDraft(slug, draftVersion);
-          setDraftVersion(null);
-        } catch {
-          setMessage(
-            "발행했습니다. 남아 있는 임시 저장본은 글 관리에서 확인해 주세요.",
-          );
-        }
-      }
-      await showSuccess("publish");
-      publishDialog.current?.close();
-      router.replace("/manage");
-      router.refresh();
-    } catch (error) {
-      setFeedback({ action: "publish", state: "error" });
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "저장에 실패했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.",
-      );
-    } finally {
-      finish();
-    }
-  }
-  async function storeDraft() {
-    if (!editor || !start("draft")) return;
-    try {
-      const slug = allocateSlug();
-      const now = new Date().toISOString();
-      const value: LocalDraft = {
-        post: {
-          createdAt: initial?.createdAt ?? now,
-          lastEditedAt: initial?.lastEditedAt ?? null,
-          commentsCount: 0,
-          reactionsCount: 0,
-          ...initial,
-          ...currentFields(),
-          title: fields.title.trim() || "제목 없음",
-          slug,
-        },
-        sha,
-        savedAt: now,
-        pinned: pins.posts,
-        order: pinnedOrder.map((value) =>
-          value === currentPin ? slug : value,
-        ),
-      };
-      saveDraft(value, draftVersion);
-      setDraftVersion(now);
-      setDirty(false);
-      await showSuccess("draft");
-      publishDialog.current?.close();
-      router.replace(`/write?draft=${encodeURIComponent(slug)}`);
-    } catch (error) {
-      setFeedback({ action: "draft", state: "error" });
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "임시 저장하지 못했습니다. 현재 내용은 유지됩니다.",
-      );
-    } finally {
-      finish();
-    }
-  }
-  async function remove() {
-    if (
-      !initial ||
-      !sha ||
-      !window.confirm("이 글을 삭제할까요?") ||
-      !start("delete")
-    )
-      return;
-    try {
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(initial.slug)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sha }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      setDirty(false);
-      await showSuccess("delete");
-      publishDialog.current?.close();
-      router.replace("/manage");
-      router.refresh();
-    } catch (error) {
-      setFeedback({ action: "delete", state: "error" });
-      setMessage(
-        error instanceof Error ? error.message : "삭제에 실패했습니다.",
-      );
-    } finally {
-      finish();
-    }
-  }
   async function logout() {
     if (!leave() || !start()) return;
     try {
@@ -569,127 +368,20 @@ export function PostEditor({
     setFeedback(null);
     publishDialog.current?.showModal();
   }
-  const formattingDisabled = !editor || unsupported;
   const categorySeries =
     getCategoryNavigation(fields.category.slug)?.series ?? [];
-  const toolbar = (
-    <fieldset className={styles.toolbar} disabled={busy} aria-label="본문 서식">
-      <IconButton
-        label="이미지"
-        disabled={formattingDisabled}
-        onClick={() => chooseImage("body")}
-      >
-        <ImagePlus size={20} />
-      </IconButton>
-      <span className={styles.fontLabel}>기본 서체</span>
-      <span className={styles.separator} />
-      {(
-        [
-          [
-            "굵게",
-            Bold,
-            active?.bold,
-            () => editor?.chain().focus().toggleBold().run(),
-          ],
-          [
-            "기울임",
-            Italic,
-            active?.italic,
-            () => editor?.chain().focus().toggleItalic().run(),
-          ],
-          [
-            "밑줄",
-            Underline,
-            active?.underline,
-            () => editor?.chain().focus().toggleUnderline().run(),
-          ],
-          [
-            "취소선",
-            Strikethrough,
-            active?.strike,
-            () => editor?.chain().focus().toggleStrike().run(),
-          ],
-          [
-            "인용",
-            Quote,
-            active?.blockquote,
-            () => editor?.chain().focus().toggleBlockquote().run(),
-          ],
-          [
-            "목록",
-            List,
-            active?.bulletList,
-            () => editor?.chain().focus().toggleBulletList().run(),
-          ],
-          [
-            "번호 목록",
-            ListOrdered,
-            active?.orderedList,
-            () => editor?.chain().focus().toggleOrderedList().run(),
-          ],
-          [
-            "체크리스트",
-            ListTodo,
-            active?.taskList,
-            () => editor?.chain().focus().toggleTaskList().run(),
-          ],
-          [
-            "표",
-            Table2,
-            false,
-            () =>
-              editor
-                ?.chain()
-                .focus()
-                .insertTable({ rows: 3, cols: 3, withHeaderRow: false })
-                .run(),
-          ],
-          [
-            "실행 취소",
-            Undo2,
-            false,
-            () => editor?.chain().focus().undo().run(),
-          ],
-          [
-            "다시 실행",
-            Redo2,
-            false,
-            () => editor?.chain().focus().redo().run(),
-          ],
-        ] as const
-      ).map(([label, Icon, pressed, command]) => (
-        <IconButton
-          key={label}
-          label={label}
-          aria-pressed={Boolean(pressed)}
-          disabled={formattingDisabled}
-          onClick={command}
-        >
-          <Icon size={19} strokeWidth={1.7} />
-        </IconButton>
-      ))}
-      {active?.codeBlock && (
-        <input
-          className={styles.codeLanguage}
-          aria-label="코드 언어"
-          placeholder="언어 (ts, js, python…)"
-          value={active.codeLanguage ?? ""}
-          maxLength={32}
-          disabled={formattingDisabled}
-          onChange={(event) =>
-            editor?.commands.updateAttributes("codeBlock", {
-              language: event.target.value.toLowerCase().replace(/\s/g, ""),
-            })
-          }
-        />
-      )}
-    </fieldset>
-  );
 
   return (
     <div className={styles.writer}>
       <h1 className="sr-only">{initial ? "글 수정" : "글쓰기"}</h1>
-      <WriterHeader onLogout={logout}>{toolbar}</WriterHeader>
+      <WriterHeader onLogout={logout}>
+        <EditorToolbar
+          editor={editor}
+          busy={busy}
+          unsupported={unsupported}
+          onChooseImage={() => chooseImage("body")}
+        />
+      </WriterHeader>
       <div className={styles.canvas}>
         <fieldset disabled={busy} className={styles.composition}>
           <div className={styles.categorySelectors}>

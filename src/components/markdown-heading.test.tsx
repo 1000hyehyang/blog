@@ -3,7 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MarkdownContent } from "./markdown";
-import { extractHeadings, toSlug } from "@/lib/content";
+import { toSlug } from "@/lib/content";
+import { extractHeadings } from "@/lib/content/headings";
 import { getReactNodeText } from "@/lib/react/get-node-text";
 
 vi.mock("server-only", () => ({}));
@@ -11,6 +12,29 @@ vi.mock("server-only", () => ({}));
 afterEach(() => cleanup());
 
 describe("MarkdownContent headings", () => {
+  it("ignores fenced code and shares unique IDs for entities, nested and Setext headings", () => {
+    expect(extractHeadings("~~~md\n# fake\n~~~")).toEqual([]);
+    const source =
+      "## Repeat\n\n## Repeat\n\n## Repeat-2\n\n## A &amp; B\n\nTitle\n=====\n\n> ## ++Nested++\n\n## !!!";
+    const headings = extractHeadings(source);
+    expect(headings.map(({ id }) => id)).toEqual([
+      "repeat",
+      "repeat-2",
+      "repeat-2-2",
+      "a-b",
+      "title",
+      "nested",
+      "section",
+    ]);
+    const { container } = render(<MarkdownContent source={source} />);
+    expect(
+      Array.from(
+        container.querySelectorAll(".markdown-heading"),
+        (node) => node.id,
+      ),
+    ).toEqual(headings.map(({ id }) => id));
+    expect(headings[3].text).toBe("A & B");
+  });
   it("keeps headings inside tight lists out of paragraph wrappers", () => {
     const html = renderToStaticMarkup(
       <MarkdownContent

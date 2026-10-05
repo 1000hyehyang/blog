@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isWriter } from "@/lib/writer-auth";
-import { getStoredPostsWithSha } from "@/infrastructure/github/posts";
+import { getStoredPostsWithSha } from "@/infrastructure/github/post-store";
 import { WriterHeader } from "@/features/write/writer-header";
 import { ManagePosts } from "@/features/write/manage-posts";
 import styles from "@/features/write/writer.module.css";

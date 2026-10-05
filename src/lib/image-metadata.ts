@@ -2,12 +2,28 @@
 const prefix = "blog-image:v1:";
 
 export type ImageAlignment = "left" | "center" | "right";
+export type ImageDimensions = { width: number; height: number };
+
+export function readImageDimensions(
+  value: unknown,
+): ImageDimensions | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const { width, height } = value as ImageDimensions;
+  return Number.isSafeInteger(width) &&
+    width > 0 &&
+    Number.isSafeInteger(height) &&
+    height > 0
+    ? { width, height }
+    : undefined;
+}
+
 export type ImageMetadata = {
   align: ImageAlignment;
   width: number;
   caption: string;
   title: string | null;
   batchId: string | null;
+  dimensions?: ImageDimensions;
 };
 
 export function readImageMetadata(
@@ -36,7 +52,11 @@ export function readImageMetadata(
           !/^[a-f0-9-]{36}$/.test(value.batchId)))
     )
       return fallback;
-    return { ...value, batchId: value.batchId ?? null };
+    return {
+      ...value,
+      batchId: value.batchId ?? null,
+      dimensions: readImageDimensions(value.dimensions),
+    };
   } catch {
     return fallback;
   }
@@ -47,7 +67,8 @@ export function writeImageMetadata(value: ImageMetadata): string | null {
     value.align === "center" &&
     value.width === 100 &&
     !value.caption &&
-    !value.batchId
+    !value.batchId &&
+    !value.dimensions
   )
     return value.title;
   return prefix + encodeURIComponent(JSON.stringify(value));

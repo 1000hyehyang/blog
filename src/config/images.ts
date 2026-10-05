@@ -19,17 +19,25 @@ export const remoteImagePatterns = [
     hostname: "github.com",
     pathname: "/user-attachments/**",
   },
+  {
+    protocol: "https" as const,
+    hostname: "*.public.blob.vercel-storage.com",
+    pathname: "/posts/**",
+  },
 ];
 
 export function canOptimizeImage(src: string) {
-  if (src.startsWith("/")) return true;
+  if (/^\/(?!\/)/.test(src)) return true;
 
   try {
     const url = new URL(src);
     return remoteImagePatterns.some(
       ({ protocol, hostname, pathname }) =>
         url.protocol === `${protocol}:` &&
-        url.hostname === hostname &&
+        !url.port &&
+        (hostname.startsWith("*.")
+          ? url.hostname.slice(url.hostname.indexOf(".")) === hostname.slice(1)
+          : url.hostname === hostname) &&
         (pathname === "/**" || url.pathname.startsWith(pathname.slice(0, -2))),
     );
   } catch {

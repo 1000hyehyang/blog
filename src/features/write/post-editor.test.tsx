@@ -11,6 +11,8 @@ import { PostEditor } from "./post-editor";
 import type { StoredPost } from "@/lib/content/post-file";
 import { readDraft, saveDraft, type LocalDraft } from "./local-drafts";
 import { DraftEditor } from "./draft-editor";
+import { Editor } from "@tiptap/react";
+import { act } from "@testing-library/react";
 
 const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
@@ -38,6 +40,24 @@ const initial: StoredPost = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubGlobal(
+    "Image",
+    class {
+      src = "";
+      naturalWidth = 800;
+      naturalHeight = 600;
+      decode = async () => {};
+    },
+  );
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static createObjectURL() {
+        return "blob:test-image";
+      }
+      static revokeObjectURL() {}
+    },
+  );
   mocks.upload.mockResolvedValue({
     url: "https://test.public.blob.vercel-storage.com/image.png",
   });
@@ -67,6 +87,32 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer data preservation", () => {
+  it("serializes the latest body only when saving, including edits immediately before save", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ message: "conflict" }, { status: 409 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    const element = await screen.findByRole("textbox", { name: "본문 편집기" });
+    const editor = (element as HTMLElement & { editor: Editor }).editor;
+    const serialize = vi.spyOn(editor, "getMarkdown");
+    act(() => {
+      editor.commands.insertContentAt(1, "first");
+      editor.commands.insertContentAt(1, "latest");
+    });
+    expect(serialize).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    expect(serialize).toHaveBeenCalledOnce();
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).post.body).toContain(
+      "latestfirst",
+    );
+  });
   it("keeps the image folder ID through drafts and publishing, using the category selected for each upload", async () => {
     const fetchMock = vi
       .fn()

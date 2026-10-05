@@ -5,11 +5,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import { CopyCodeButton } from "@/components/copy-code-button";
 import { ExternalLinkPreview } from "@/features/post/external-link-preview";
 import { YouTubeEmbed } from "@/features/post/youtube-embed";
-import {
-  type MarkdownHeadingLevel,
-  toBodyHeadingLevel,
-  toSlug,
-} from "@/lib/content";
+import { type MarkdownHeadingLevel, toBodyHeadingLevel } from "@/lib/content";
 import { parseExternalHttpUrl } from "@/lib/link-preview";
 import {
   getMarkdownCodeLanguage,
@@ -18,21 +14,15 @@ import {
 import { getStandaloneExternalUrl } from "@/lib/markdown-link";
 import { markdownPlugins } from "@/lib/markdown-plugins";
 import { rehypeContentLayout } from "@/lib/markdown-layout";
-import { getReactNodeText } from "@/lib/react/get-node-text";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import { hasImageSettings, readImageMetadata } from "@/lib/image-metadata";
 import { readImageGroup } from "@/lib/image-group";
 import { ImageGroupDisplay } from "./image-group";
 import { ImageViewer } from "./image-viewer";
 
-function getHeadingText(children: ReactNode) {
-  return getReactNodeText(children).replace(/\s+/g, " ").trim();
-}
-
 function createHeading(level: MarkdownHeadingLevel) {
-  return function MarkdownHeading({ children }: { children?: ReactNode }) {
+  return function MarkdownHeading({ children, id }: ComponentProps<"h2">) {
     const Tag = `h${toBodyHeadingLevel(level)}` as const;
-    const id = level <= 3 ? toSlug(getHeadingText(children)) : undefined;
 
     return (
       <Tag id={id} className={`markdown-heading markdown-heading--${level}`}>
@@ -123,6 +113,8 @@ function MarkdownImage({ src, alt, title }: ComponentProps<"img">) {
       alt={alt ?? ""}
       title={settings.title ?? undefined}
       data-image-caption={settings.caption || undefined}
+      width={settings.dimensions?.width}
+      height={settings.dimensions?.height}
       loading="lazy"
     />
   );

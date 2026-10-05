@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { ZodError } from "zod";
 import { isWriter, sameOrigin } from "./writer-auth";
 import { readLimitedResponseText } from "./limited-response";
-import { PostStoreError } from "@/infrastructure/github/posts";
+import { PostStoreError } from "@/infrastructure/github/post-store";
 
 export async function readWriterJson(
   request: Request,

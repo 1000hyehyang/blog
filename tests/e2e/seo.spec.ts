@@ -51,11 +51,14 @@ test("공개 페이지에 사이트와 글 메타데이터를 제공한다", asy
   );
   expect(breadcrumbs["@type"]).toBe("BreadcrumbList");
   expect(breadcrumbs.itemListElement.at(-1).item).toBe(canonical);
-  await expect(
-    page
-      .getByRole("navigation", { name: "현재 위치" })
-      .getByRole("link", { name: "Development" }),
-  ).toHaveAttribute("href", "/category/development");
+  expect(breadcrumbs.itemListElement).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "Development",
+        item: new URL("/category/development", canonical!).href,
+      }),
+    ]),
+  );
 });
 
 test("페이지별 대표 URL을 유지하고 정렬·검색·관리 화면은 색인하지 않는다", async ({

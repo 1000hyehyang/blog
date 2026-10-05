@@ -48,8 +48,10 @@ registerHooks({
 });
 
 try {
-  const { rebuildPostIndex, getStoredPostsWithSha } =
-    await import("../src/infrastructure/github/posts.ts");
+  const { rebuildPostIndex } =
+    await import("../src/infrastructure/github/post-mutations.ts");
+  const { getStoredPostsWithSha } =
+    await import("../src/infrastructure/github/post-store.ts");
   if (process.argv.includes("--check")) {
     if (process.env.CONTENT_SOURCE === "github")
       throw new Error(

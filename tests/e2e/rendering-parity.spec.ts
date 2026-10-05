@@ -8,7 +8,17 @@ const body = readFileSync("tests/fixtures/posts/post-8.md", "utf8").replace(
 );
 
 async function appearance(root: Locator, editing: boolean) {
-  return root.evaluate((element, editing) => {
+  return root.evaluate(async (element, editing) => {
+    await Promise.all(
+      Array.from(
+        element.querySelectorAll(".content-image-block img"),
+        async (node) => {
+          const image = node as HTMLImageElement;
+          image.loading = "eager";
+          await image.decode();
+        },
+      ),
+    );
     // 페이지 여백의 영향을 제외하고 같은 본문 폭에서 비교한다.
     element.style.width = `${Math.min(window.innerWidth - 48, 600)}px`;
     const selectors = {

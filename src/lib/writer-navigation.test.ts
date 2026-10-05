@@ -9,7 +9,7 @@ vi.mock("@/lib/writer-auth", () => ({
   isWriter: async () => mocks.authenticated,
   writerConfigured: () => true,
 }));
-vi.mock("@/infrastructure/github/posts", () => ({
+vi.mock("@/infrastructure/github/post-store", () => ({
   getStoredPost: mocks.read,
   getStoredPosts: mocks.read,
   getStoredPostsWithSha: mocks.read,

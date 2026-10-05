@@ -185,6 +185,7 @@ function adjacentPlainImages(editor: Editor, position: number) {
   const images = nodes.slice(first, last + 1).map(({ node }) => ({
     src: node.attrs.src as string,
     alt: (node.attrs.alt as string | null) ?? "",
+    ...(node.attrs.dimensions && { dimensions: node.attrs.dimensions }),
   }));
   return asImageGroup({ layout: "collage", images })
     ? {
@@ -211,7 +212,8 @@ function SingleImageNodeView({
   updateAttributes,
   getPos,
 }: NodeViewProps) {
-  const { src, alt, align, width, caption } = node.attrs as ImageAttrs;
+  const { src, alt, align, width, caption, dimensions } =
+    node.attrs as ImageAttrs;
   const movement = useImageMove({ editor, getPos });
   const context = useContext(ImageContext);
   const figure = useRef<HTMLElement>(null);
@@ -411,7 +413,7 @@ function SingleImageNodeView({
         data-current={showControls || undefined}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt ?? ""} draggable={false} />
+        <img src={src} alt={alt ?? ""} {...dimensions} draggable={false} />
         {editor.isEditable && (
           <ImagePhotoActions
             active={activeRepresentative}

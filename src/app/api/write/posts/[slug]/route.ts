@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { deletePost, savePost } from "@/infrastructure/github/posts";
+import { deletePost, savePost } from "@/infrastructure/github/post-mutations";
 import { slugSchema } from "@/lib/content/post-file";
 import { pinnedOrderSchema } from "@/domain/pinned-posts";
 import {

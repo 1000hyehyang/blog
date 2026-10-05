@@ -1,7 +1,13 @@
+import { readImageDimensions, type ImageDimensions } from "./image-metadata";
+
 const prefix = "blog-image-group:v1:";
 
 export type ImageGroupLayout = "individual" | "collage" | "slide";
-export type GroupImage = { src: string; alt: string };
+export type GroupImage = {
+  src: string;
+  alt: string;
+  dimensions?: ImageDimensions;
+};
 export type ImageGroup = {
   layout: ImageGroupLayout;
   images: GroupImage[];
@@ -30,7 +36,13 @@ export function asImageGroup(value: unknown): ImageGroup | null {
     return null;
   return {
     layout: group.layout as ImageGroupLayout,
-    images: group.images as GroupImage[],
+    images: group.images.map(({ src, alt, dimensions }) => ({
+      src,
+      alt,
+      ...(readImageDimensions(dimensions) && {
+        dimensions: readImageDimensions(dimensions),
+      }),
+    })),
     ...(group.caption ? { caption: group.caption } : {}),
   };
 }

@@ -21,6 +21,7 @@ import {
 import {
   hasImageSettings,
   readImageMetadata,
+  readImageDimensions,
   writeImageMetadata,
   type ImageMetadata,
 } from "@/lib/image-metadata";
@@ -145,6 +146,15 @@ const EditableImage = Image.extend({
         parseHTML: (element: HTMLElement) =>
           image(element)?.getAttribute("data-blog-image-batch"),
       },
+      dimensions: {
+        default: null,
+        rendered: false,
+        parseHTML: (element: HTMLElement) =>
+          readImageDimensions({
+            width: Number(image(element)?.getAttribute("width")),
+            height: Number(image(element)?.getAttribute("height")),
+          }) ?? null,
+      },
       layout: {
         default: null,
         parseHTML: (element: HTMLElement) =>
@@ -187,12 +197,21 @@ const EditableImage = Image.extend({
       return wrap([
         "figure",
         { "data-blog-image-group": writeImageGroup(group) },
-        ...group.images.map((item) => ["img", item]),
+        ...group.images.map(({ dimensions, ...item }) => [
+          "img",
+          { ...item, ...dimensions },
+        ]),
         ...(group.caption ? [["figcaption", {}, group.caption]] : []),
       ]);
     const image = [
       "img",
-      { src, alt, title, "data-blog-image-batch": batchId },
+      {
+        src,
+        alt,
+        title,
+        ...settings.dimensions,
+        "data-blog-image-batch": batchId,
+      },
     ] as const;
     if (!hasImageSettings(settings)) return wrap(image);
     return wrap([

@@ -1,3 +1,5 @@
+import { savePost, deletePost, rebuildPostIndex } from "./post-mutations";
+import { getStoredPostsWithSha, getStoredPosts } from "./post-store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, readdir } from "node:fs/promises";
 import {
@@ -19,17 +21,11 @@ import {
 } from "@/lib/content/post-index";
 import {
   getAllPosts,
-  getPost,
   getPostContent,
   getRecentPostContents,
   getPostSummary,
   getPosts,
   searchPosts,
-  savePost,
-  deletePost,
-  getStoredPostsWithSha,
-  getStoredPosts,
-  rebuildPostIndex,
 } from "./posts";
 import { invalidatePosts } from "@/lib/writer-api";
 import { cacheTag, revalidateTag } from "next/cache";
@@ -200,7 +196,9 @@ describe("Markdown store", () => {
       sample.id,
     ]);
     expect(withCommentCounts).not.toHaveBeenCalled();
-    await getPost(sample.id);
+    await getPostSummary(sample.id);
+    expect(withCommentCounts).not.toHaveBeenCalled();
+    await getPosts();
     expect(withCommentCounts).toHaveBeenCalledOnce();
   });
   it("preserves first publication and only advances modification dates for content changes", async () => {
@@ -292,8 +290,8 @@ describe("Markdown store", () => {
     ).toHaveLength(writes);
   });
   it("looks up published posts by ID rather than storage slug and omits bodies from lists", async () => {
-    expect((await getPost("fixture-id-8"))?.slug).toBe("post-8");
-    expect(await getPost("post-8")).toBeNull();
+    expect((await getPostContent("fixture-id-8"))?.slug).toBe("post-8");
+    expect(await getPostContent("post-8")).toBeNull();
     expect(await getPostSummary("fixture-id-8")).not.toHaveProperty("body");
     const posts = await getAllPosts();
     expect(posts).toHaveLength(8);
@@ -358,7 +356,7 @@ describe("Markdown store", () => {
     expect(await getAllPosts()).toEqual([]);
     expect(await getStoredPostsWithSha()).toEqual([]);
     expect((await searchPosts("body")).totalCount).toBe(0);
-    expect(await getPost(sample.id)).toBeNull();
+    expect(await getPostContent(sample.id)).toBeNull();
     expect(
       fetchMock.mock.calls.some(([url]) =>
         /\/git\/(trees|blobs)\/|\/contents\/content\/posts/.test(url),
@@ -500,7 +498,7 @@ describe("indexed reads and immediate writes", () => {
       ),
     ).toBe(false);
     const count = fetchMock.mock.calls.length;
-    expect((await getPost("id-4300"))?.body).toBe("Body 4300");
+    expect((await getPostContent("id-4300"))?.body).toBe("Body 4300");
     expect(
       fetchMock.mock.calls
         .slice(count)
@@ -538,7 +536,7 @@ describe("indexed reads and immediate writes", () => {
       new Set([...first.posts, ...second.posts].map(({ slug }) => slug)).size,
     ).toBe(24);
     expect((await searchPosts("private-secret")).totalCount).toBe(0);
-    expect(await getPost("private")).toBeNull();
+    expect(await getPostContent("private")).toBeNull();
     expect(
       fetchMock.mock.calls.some(([url]) =>
         url.includes("/contents/content/posts"),
@@ -559,7 +557,7 @@ describe("indexed reads and immediate writes", () => {
     });
     const { files } = githubStore([sample]);
     await getPosts();
-    await getPost("a");
+    await getPostContent("a");
     await searchPosts("body");
     const result = await savePost(
       "a",
@@ -576,7 +574,7 @@ describe("indexed reads and immediate writes", () => {
     expect(cacheTag).toHaveBeenCalledWith("posts");
     expect(revalidateTag).toHaveBeenCalledWith("posts", { expire: 0 });
     expect(result.post.category.name).toBe("Development");
-    expect((await getPost("a"))?.body).toBe("완전히 새 본문");
+    expect((await getPostContent("a"))?.body).toBe("완전히 새 본문");
     expect((await getPosts({ category: "art" })).posts).toEqual([]);
     expect(
       (await getPosts({ category: "development", series: "fixture-series" }))
@@ -590,7 +588,7 @@ describe("indexed reads and immediate writes", () => {
   });
   it("removes deleted and unpublished articles from the catalog, detail, search, and cached reads", async () => {
     const { files } = githubStore([sample]);
-    await getPost("a");
+    await getPostContent("a");
     await searchPosts("body");
     const unpublished = await savePost(
       "a",
@@ -599,7 +597,7 @@ describe("indexed reads and immediate writes", () => {
     );
     invalidatePosts();
     expect(await getAllPosts()).toEqual([]);
-    expect(await getPost("a")).toBeNull();
+    expect(await getPostContent("a")).toBeNull();
     expect((await searchPosts("body")).totalCount).toBe(0);
     await deletePost("a", unpublished.sha);
     invalidatePosts();
@@ -711,7 +709,7 @@ describe("indexed reads and immediate writes", () => {
       ),
     ).toBe(false);
     expect(files.get("content/posts/a.md")).toBe(content);
-    expect((await getPost("a"))?.body).toBe(sample.body);
+    expect((await getPostContent("a"))?.body).toBe(sample.body);
   });
 });
 
