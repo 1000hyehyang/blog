@@ -20,6 +20,8 @@ import {
 import {
   getAllPosts,
   getPost,
+  getPostContent,
+  getRecentPostContents,
   getPostSummary,
   getPosts,
   searchPosts,
@@ -31,6 +33,7 @@ import {
 } from "./posts";
 import { invalidatePosts } from "@/lib/writer-api";
 import { cacheTag, revalidateTag } from "next/cache";
+import { withCommentCounts } from "./comment-counts";
 import * as site from "@/config/site";
 
 vi.mock("server-only", () => ({}));
@@ -41,7 +44,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 vi.mock("./comment-counts", () => ({
-  withCommentCounts: (posts: unknown) => posts,
+  withCommentCounts: vi.fn((posts: unknown) => posts),
 }));
 const sample: StoredPost = {
   id: "a",
@@ -63,6 +66,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
@@ -185,6 +189,84 @@ function githubStore(posts: StoredPost[], indexed = true) {
 }
 
 describe("Markdown store", () => {
+  it("reads public content for RSS without querying comments", async () => {
+    githubStore([
+      sample,
+      { ...sample, slug: "draft", id: "draft", published: false },
+    ]);
+    expect((await getPostContent(sample.id))?.body).toBe(sample.body);
+    expect(await getPostContent("draft")).toBeNull();
+    expect((await getRecentPostContents(10)).map((post) => post?.id)).toEqual([
+      sample.id,
+    ]);
+    expect(withCommentCounts).not.toHaveBeenCalled();
+    await getPost(sample.id);
+    expect(withCommentCounts).toHaveBeenCalledOnce();
+  });
+  it("preserves first publication and only advances modification dates for content changes", async () => {
+    githubStore([]);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+    const draft = await savePost(
+      "first",
+      { ...sample, id: undefined, published: false },
+      null,
+    );
+    expect(draft.post.publishedAt).toBeNull();
+    vi.setSystemTime(new Date("2026-02-01T00:00:00Z"));
+    const published = await savePost(
+      "first",
+      { ...draft.post, published: true },
+      draft.sha,
+    );
+    expect(published.post.createdAt).toBe(draft.post.createdAt);
+    expect(published.post.publishedAt).toBe("2026-02-01T00:00:00.000Z");
+    expect(published.post.lastEditedAt).toBeNull();
+    vi.setSystemTime(new Date("2026-03-01T00:00:00Z"));
+    const unchanged = await savePost("first", published.post, published.sha);
+    expect(unchanged.post.lastEditedAt).toBeNull();
+    const edited = await savePost(
+      "first",
+      { ...unchanged.post, body: "new body" },
+      unchanged.sha,
+    );
+    expect(edited.post.lastEditedAt).toBe("2026-03-01T00:00:00.000Z");
+    const privatePost = await savePost(
+      "first",
+      { ...edited.post, published: false },
+      edited.sha,
+    );
+    vi.setSystemTime(new Date("2026-04-01T00:00:00Z"));
+    const republished = await savePost(
+      "first",
+      { ...privatePost.post, published: true, featured: true },
+      privatePost.sha,
+    );
+    expect(republished.post.publishedAt).toBe(published.post.publishedAt);
+    expect(republished.post.lastEditedAt).toBe(edited.post.lastEditedAt);
+  });
+  it("does not repeat the first page for missing, filtered or exhausted cursors", async () => {
+    githubStore([
+      sample,
+      {
+        ...sample,
+        id: "b",
+        slug: "b",
+        category: { name: "Study", slug: "study" },
+      },
+      { ...sample, id: "private", slug: "private", published: false },
+    ]);
+    for (const after of ["missing", "private", "b"]) {
+      expect(await getPosts({ category: "art", after })).toMatchObject({
+        posts: [],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      });
+    }
+    expect((await getPosts({ after: "b" })).posts).toEqual([]);
+    expect((await searchPosts("title", { after: "missing" })).posts).toEqual(
+      [],
+    );
+  });
   it("publishes with the draft ID, keeps existing IDs immutable and rejects duplicate or invalid new IDs", async () => {
     const id = "b4300eb9-7058-4f2b-82e0-857745ccc2a9";
     const { fetchMock } = githubStore([]);

@@ -22,6 +22,7 @@ export interface Post {
   category: PostCategory;
   series?: string;
   createdAt: string;
+  publishedAt?: string | null;
   lastEditedAt: string | null;
   commentsCount: number;
   reactionsCount: number;
@@ -31,5 +32,12 @@ export type PostSummary = Omit<Post, "body">;
 
 export type PostPreview = Pick<
   Post,
-  "id" | "slug" | "title" | "excerpt" | "coverImage" | "category" | "createdAt"
+  | "id"
+  | "slug"
+  | "title"
+  | "excerpt"
+  | "coverImage"
+  | "category"
+  | "createdAt"
+  | "publishedAt"
 >;

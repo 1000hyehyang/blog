@@ -56,6 +56,7 @@ export function toPostPreview(post: PostSummary): PostPreview {
     coverImage: post.coverImage,
     category: post.category,
     createdAt: post.createdAt,
+    publishedAt: post.publishedAt,
   };
 }
 

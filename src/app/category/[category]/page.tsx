@@ -8,6 +8,7 @@ import { SeriesGrid } from "@/features/post/series-grid";
 import { summarizeSeries } from "@/features/post/post-queries";
 import { getAllPosts, getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
+import { missingPageMetadata } from "@/lib/seo";
 
 type CategoryPageProps = {
   params: Promise<{ category: string }>;
@@ -24,8 +25,13 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
   const navigation = getCategoryNavigation(category);
-  if (!navigation) notFound();
+  if (!navigation) return missingPageMetadata;
   const { cursor } = await searchParams;
+  const posts = await getAllPosts({ category });
+  if (cursor) {
+    const index = posts.findIndex((post) => post.slug === cursor);
+    if (index === -1 || index === posts.length - 1) return missingPageMetadata;
+  }
   const canonical = `${routes.category(category)}${cursor ? `?${new URLSearchParams({ cursor })}` : ""}`;
 
   const description = `${siteConfig.name}의 ${navigation.label} 글 모음. ${navigation.tagline}`;
@@ -34,6 +40,7 @@ export async function generateMetadata({
     title: `${navigation.label} 카테고리`,
     description,
     alternates: { canonical },
+    ...(!posts.length && { robots: { index: false, follow: true } }),
     openGraph: {
       type: "website",
       locale: "ko_KR",
@@ -66,6 +73,7 @@ export default async function CategoryPage({
     navigation.series.length ? getAllPosts({ category }) : Promise.resolve([]),
   ]);
   const series = summarizeSeries(seriesPosts, navigation);
+  if (cursor && !result.posts.length) notFound();
 
   return (
     <div className="page-shell">

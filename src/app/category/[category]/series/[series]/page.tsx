@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
 import { PostListing } from "@/features/post/post-listing";
-import { getPosts } from "@/infrastructure/github/posts";
+import { getAllPosts, getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
+import { missingPageMetadata } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ category: string; series: string }>;
@@ -21,8 +22,15 @@ export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
   const { category, series: slug } = await params;
-  const { navigation, series } = resolveSeries(category, slug);
+  const navigation = getCategoryNavigation(category);
+  const series = navigation?.series.find((item) => item.slug === slug);
+  if (!navigation || !series) return missingPageMetadata;
   const { cursor } = await searchParams;
+  const posts = await getAllPosts({ category, series: slug });
+  if (cursor) {
+    const index = posts.findIndex((post) => post.slug === cursor);
+    if (index === -1 || index === posts.length - 1) return missingPageMetadata;
+  }
   const canonical = `${routes.series(category, slug)}${cursor ? `?${new URLSearchParams({ cursor })}` : ""}`;
   const title = `${series.label} · ${navigation.label}`;
   const description =
@@ -31,11 +39,20 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical },
+    ...(!posts.length && { robots: { index: false, follow: true } }),
     openGraph: {
       title,
       description,
       url: canonical,
       type: "website",
+      siteName: siteConfig.name,
+      locale: "ko_KR",
+      images: [siteConfig.defaultImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       images: [siteConfig.defaultImage],
     },
   };
@@ -43,11 +60,13 @@ export async function generateMetadata({
 export default async function SeriesPage({ params, searchParams }: Props) {
   const { category, series: slug } = await params;
   const { navigation, series } = resolveSeries(category, slug);
+  const { cursor } = await searchParams;
   const result = await getPosts({
     category,
     series: series.slug,
-    after: (await searchParams).cursor,
+    after: cursor,
   });
+  if (cursor && !result.posts.length) notFound();
   return (
     <div className="page-shell">
       <nav aria-label="현재 위치" className="mb-6 text-sm text-secondary">

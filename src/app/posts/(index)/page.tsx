@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { siteConfig } from "@/config/site";
 import { EmptyState } from "@/features/post/empty-state";
 import { PostGrid } from "@/features/post/post-grid";
-import { getPosts } from "@/infrastructure/github/posts";
+import { getAllPosts, getPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
+import { missingPageMetadata } from "@/lib/seo";
 
 type PostsPageProps = {
   searchParams: Promise<{ cursor?: string; sort?: string }>;
@@ -15,6 +17,12 @@ export async function generateMetadata({
   searchParams,
 }: PostsPageProps): Promise<Metadata> {
   const query = await searchParams;
+  if (query.cursor) {
+    const posts = await getAllPosts();
+    if (query.sort === "oldest") posts.reverse();
+    const index = posts.findIndex((post) => post.slug === query.cursor);
+    if (index === -1 || index === posts.length - 1) return missingPageMetadata;
+  }
   const params = new URLSearchParams();
   if (query.cursor) params.set("cursor", query.cursor);
   if (query.sort === "oldest") params.set("sort", "oldest");
@@ -50,6 +58,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const sort = query.sort === "oldest" ? "oldest" : "latest";
   const result = await getPosts({ first: 12, after: query.cursor, sort });
   const posts = result.posts;
+  if (query.cursor && !posts.length) notFound();
 
   return (
     <div className="page-shell">

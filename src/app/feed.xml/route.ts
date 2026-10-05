@@ -1,48 +1,63 @@
 import { siteConfig } from "@/config/site";
-import { getPosts } from "@/infrastructure/github/posts";
+import { getRecentPostContents } from "@/infrastructure/github/posts";
+import { resolvePostModifiedAt, resolvePostPublishedAt } from "@/lib/content";
+import { renderFeedHtml } from "@/lib/content/feed-html";
 import { routes } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
 
 function escapeXml(value: string) {
-  return value.replace(
-    /[<>&'"]/g,
-    (character) =>
-      ({
-        "<": "&lt;",
-        ">": "&gt;",
-        "&": "&amp;",
-        "'": "&apos;",
-        '"': "&quot;",
-      })[character] ?? character,
-  );
+  return value
+    .replace(/[^\t\n\r\x20-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu, "")
+    .replace(
+      /[<>&'"]/g,
+      (character) =>
+        ({
+          "<": "&lt;",
+          ">": "&gt;",
+          "&": "&amp;",
+          "'": "&apos;",
+          '"': "&quot;",
+        })[character] ?? character,
+    );
 }
 
 export async function GET() {
-  const { posts } = await getPosts({ first: 50 });
-  const items = posts
-    .map((post) => {
-      const postUrl = absoluteUrl(routes.post(post.id));
-      return `
+  const posts = await getRecentPostContents(10);
+  const items: string[] = [];
+  let bytes = 0;
+  let latestModified: string | undefined;
+  for (const post of posts) {
+    if (!post) continue;
+    const url = absoluteUrl(routes.post(post.id));
+    const body = renderFeedHtml(post.body, url);
+    const postUrl = escapeXml(url);
+    const item = `
     <item>
       <title>${escapeXml(post.title)}</title>
       <link>${postUrl}</link>
       <guid>${postUrl}</guid>
-      <description>${escapeXml(post.excerpt)}</description>
+      <description>${escapeXml(body)}</description>
       <category>${escapeXml(post.category.name)}</category>
-      <pubDate>${new Date(post.createdAt).toUTCString()}</pubDate>
+      <pubDate>${new Date(resolvePostPublishedAt(post)).toUTCString()}</pubDate>
     </item>`;
-    })
-    .join("");
+    // 채널 정보를 포함해 10MB 미만을 유지하도록 오래된 항목을 통째로 제외한다.
+    bytes += Buffer.byteLength(item);
+    if (bytes > 8_000_000) break;
+    items.push(item);
+    const modified = resolvePostModifiedAt(post);
+    if (!latestModified || Date.parse(modified) > Date.parse(latestModified))
+      latestModified = modified;
+  }
 
   const xml = `<?xml version="1.0" encoding="UTF-8" ?>
     <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>
       <title>${escapeXml(siteConfig.name)}</title>
-      <link>${siteConfig.url}</link>
+      <link>${escapeXml(siteConfig.url)}</link>
       <description>${escapeXml(siteConfig.description)}</description>
       <language>ko-KR</language>
-      <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-      <atom:link href="${absoluteUrl(routes.feed)}" rel="self" type="application/rss+xml" />
-      ${items}
+      ${latestModified ? `<lastBuildDate>${new Date(latestModified).toUTCString()}</lastBuildDate>` : ""}
+      <atom:link href="${escapeXml(absoluteUrl(routes.feed))}" rel="self" type="application/rss+xml" />
+      ${items.join("")}
     </channel></rss>`;
 
   return new Response(xml, {

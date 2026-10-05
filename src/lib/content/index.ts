@@ -18,11 +18,19 @@ export function formatDate(value: string, locale = "ko-KR") {
   }).format(new Date(value));
 }
 
+export function resolvePostPublishedAt(post: {
+  createdAt: string;
+  publishedAt?: string | null;
+}) {
+  return post.publishedAt ?? post.createdAt;
+}
+
 export function resolvePostModifiedAt(post: {
   createdAt: string;
+  publishedAt?: string | null;
   lastEditedAt: string | null;
 }) {
-  return post.lastEditedAt ?? post.createdAt;
+  return post.lastEditedAt ?? resolvePostPublishedAt(post);
 }
 
 export type MarkdownHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;

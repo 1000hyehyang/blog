@@ -34,6 +34,8 @@ export const postFileSchema = postFieldsSchema.extend({
   slug: slugSchema,
   id: z.string().min(1),
   createdAt: z.string().datetime(),
+  // undefined는 기존 글, null은 아직 공개한 적 없는 초안을 뜻한다.
+  publishedAt: z.string().datetime().nullable().optional(),
   lastEditedAt: z.string().datetime().nullable(),
   commentsCount: z.number().int().nonnegative().default(0),
   reactionsCount: z.number().int().nonnegative().default(0),

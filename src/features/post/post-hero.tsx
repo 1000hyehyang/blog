@@ -3,7 +3,7 @@ import Image from "next/image";
 import { siteConfig } from "@/config/site";
 import { PostCoverImage } from "@/features/post/post-cover-image";
 import type { Post } from "@/domain/post";
-import { formatDate } from "@/lib/content";
+import { formatDate, resolvePostPublishedAt } from "@/lib/content";
 
 type PostHeroProps = {
   post: Post;
@@ -42,7 +42,9 @@ export function PostHero({ post }: PostHeroProps) {
           <span className="font-medium text-white">
             {siteConfig.author.nickname}
           </span>
-          <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
+          <time dateTime={resolvePostPublishedAt(post)}>
+            {formatDate(resolvePostPublishedAt(post))}
+          </time>
         </div>
       </div>
     </header>

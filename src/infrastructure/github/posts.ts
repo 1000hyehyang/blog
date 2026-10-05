@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -9,6 +10,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { withCommentCounts } from "./comment-counts";
 import { getCategoryNavigation } from "@/config/site";
 import { createExcerpt } from "@/lib/content/excerpt";
+import { resolvePostPublishedAt } from "@/lib/content";
 import {
   pinnedPosts,
   pinnedOrderSchema,
@@ -153,7 +155,8 @@ function sortCatalog(entries: CatalogEntry[]) {
   assertUniquePosts(entries);
   return entries.sort(
     (a, b) =>
-      Date.parse(b.post.createdAt) - Date.parse(a.post.createdAt) ||
+      Date.parse(resolvePostPublishedAt(b.post)) -
+        Date.parse(resolvePostPublishedAt(a.post)) ||
       a.post.slug.localeCompare(b.post.slug, "en", { numeric: true }),
   );
 }
@@ -302,35 +305,41 @@ export async function getAllPosts(
 export async function getPostSummary(postId: string) {
   return (await getAllPosts()).find((post) => post.id === postId) ?? null;
 }
-export const getPost = cache(async (postId: string) => {
+export const getPostContent = cache(async (postId: string) => {
   const entry = (await publicCatalog()).find(({ post }) => post.id === postId);
-  if (!entry) return null;
+  return entry ? readPostContent(entry) : null;
+});
+async function readPostContent(entry: CatalogEntry) {
   const post = usesGitHubStorage()
     ? await publicBody(entry.post.slug, entry.sha)
     : (await getStoredPost(entry.post.slug))?.post;
-  return post?.published && post.id === postId
-    ? (
-        await withCommentCounts([
-          {
-            ...post,
-            category: {
-              ...post.category,
-              name:
-                getCategoryNavigation(post.category.slug)?.label ??
-                post.category.name,
-            },
-          },
-        ])
-      )[0]
+  return post?.published && post.id === entry.post.id
+    ? {
+        ...post,
+        category: {
+          ...post.category,
+          name:
+            getCategoryNavigation(post.category.slug)?.label ??
+            post.category.name,
+        },
+      }
     : null;
+}
+export async function getRecentPostContents(limit: number) {
+  return batches((await publicCatalog()).slice(0, limit), readPostContent);
+}
+export const getPost = cache(async (postId: string) => {
+  const post = await getPostContent(postId);
+  return post ? (await withCommentCounts([post]))[0] : null;
 });
 function paginate<T extends { slug: string }>(
   posts: T[],
   options: { first?: number; after?: string },
 ) {
-  const start = options.after
+  const cursor = options.after
     ? posts.findIndex((post) => post.slug === options.after) + 1
     : 0;
+  const start = options.after && cursor === 0 ? posts.length : cursor;
   const count = Number.isFinite(options.first)
     ? Math.max(1, Math.min(Math.floor(options.first!), 50))
     : 12;
@@ -527,6 +536,12 @@ export async function savePost(
       400,
     );
   const now = new Date().toISOString();
+  // 기존 비공개 글은 과거에 공개했을 수 있으므로 원래 날짜를 보존한다.
+  const publishedAt = previous
+    ? previous.post.publishedAt === undefined
+      ? previous.post.createdAt
+      : previous.post.publishedAt
+    : null;
   const post: FilePost = {
     ...(previous?.post ?? {
       id: z.object({ id: z.uuid().optional() }).parse(input).id ?? randomUUID(),
@@ -542,8 +557,25 @@ export async function savePost(
     },
     excerpt: createExcerpt(fields.body),
     slug,
-    lastEditedAt: previous ? now : null,
+    publishedAt: publishedAt ?? (fields.published ? now : null),
+    lastEditedAt: previous?.post.lastEditedAt ?? null,
   };
+  if (
+    previous &&
+    (
+      [
+        "title",
+        "body",
+        "category",
+        "series",
+        "tags",
+        "coverImage",
+        "galleryImage",
+      ] as const
+    ).some((key) => !isDeepStrictEqual(previous.post[key], post[key]))
+  )
+    post.lastEditedAt = now;
+  if (!publishedAt && fields.published) post.lastEditedAt = null;
   const state = await snapshot(ref);
   const changed: FilePost[] = [post];
   if (ordering) {

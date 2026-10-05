@@ -14,10 +14,20 @@ import {
   getPost,
   getPostSummary,
 } from "@/infrastructure/github/posts";
-import { extractHeadings, resolvePostModifiedAt } from "@/lib/content";
+import {
+  extractHeadings,
+  resolvePostModifiedAt,
+  resolvePostPublishedAt,
+} from "@/lib/content";
 import { getRelatedPosts } from "@/features/post/post-queries";
 import { routes } from "@/lib/routes";
-import { buildPostJsonLd, serializeJsonLd } from "@/lib/seo";
+import {
+  buildBreadcrumbJsonLd,
+  buildPostJsonLd,
+  getPostBreadcrumbs,
+  missingPageMetadata,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 type PostPageProps = {
   params: Promise<{ postId: string }>;
@@ -27,7 +37,7 @@ export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
   const post = await getPostSummary((await params).postId);
-  if (!post?.published) notFound();
+  if (!post?.published) return missingPageMetadata;
 
   const images = [post.coverImage.src || siteConfig.defaultImage];
   const description = post.excerpt || post.title;
@@ -45,7 +55,7 @@ export async function generateMetadata({
       description,
       url: routes.post(post.id),
       images,
-      publishedTime: post.createdAt,
+      publishedTime: resolvePostPublishedAt(post),
       modifiedTime: resolvePostModifiedAt(post),
       authors: [siteConfig.socialLinks.github],
       section: post.category.name,
@@ -67,6 +77,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const posts = await getAllPosts();
   const relatedPosts = getRelatedPosts(posts, post);
   const headings = extractHeadings(post.body);
+  const breadcrumbs = getPostBreadcrumbs(post);
 
   return (
     <article className="page-shell page-shell--detail">
@@ -74,6 +85,12 @@ export default async function PostPage({ params }: PostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: serializeJsonLd(buildPostJsonLd(post)),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(buildBreadcrumbJsonLd(breadcrumbs)),
         }}
       />
 
