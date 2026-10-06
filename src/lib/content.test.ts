@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { createExcerpt } from "./content/excerpt";
-import { formatDate, toBodyHeadingLevel, toSlug } from "./content";
+import {
+  formatDate,
+  formatNumericDate,
+  toBodyHeadingLevel,
+  toSlug,
+} from "./content";
 
 describe("게시글 콘텐츠 유틸리티", () => {
   it("Markdown 문법을 제외한 요약을 생성한다", () => {
@@ -65,5 +70,8 @@ describe("게시글 콘텐츠 유틸리티", () => {
   it("날짜를 Asia/Seoul 기준으로 표현한다", () => {
     expect(formatDate("2026-07-22T00:00:00Z", "en-US")).toBe("Jul 22, 2026");
     expect(formatDate("2026-07-22T15:00:00Z", "en-US")).toBe("Jul 23, 2026");
+    expect(formatNumericDate("2026-07-22T14:59:59Z")).toBe("2026-07-22");
+    expect(formatNumericDate("2026-07-22T15:00:00Z")).toBe("2026-07-23");
+    expect(formatNumericDate("2026-12-31T15:00:00Z")).toBe("2027-01-01");
   });
 });

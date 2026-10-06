@@ -1,11 +1,12 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { getCategoryNavigation } from "@/config/site";
 import { createExcerpt } from "@/lib/content/excerpt";
+import { applyPostEdit, postValidationMessage } from "@/domain/post-edit";
 import {
   pinnedPosts,
+  pinnedOrderRanks,
   pinnedOrderSchema,
   type PinnedOrder,
   samePinnedOrder,
@@ -108,14 +109,12 @@ export async function savePost(
     );
   slugSchema.parse(slug);
   const fields = postFieldsSchema.parse(input);
-  if (fields.published && !fields.body.trim())
-    throw new PostStoreError("본문을 입력해 주세요.", 400);
   const navigation = getCategoryNavigation(fields.category.slug);
-  if (
-    fields.series &&
-    !navigation?.series.some((series) => series.slug === fields.series)
-  )
-    throw new PostStoreError("카테고리에 등록된 시리즈를 선택해 주세요.", 400);
+  const validationMessage = postValidationMessage(
+    fields,
+    navigation?.series ?? [],
+  );
+  if (validationMessage) throw new PostStoreError(validationMessage, 400);
   const ordering = pinned ? pinnedOrderSchema.parse(pinned) : undefined;
   const ref = await headRef();
   const previous = await getStoredPost(slug, ref);
@@ -145,46 +144,18 @@ export async function savePost(
       400,
     );
   const now = new Date().toISOString();
-  // 기존 비공개 글은 과거에 공개했을 수 있으므로 원래 날짜를 보존한다.
-  const publishedAt = previous
-    ? previous.post.publishedAt === undefined
-      ? previous.post.createdAt
-      : previous.post.publishedAt
-    : null;
   const post: FilePost = {
-    ...(previous?.post ?? {
-      id: z.object({ id: z.uuid().optional() }).parse(input).id ?? randomUUID(),
-      createdAt: now,
-      commentsCount: 0,
-      reactionsCount: 0,
+    ...applyPostEdit(previous?.post ?? null, fields, {
+      slug,
+      id:
+        previous?.post.id ??
+        z.object({ id: z.uuid().optional() }).parse(input).id ??
+        randomUUID(),
+      now,
+      categoryName: navigation?.label ?? fields.category.name,
     }),
-    ...fields,
-    series: fields.series,
-    category: {
-      slug: fields.category.slug,
-      name: navigation?.label ?? fields.category.name,
-    },
     excerpt: createExcerpt(fields.body),
-    slug,
-    publishedAt: publishedAt ?? (fields.published ? now : null),
-    lastEditedAt: previous?.post.lastEditedAt ?? null,
   };
-  if (
-    previous &&
-    (
-      [
-        "title",
-        "body",
-        "category",
-        "series",
-        "tags",
-        "coverImage",
-        "galleryImage",
-      ] as const
-    ).some((key) => !isDeepStrictEqual(previous.post[key], post[key]))
-  )
-    post.lastEditedAt = now;
-  if (!publishedAt && fields.published) post.lastEditedAt = null;
   const state = await snapshot(ref);
   const changed: FilePost[] = [post];
   if (ordering) {
@@ -196,16 +167,9 @@ export async function savePost(
         409,
         { kind: "pinned", posts: currentPosts },
       );
-    const allowed = new Set(current);
-    allowed.delete(slug);
     const currentPinned = post.featured && post.published;
-    if (currentPinned) allowed.add(slug);
-    const ranks = new Map(ordering.order.map((slug, index) => [slug, index]));
-    if (
-      ranks.size !== ordering.order.length ||
-      ordering.order.some((slug) => !allowed.has(slug)) ||
-      ranks.has(slug) !== currentPinned
-    )
+    const ranks = pinnedOrderRanks(post, current, ordering.order);
+    if (!ranks)
       throw new PostStoreError("Pinned 목록이 올바르지 않습니다.", 400);
     post.featuredOrder = currentPinned ? ranks.get(slug) : undefined;
     for (const { post: summary, sha: storedSha } of state.entries) {

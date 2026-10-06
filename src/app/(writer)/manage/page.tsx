@@ -28,7 +28,15 @@ export default async function ManagePage({
         initialTab={query?.tab}
         posts={posts.map(
           ({
-            post: { slug, title, category, published, createdAt, lastEditedAt },
+            post: {
+              slug,
+              title,
+              category,
+              published,
+              createdAt,
+              publishedAt,
+              lastEditedAt,
+            },
             sha,
           }) => ({
             slug,
@@ -36,6 +44,7 @@ export default async function ManagePage({
             category,
             published,
             createdAt,
+            publishedAt,
             lastEditedAt,
             sha,
           }),

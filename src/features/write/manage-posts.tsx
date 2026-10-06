@@ -9,17 +9,27 @@ import {
   type DamagedDraft,
 } from "./local-drafts";
 import { DamagedDrafts } from "./damaged-drafts";
+import { deletePostRequest } from "./post-api";
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { FilePost } from "@/lib/content/post-file";
+import { formatNumericDate, resolvePostPublishedAt } from "@/lib/content";
 import { siteConfig } from "@/config/site";
 import { WriterCheckbox, WriterSelect } from "./writer-controls";
 import styles from "./writer.module.css";
 
 type ManagedPost = Pick<
   FilePost,
-  "slug" | "title" | "category" | "published" | "createdAt" | "lastEditedAt"
+  | "slug"
+  | "title"
+  | "category"
+  | "published"
+  | "createdAt"
+  | "publishedAt"
+  | "lastEditedAt"
 > & { localVersion?: string; sha?: string };
 const MANAGE_PAGE_SIZE = 6;
+const postDate = (post: ManagedPost) =>
+  post.published ? resolvePostPublishedAt(post) : post.createdAt;
 const postKey = (post: ManagedPost) =>
   `${post.localVersion ? "local" : "stored"}:${post.slug}`;
 const canDeletePost = (post: ManagedPost) =>
@@ -69,17 +79,7 @@ export function ManagePosts({
       return;
     }
     if (!post.sha || post.sha === "local") return;
-    const response = await fetch(
-      `/api/write/posts/${encodeURIComponent(post.slug)}`,
-      {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sha: post.sha }),
-      },
-    );
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.message ?? "글을 삭제하지 못했습니다.");
+    await deletePostRequest(post.slug, post.sha, "글을 삭제하지 못했습니다.");
     setRemoved((slugs) => [...slugs, post.slug]);
   }
   async function removePosts(targets: ManagedPost[], message: string) {
@@ -118,7 +118,7 @@ export function ManagePosts({
         (category === "all" || post.category.slug === category),
     )
     .sort((a, b) => {
-      const diff = Date.parse(a.createdAt) - Date.parse(b.createdAt);
+      const diff = Date.parse(postDate(a)) - Date.parse(postDate(b));
       return (sort === "oldest" ? diff : -diff) || a.slug.localeCompare(b.slug);
     });
   const deletable = filtered.filter(canDeletePost);
@@ -246,8 +246,8 @@ export function ManagePosts({
                   <span>{post.published ? "발행됨" : "임시 저장"}</span>
                   {post.category.name}
                   <span>·</span>
-                  <time dateTime={post.createdAt}>
-                    {post.createdAt.slice(0, 10)}
+                  <time dateTime={postDate(post)}>
+                    {formatNumericDate(postDate(post))}
                   </time>
                 </div>
                 <Link

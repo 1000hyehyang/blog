@@ -1,25 +1,15 @@
-"use client";
+import { Suspense, type ReactNode } from "react";
+import { SiteHeader } from "./site-header";
+import { SiteFooter } from "./site-footer";
 
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-
-export function SiteFrame({
-  children,
-  header,
-  footer,
-}: {
-  children: ReactNode;
-  header: ReactNode;
-  footer: ReactNode;
-}) {
-  const pathname = usePathname();
-  if (["/write", "/manage", "/login"].includes(pathname))
-    return <main className="flex-1">{children}</main>;
+export function SiteFrame({ children }: { children: ReactNode }) {
   return (
     <>
-      {header}
+      <Suspense fallback={null}>
+        <SiteHeader />
+      </Suspense>
       <main className="flex-1 pt-[var(--header-height)]">{children}</main>
-      {footer}
+      <SiteFooter />
     </>
   );
 }

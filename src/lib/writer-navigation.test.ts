@@ -1,8 +1,8 @@
 import { expect, it, vi, beforeEach } from "vitest";
 import { writerDestination } from "./writer-navigation";
-import WritePage from "@/app/write/page";
-import ManagePage from "@/app/manage/page";
-import LoginPage from "@/app/login/page";
+import WritePage from "@/app/(writer)/write/page";
+import ManagePage from "@/app/(writer)/manage/page";
+import LoginPage from "@/app/(writer)/login/page";
 
 const mocks = vi.hoisted(() => ({ authenticated: false, read: vi.fn() }));
 vi.mock("@/lib/writer-auth", () => ({

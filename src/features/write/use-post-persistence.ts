@@ -10,10 +10,11 @@ import {
   type LocalDraft,
 } from "./local-drafts";
 import type { usePinnedOrder } from "./use-pinned-order";
-import type { ButtonState } from "./stateful-button";
+import type { useWriterFeedback } from "./use-writer-feedback";
+import { savePostRequest, deletePostRequest } from "./post-api";
 
-type Action = "publish" | "draft" | "delete";
 type Options = {
+  feedback: ReturnType<typeof useWriterFeedback>;
   initial: StoredPost | null;
   initialSha: string | null;
   draft?: LocalDraft;
@@ -25,6 +26,7 @@ type Options = {
 };
 
 export function usePostPersistence({
+  feedback,
   initial,
   initialSha,
   draft,
@@ -39,34 +41,9 @@ export function usePostPersistence({
   const postId = useRef(initial?.id ?? "");
   const [sha, setSha] = useState(initialSha);
   const [draftVersion, setDraftVersion] = useState(draft?.savedAt ?? null);
-  const [busy, setBusy] = useState(false);
-  const busyRef = useRef(false);
-  const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState<{
-    action: Action;
-    state: ButtonState;
-  } | null>(null);
+  const { start, finish, setMessage, setFeedback, showSuccess } = feedback;
   const pinnedOrder = pins.order;
 
-  function start(action?: Action) {
-    if (busyRef.current) return false;
-    busyRef.current = true;
-    setBusy(true);
-    setMessage("");
-    setFeedback(action ? { action, state: "loading" } : null);
-    return true;
-  }
-  function finish() {
-    busyRef.current = false;
-    setBusy(false);
-  }
-  async function showSuccess(action: Action) {
-    setFeedback({ action, state: "success" });
-    await new Promise((resolve) => setTimeout(resolve, 450));
-  }
-  function buttonState(action: Action): ButtonState {
-    return feedback?.action === action ? feedback.state : "idle";
-  }
   function allocateId() {
     return (postId.current ||= crypto.randomUUID());
   }
@@ -94,22 +71,15 @@ export function usePostPersistence({
           (value) => value !== currentPin || (fields.featured && published),
         )
         .map((value) => (value === currentPin ? slug : value));
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(slug)}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            post: { ...fields, id: allocateId(), published },
-            sha,
-            pinned: { base: pins.base, order },
-          }),
-        },
+      const data = await savePostRequest(
+        slug,
+        { ...fields, id: allocateId(), published },
+        sha,
+        { base: pins.base, order },
       );
-      const data = await response.json();
-      if (!response.ok) {
+      if (!data.ok) {
         const conflict = pinnedConflictSchema.safeParse(data.conflict);
-        if (response.status === 409 && conflict.success)
+        if (data.status === 409 && conflict.success)
           pins.setConflict(conflict.data.posts);
         throw new Error(data.message);
       }
@@ -190,16 +160,7 @@ export function usePostPersistence({
     )
       return;
     try {
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(initial.slug)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sha }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      await deletePostRequest(initial.slug, sha);
       await showSuccess("delete");
       onSaved();
       router.replace("/manage");
@@ -213,18 +174,5 @@ export function usePostPersistence({
       finish();
     }
   }
-  return {
-    sha,
-    busy,
-    message,
-    setMessage,
-    setFeedback,
-    start,
-    finish,
-    buttonState,
-    allocateId,
-    save,
-    storeDraft,
-    remove,
-  };
+  return { sha, allocateId, save, storeDraft, remove };
 }

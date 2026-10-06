@@ -87,6 +87,78 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer data preservation", () => {
+  it("retains the local recovery draft when a successful response is malformed and supports retry", async () => {
+    const draft: LocalDraft = {
+      post: { ...initial, published: false },
+      sha: null,
+      savedAt: "2026-01-01T00:00:00Z",
+      pinned: [],
+      order: [],
+    };
+    saveDraft(draft, null);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ post: null, sha: "b".repeat(40) }))
+      .mockResolvedValueOnce(
+        Response.json({ post: initial, sha: "b".repeat(40) }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor
+        initial={draft.post}
+        initialSha={null}
+        draft={draft}
+        writable
+      />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "발행" }));
+    const retry = await screen.findByRole("button", { name: "다시 시도" });
+    expect(retry).toBeEnabled();
+    expect(readDraft(draft.post.slug)?.post.body).toBe(initial.body);
+    expect(mocks.replace).not.toHaveBeenCalled();
+    fireEvent.click(retry);
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
+    expect(readDraft(draft.post.slug)).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares the upload lock with saving and logout and restores editing after upload", async () => {
+    let completeUpload: ((value: { url: string }) => void) | undefined;
+    mocks.upload.mockImplementationOnce(
+      () =>
+        new Promise<{ url: string }>((resolve) => {
+          completeUpload = resolve;
+        }),
+    );
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<PostEditor initial={null} initialSha={null} writable />);
+    const editor = await screen.findByRole("textbox", { name: "본문 편집기" });
+    const file = new File(["image"], "photo.png", { type: "image/png" });
+    const input = screen.getByLabelText("이미지 파일 선택");
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledOnce());
+    expect(screen.getByRole("button", { name: "완료" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "임시 저장" })).toBeDisabled();
+    expect(editor).toHaveAttribute("contenteditable", "false");
+    fireEvent.change(input, { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
+    expect(mocks.upload).toHaveBeenCalledOnce();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await act(async () =>
+      completeUpload?.({ url: "https://example.com/photo.png" }),
+    );
+    await waitFor(() =>
+      expect(editor).toHaveAttribute("contenteditable", "true"),
+    );
+    expect(editor.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://example.com/photo.png",
+    );
+  });
+
   it("serializes the latest body only when saving, including edits immediately before save", async () => {
     const fetchMock = vi
       .fn()

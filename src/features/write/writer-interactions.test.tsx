@@ -203,6 +203,85 @@ it("lists healthy drafts alongside recoverable damaged entries and exports their
   expect(readDraft("healthy")?.post.body).toBe("Saved body");
 });
 
+it("uses Seoul publication dates for published posts and creation or save dates for drafts", () => {
+  const fields = {
+    category: { name: "Development", slug: "development" },
+    createdAt: "2026-01-01T00:00:00Z",
+    lastEditedAt: null,
+  };
+  const savedAt = "2026-07-24T15:00:00Z";
+  saveDraft(
+    {
+      post: {
+        ...fields,
+        id: "local-id",
+        slug: "local-draft",
+        title: "Local draft",
+        body: "Saved body",
+        tags: [],
+        coverImage: { src: "" },
+        featured: false,
+        published: false,
+        publishedAt: "2026-08-01T00:00:00Z",
+        commentsCount: 0,
+        reactionsCount: 0,
+      },
+      sha: null,
+      savedAt,
+      pinned: [],
+      order: [],
+    },
+    null,
+  );
+  const publishedAt = "2026-07-22T15:00:00Z";
+  const legacyDate = "2026-07-22T01:00:00Z";
+  const { container } = render(
+    <ManagePosts
+      posts={[
+        {
+          ...fields,
+          slug: "delayed-publication",
+          title: "Delayed publication",
+          published: true,
+          publishedAt,
+        },
+        {
+          ...fields,
+          slug: "legacy",
+          title: "Legacy post",
+          published: true,
+          createdAt: legacyDate,
+        },
+        {
+          ...fields,
+          slug: "private",
+          title: "Private post",
+          published: false,
+          createdAt: publishedAt,
+          publishedAt: "2026-08-01T00:00:00Z",
+        },
+      ]}
+    />,
+  );
+  const dates = () =>
+    Array.from(container.querySelectorAll("time"), (time) => ({
+      value: time.dateTime,
+      text: time.textContent,
+    }));
+  expect(dates()).toEqual([
+    { value: publishedAt, text: "2026-07-23" },
+    { value: legacyDate, text: "2026-07-22" },
+  ]);
+  fireEvent.click(screen.getByRole("combobox", { name: "정렬" }));
+  fireEvent.click(screen.getByRole("option", { name: "오래된순" }));
+  expect(dates().map((date) => date.value)).toEqual([legacyDate, publishedAt]);
+  fireEvent.click(screen.getByRole("button", { name: "임시 저장" }));
+  expect(dates()).toEqual([
+    { value: publishedAt, text: "2026-07-23" },
+    { value: savedAt, text: "2026-07-25" },
+  ]);
+});
+
 it("deletes a published post with its current SHA", async () => {
   const fetchMock = vi.fn().mockResolvedValue(Response.json({ deleted: true }));
   vi.stubGlobal("fetch", fetchMock);

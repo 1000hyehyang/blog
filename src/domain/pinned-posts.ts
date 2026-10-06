@@ -38,6 +38,23 @@ export function samePinnedOrder(a: string[], b: string[]) {
   return a.length === b.length && a.every((slug, index) => slug === b[index]);
 }
 
+export function pinnedOrderRanks(
+  post: Pick<PostSummary, "slug" | "featured" | "published">,
+  current: string[],
+  order: string[],
+) {
+  const allowed = new Set(current);
+  allowed.delete(post.slug);
+  const currentPinned = post.featured && post.published;
+  if (currentPinned) allowed.add(post.slug);
+  const ranks = new Map(order.map((slug, index) => [slug, index]));
+  return ranks.size !== order.length ||
+    order.some((slug) => !allowed.has(slug)) ||
+    ranks.has(post.slug) !== currentPinned
+    ? null
+    : ranks;
+}
+
 // 해제한 고정은 복원하지 않고, 원격에서 추가한 고정만 로컬 순서 뒤에 붙인다.
 export function rebasePinnedOrder(
   base: string[],

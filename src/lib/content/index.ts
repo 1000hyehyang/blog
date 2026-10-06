@@ -18,6 +18,15 @@ export function formatDate(value: string, locale = "ko-KR") {
   }).format(new Date(value));
 }
 
+export function formatNumericDate(value: string) {
+  return new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: DISPLAY_TIME_ZONE,
+  }).format(new Date(value));
+}
+
 export function resolvePostPublishedAt(post: {
   createdAt: string;
   publishedAt?: string | null;
