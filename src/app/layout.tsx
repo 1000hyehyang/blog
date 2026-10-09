@@ -3,13 +3,11 @@ import { Suspense } from "react";
 
 import { ClickRipple } from "@/components/click-ripple";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFrame } from "@/components/layout/site-frame";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { wantedSansStylesheetUrl } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { routes } from "@/lib/routes";
+import { absoluteUrl } from "@/lib/seo";
 
 import "./globals.css";
 
@@ -17,18 +15,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.title,
-    template: `%s | ${siteConfig.shortName}`,
+    template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
   authors: [
     { name: siteConfig.author.name, url: siteConfig.socialLinks.github },
   ],
   creator: siteConfig.author.name,
-  alternates: {
-    types: {
-      "application/rss+xml": [{ url: routes.feed, title: siteConfig.name }],
-    },
-  },
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
   openGraph: {
     type: "website",
     locale: "ko_KR",
@@ -59,6 +53,12 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning className="h-full antialiased">
       <head>
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={siteConfig.name}
+          href={absoluteUrl(routes.feed)}
+        />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link rel="stylesheet" href={wantedSansStylesheetUrl} />
       </head>
@@ -68,17 +68,7 @@ export default function RootLayout({
             <ScrollToTop />
           </Suspense>
           <ClickRipple />
-          <Suspense
-            fallback={
-              <main className="flex-1 pt-[var(--header-height)]">
-                {children}
-              </main>
-            }
-          >
-            <SiteFrame header={<SiteHeader />} footer={<SiteFooter />}>
-              {children}
-            </SiteFrame>
-          </Suspense>
+          {children}
         </ThemeProvider>
       </body>
     </html>

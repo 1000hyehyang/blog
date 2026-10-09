@@ -1,17 +1,45 @@
 import { expect, test, type Locator } from "@playwright/test";
-import { createTestSession } from "./writer-credentials";
+import {
+  testSessionCookie,
+  testSessionSecure,
+  createTestSession,
+} from "./writer-credentials";
 
-async function expectSameBox(placeholder: Locator, content: Locator) {
-  const before = await placeholder.boundingBox();
-  const after = await content.boundingBox();
-  expect(before).not.toBeNull();
-  expect(after).not.toBeNull();
-  for (const key of ["x", "y", "width", "height"] as const)
-    expect(
-      Math.abs(before![key] - after![key]),
-      `${placeholder}: ${key}`,
-    ).toBeLessThan(1);
+async function expectSameBox(
+  placeholder: Locator,
+  content: Locator,
+  keys: ("x" | "y" | "width" | "height")[] = ["x", "y", "width", "height"],
+) {
+  await expect(async () => {
+    const before = await placeholder.boundingBox();
+    const after = await content.boundingBox();
+    expect(before).not.toBeNull();
+    expect(after).not.toBeNull();
+    for (const key of keys)
+      expect(
+        Math.abs(before![key] - after![key]),
+        `${placeholder}: ${key}`,
+      ).toBeLessThan(1);
+  }).toPass({ timeout: 5_000 });
 }
+
+test("layout measurements wait for content replaced during loading", async ({
+  page,
+}) => {
+  await page.setContent(`
+    <div id="placeholder" style="position:absolute;left:0;top:0;width:100px;height:20px"></div>
+    <div id="content" hidden style="position:absolute;left:0;top:0;width:100px;height:20px"></div>
+  `);
+  await page.evaluate(() => {
+    setTimeout(() => {
+      const content = document.querySelector<HTMLElement>("#content")!;
+      const replacement = content.cloneNode(true) as HTMLElement;
+      replacement.hidden = false;
+      content.replaceWith(replacement);
+    }, 100);
+  });
+  await expectSameBox(page.locator("#placeholder"), page.locator("#content"));
+});
 
 test("writer skeleton matches the loaded editor layout", async ({
   browser,
@@ -27,16 +55,20 @@ test("writer skeleton matches the loaded editor layout", async ({
   try {
     const cookies = [
       {
-        name: "blog-writer",
+        name: testSessionCookie,
+        secure: testSessionSecure,
         value: createTestSession(),
-        url: baseURL!,
+        domain: "127.0.0.1",
+        path: "/",
       },
     ];
     await loadingContext.addCookies(cookies);
     await page.context().addCookies(cookies);
     const loadingPage = await loadingContext.newPage();
     await loadingPage.goto(`${baseURL}/write`);
-    const skeleton = loadingPage.getByLabel("글쓰기 화면 불러오는 중");
+    const skeleton = loadingPage.locator(
+      '[aria-label="글쓰기 화면 불러오는 중"]:visible',
+    );
     await expect(skeleton).toBeVisible();
     await page.goto("/write");
     await expect(
@@ -78,6 +110,80 @@ test("writer skeleton matches the loaded editor layout", async ({
   }
 });
 
+test("post detail skeleton matches the hero, body and table of contents layout", async ({
+  browser,
+  page,
+  baseURL,
+  isMobile,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const loadingContext = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: page.viewportSize(),
+    isMobile,
+  });
+  try {
+    const loadingPage = await loadingContext.newPage();
+    await loadingPage.goto(`${baseURL}/fixture-id-8`);
+    const skeleton = loadingPage.locator('[aria-label="포스트 로딩 중"]');
+    await expect(skeleton).toBeVisible();
+    await expect(
+      loadingPage.locator('[aria-label="콘텐츠 로딩 중"]'),
+    ).toHaveCount(0);
+    await page.goto("/fixture-id-8");
+    const article = page.locator("article.page-shell--detail:not([aria-busy])");
+    await expect(article.locator(".prose")).toBeVisible();
+    await Promise.all([
+      loadingPage.evaluate(() => document.fonts.ready),
+      page.evaluate(() => document.fonts.ready),
+    ]);
+    await expectSameBox(skeleton.locator("header"), article.locator("header"));
+    await expectSameBox(
+      skeleton.locator("header > div:last-child > div:first-child"),
+      article.locator("header h1"),
+      ["x", "y", "height"],
+    );
+    await expectSameBox(
+      skeleton.locator("header .size-7"),
+      article.locator("header .size-7"),
+    );
+    await expectSameBox(skeleton.locator(".prose"), article.locator(".prose"), [
+      "x",
+      "y",
+      "width",
+    ]);
+    await expectSameBox(
+      skeleton.locator(".prose h2"),
+      article.locator(".prose h2").first(),
+    );
+    await expectSameBox(
+      skeleton.locator("section").first().locator(":scope > div").first(),
+      article.locator("#comments-title"),
+      ["height"],
+    );
+    if (isMobile) {
+      await expect(skeleton.locator("aside")).toBeHidden();
+      await expect(article.locator("aside")).toBeHidden();
+    } else {
+      for (let index = 0; index < 3; index++)
+        await expectSameBox(
+          skeleton.locator("aside li").nth(index),
+          article.locator("aside li").nth(index),
+        );
+    }
+    await loadingPage.screenshot({
+      path: testInfo.outputPath("post-detail-loading.png"),
+      fullPage: true,
+    });
+    await page.screenshot({
+      path: testInfo.outputPath("post-detail-loaded.png"),
+      fullPage: true,
+    });
+  } finally {
+    await loadingContext.close();
+  }
+});
+
 test("art skeleton aligns its heading, tabs and gallery with the page", async ({
   browser,
   page,
@@ -105,6 +211,8 @@ test("art skeleton aligns its heading, tabs and gallery with the page", async ({
     );
     await expect(skeleton).toBeVisible();
     await page.goto("/category/art");
+    const panel = page.getByRole("tabpanel", { name: "전체", exact: true });
+    await expect(panel).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Art", exact: true }),
     ).toBeVisible();
@@ -112,17 +220,16 @@ test("art skeleton aligns its heading, tabs and gallery with the page", async ({
       loadingPage.evaluate(() => document.fonts.ready),
       page.evaluate(() => document.fonts.ready),
     ]);
-    await expectSameBox(skeleton.locator("h1"), page.locator("h1"));
+    await expectSameBox(
+      skeleton.locator("h1"),
+      page.getByRole("heading", { name: "Art", exact: true }),
+    );
     await expectSameBox(
       skeleton.locator('[role="tablist"]'),
       page.getByRole("tablist", { name: "Art 글 보기" }),
     );
     const placeholder = skeleton.locator('[class*="columns-2"]');
-    const panel = page.getByRole("tabpanel", { name: "전체", exact: true });
-    const before = await placeholder.boundingBox();
-    const after = await panel.boundingBox();
-    for (const key of ["x", "y", "width"] as const)
-      expect(Math.abs(before![key] - after![key]), key).toBeLessThan(1);
+    await expectSameBox(placeholder, panel, ["x", "y", "width"]);
     expect(
       await placeholder.evaluate(
         (element) => getComputedStyle(element).columnCount,

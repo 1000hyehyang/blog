@@ -40,8 +40,12 @@ export function ImageGroupDisplay({
     observer.observe(groupRef.current);
     return () => observer.disconnect();
   }, []);
-  const firstRatio = ratios[images[0]?.src] ?? 1;
-  const secondRatio = ratios[images[1]?.src] ?? 1;
+  const imageRatio = (image: GroupImage) =>
+    image.dimensions
+      ? image.dimensions.width / image.dimensions.height
+      : (ratios[image.src] ?? 1);
+  const firstRatio = imageRatio(images[0]);
+  const secondRatio = imageRatio(images[1]);
   const slideHeight = width
     ? Math.max(
         150,
@@ -73,6 +77,8 @@ export function ImageGroupDisplay({
       <img
         src={image.src}
         alt={image.alt}
+        width={image.dimensions?.width}
+        height={image.dimensions?.height}
         loading="lazy"
         draggable={false}
         onLoad={(event) => {
@@ -95,9 +101,7 @@ export function ImageGroupDisplay({
         data-current={selectedIndex === imageIndex || undefined}
         data-slide-item={layout === "slide" || undefined}
         style={
-          layout === "collage"
-            ? { flexGrow: ratios[image.src] ?? 1 }
-            : undefined
+          layout === "collage" ? { flexGrow: imageRatio(image) } : undefined
         }
       >
         {onImageClick ? (
@@ -209,7 +213,7 @@ export function ImageGroupDisplay({
           </span>
         </>
       )}
-      {caption && <span className={styles.caption}>{caption}</span>}
+      {caption && <span className="markdown-image-caption">{caption}</span>}
     </span>
   );
 }

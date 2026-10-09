@@ -1,14 +1,22 @@
+import { writeDraftRecord } from "../draft-storage";
 import { expect, test } from "@playwright/test";
-import { createTestSession, testPassword } from "./writer-credentials";
+import {
+  testSessionCookie,
+  testSessionSecure,
+  createTestSession,
+  testPassword,
+} from "./writer-credentials";
 
 test("category options become visible when the select opens", async ({
   page,
 }) => {
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },
@@ -25,9 +33,11 @@ test("multiple photos open a responsive layout chooser before upload", async ({
 }) => {
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },
@@ -81,40 +91,41 @@ test("image controls work in a draft on the real writer", async ({
 }) => {
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },
   ]);
-  await page.addInitScript(() => {
-    const now = new Date().toISOString();
-    localStorage.setItem(
-      "blog:writer:draft:image-editor-e2e",
-      JSON.stringify({
-        post: {
-          slug: "image-editor-e2e",
-          id: "image-editor-e2e",
-          title: "이미지 편집 테스트",
-          body: "![첫 사진](http://127.0.0.1:3100/og-blog.png)\n\n![둘째 사진](http://127.0.0.1:3100/web-app-manifest-512x512.png)",
-          category: { name: "Development", slug: "development" },
-          tags: [],
-          excerpt: "",
-          coverImage: { src: "" },
-          featured: false,
-          published: false,
-          createdAt: now,
-          lastEditedAt: null,
-          commentsCount: 0,
-          reactionsCount: 0,
-        },
-        sha: null,
-        savedAt: now,
-        pinned: [],
-        order: [],
-      }),
-    );
+  await page.goto("/manage");
+  const now = new Date().toISOString();
+  await page.evaluate(writeDraftRecord, {
+    key: "blog:writer:draft:image-editor-e2e",
+    raw: JSON.stringify({
+      post: {
+        slug: "image-editor-e2e",
+        id: "image-editor-e2e",
+        title: "이미지 편집 테스트",
+        body: "![첫 사진](http://127.0.0.1:3100/og-blog.png)\n\n![둘째 사진](http://127.0.0.1:3100/web-app-manifest-512x512.png)",
+        category: { name: "Development", slug: "development" },
+        tags: [],
+        excerpt: "",
+        coverImage: { src: "" },
+        featured: false,
+        published: false,
+        createdAt: now,
+        lastEditedAt: null,
+        commentsCount: 0,
+        reactionsCount: 0,
+      },
+      sha: null,
+      savedAt: now,
+      pinned: [],
+      order: [],
+    }),
   });
   await page.goto("/write?draft=image-editor-e2e");
   const editor = page.getByRole("textbox", { name: "본문 편집기" });
@@ -151,43 +162,43 @@ test("photos move by mouse or touch and retain their order after saving a draft"
 }) => {
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },
   ]);
-  await page.addInitScript(() => {
-    if (localStorage.getItem("blog:writer:draft:image-move-e2e")) return;
-    const now = new Date().toISOString();
-    localStorage.setItem(
-      "blog:writer:draft:image-move-e2e",
-      JSON.stringify({
-        post: {
-          slug: "image-move-e2e",
-          id: "image-move-e2e",
-          title: "사진 이동 테스트",
-          body: "![첫 사진](http://127.0.0.1:3100/web-app-manifest-192x192.png?one)\n\n![둘째 사진](http://127.0.0.1:3100/web-app-manifest-192x192.png?two)",
-          category: { name: "Development", slug: "development" },
-          tags: [],
-          excerpt: "",
-          coverImage: {
-            src: "http://127.0.0.1:3100/web-app-manifest-192x192.png?one",
-          },
-          featured: false,
-          published: false,
-          createdAt: now,
-          lastEditedAt: null,
-          commentsCount: 0,
-          reactionsCount: 0,
+  await page.goto("/manage");
+  const now = new Date().toISOString();
+  await page.evaluate(writeDraftRecord, {
+    key: "blog:writer:draft:image-move-e2e",
+    raw: JSON.stringify({
+      post: {
+        slug: "image-move-e2e",
+        id: "image-move-e2e",
+        title: "사진 이동 테스트",
+        body: "![첫 사진](http://127.0.0.1:3100/web-app-manifest-192x192.png?one)\n\n![둘째 사진](http://127.0.0.1:3100/web-app-manifest-192x192.png?two)",
+        category: { name: "Development", slug: "development" },
+        tags: [],
+        excerpt: "",
+        coverImage: {
+          src: "http://127.0.0.1:3100/web-app-manifest-192x192.png?one",
         },
-        sha: null,
-        savedAt: now,
-        pinned: [],
-        order: [],
-      }),
-    );
+        featured: false,
+        published: false,
+        createdAt: now,
+        lastEditedAt: null,
+        commentsCount: 0,
+        reactionsCount: 0,
+      },
+      sha: null,
+      savedAt: now,
+      pinned: [],
+      order: [],
+    }),
   });
   await page.goto("/write?draft=image-move-e2e");
   const editor = page.getByRole("textbox", { name: "본문 편집기" });
@@ -254,6 +265,9 @@ test("photos move by mouse or touch and retain their order after saving a draft"
     .getByRole("dialog", { name: "임시 저장" })
     .getByRole("button", { name: "임시 저장", exact: true })
     .click();
+  await expect(
+    page.getByRole("dialog", { name: "임시 저장" }),
+  ).not.toBeVisible();
   await page.reload();
   await expect(photos.first()).toHaveAttribute("alt", "둘째 사진");
   await expect(photos.last()).toHaveAttribute("alt", "첫 사진");
@@ -266,9 +280,11 @@ test("table row and column menus stay open while moving from handle to delete", 
   test.skip(isMobile, "This test checks pointer hover menus.");
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },
@@ -334,9 +350,11 @@ test("mobile table handles and add controls stay on screen", async ({
   test.skip(!isMobile, "This test checks the touch layout.");
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },
@@ -388,9 +406,11 @@ test("local drafts reopen from management, preserve tags and checklist layout, a
   });
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },

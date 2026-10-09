@@ -18,11 +18,28 @@ export function formatDate(value: string, locale = "ko-KR") {
   }).format(new Date(value));
 }
 
+export function formatNumericDate(value: string) {
+  return new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: DISPLAY_TIME_ZONE,
+  }).format(new Date(value));
+}
+
+export function resolvePostPublishedAt(post: {
+  createdAt: string;
+  publishedAt?: string | null;
+}) {
+  return post.publishedAt ?? post.createdAt;
+}
+
 export function resolvePostModifiedAt(post: {
   createdAt: string;
+  publishedAt?: string | null;
   lastEditedAt: string | null;
 }) {
-  return post.lastEditedAt ?? post.createdAt;
+  return post.lastEditedAt ?? resolvePostPublishedAt(post);
 }
 
 export type MarkdownHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -38,26 +55,3 @@ export type PostHeading = {
   text: string;
   id: string;
 };
-
-function stripInlineMarkdown(value: string) {
-  return value
-    .replace(/!\[([^\]]*)]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]+)]\([^)]*\)/g, "$1")
-    .replace(/<((?:https?:\/\/|mailto:)[^>]+)>/g, "$1")
-    .replace(/\\([\\`*{}[\]()#+\-.!_>~])/g, "$1")
-    .replace(/[*_~`]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export function extractHeadings(markdown: string): PostHeading[] {
-  return [...markdown.matchAll(/^(#{1,3})\s+(.+)$/gm)].map((match) => {
-    const text = stripInlineMarkdown(match[2]);
-
-    return {
-      level: match[1].length as 1 | 2 | 3,
-      text,
-      id: toSlug(text),
-    };
-  });
-}

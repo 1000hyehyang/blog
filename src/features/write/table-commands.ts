@@ -10,6 +10,7 @@ export function runTableAction(
   rowIndex = target.row,
   columnIndex = target.column,
 ) {
+  if (!editor.isEditable) return;
   const table = editor.state.doc.nodeAt(target.position);
   if (!table || table.type.name !== "table") return;
   if (action === "paragraphBefore" || action === "paragraphAfter") {

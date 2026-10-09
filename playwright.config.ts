@@ -6,13 +6,14 @@ export default defineConfig({
   fullyParallel: true,
   use: { baseURL: "http://127.0.0.1:3100", trace: "on-first-retry" },
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
+    command: `npm run ${process.env.BLOG_E2E_PRODUCTION === "1" ? "start" : "dev"} -- --hostname 127.0.0.1 --port 3100`,
     url: "http://127.0.0.1:3100",
     reuseExistingServer: false,
     env: {
       BLOG_E2E: "1",
       CONTENT_SOURCE: "local",
       LOCAL_CONTENT_PATH: "tests/fixtures/posts",
+      GITHUB_TOKEN: "",
       WRITE_PASSWORD_HASH: testHash,
       WRITE_SESSION_SECRET: testSessionSecret,
       WRITE_ORIGIN: "http://127.0.0.1:3100",

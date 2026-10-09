@@ -1,3 +1,8 @@
+import { IDBObjectStore } from "fake-indexeddb";
+import {
+  readDraftRecord,
+  writeDraftRecord,
+} from "../../../tests/draft-storage";
 import { useState } from "react";
 import {
   render,
@@ -8,6 +13,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { TagInput } from "./tag-input";
+import { imageFileError } from "./image-upload";
 import { WriterLogin } from "./writer-login";
 import { ManagePosts } from "./manage-posts";
 import { WriterSelect } from "./writer-controls";
@@ -28,6 +34,16 @@ afterEach(() => {
   localStorage.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+it("accepts photos up to 20 MiB and rejects larger, empty or unsupported files", () => {
+  const photo = (size: number, type = "image/png") =>
+    new File([new Uint8Array(size)], "photo.png", { type });
+  expect(imageFileError(photo(9 * 1024 * 1024))).toBe("");
+  expect(imageFileError(photo(20 * 1024 * 1024))).toBe("");
+  expect(imageFileError(photo(20 * 1024 * 1024 + 1))).toContain("20MB");
+  expect(imageFileError(photo(0))).not.toBe("");
+  expect(imageFileError(photo(1, "image/svg+xml"))).not.toBe("");
 });
 
 it("commits comma-separated tag chips, removes them and unpacks the last chip with Backspace", () => {
@@ -124,7 +140,7 @@ it("uses seven masked password slots, posts to the existing session API and reta
   ]);
 });
 
-it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwrites/deletion", () => {
+it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwrites/deletion", async () => {
   const draft: LocalDraft = {
     post: {
       id: "id",
@@ -146,28 +162,30 @@ it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwri
     pinned: [],
     order: [],
   };
-  saveDraft(draft, null);
-  expect(readDrafts()).toEqual({ drafts: [draft], damaged: [] });
-  expect(() =>
+  await saveDraft(draft, null);
+  expect(await readDrafts()).toEqual({ drafts: [draft], damaged: [] });
+  await expect(
     saveDraft({ ...draft, post: { ...draft.post, body: "overwrite" } }, null),
-  ).toThrow();
-  expect(readDraft("draft-test")?.post.body).toBe(draft.post.body);
+  ).rejects.toThrow();
+  expect((await readDraft("draft-test"))?.post.body).toBe(draft.post.body);
   const updated = { ...draft, savedAt: "2026-01-01T00:00:01Z" };
-  saveDraft(updated, draft.savedAt);
-  expect(() => removeDraft(draft.post.slug, draft.savedAt)).toThrow();
-  const set = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-    throw new Error("quota");
-  });
-  expect(() =>
+  await saveDraft(updated, draft.savedAt);
+  await expect(removeDraft(draft.post.slug, draft.savedAt)).rejects.toThrow();
+  const set = vi
+    .spyOn(IDBObjectStore.prototype, "put")
+    .mockImplementation(() => {
+      throw new Error("quota");
+    });
+  await expect(
     saveDraft({ ...updated, savedAt: "2026-01-01T00:00:02Z" }, updated.savedAt),
-  ).toThrow("quota");
-  expect(readDraft("draft-test")).toEqual(updated);
+  ).rejects.toThrow("quota");
+  expect(await readDraft("draft-test")).toEqual(updated);
   set.mockRestore();
-  removeDraft(draft.post.slug, updated.savedAt);
-  expect(readDrafts()).toEqual({ drafts: [], damaged: [] });
+  await removeDraft(draft.post.slug, updated.savedAt);
+  expect(await readDrafts()).toEqual({ drafts: [], damaged: [] });
 });
 
-it("lists healthy drafts alongside recoverable damaged entries and exports their original bytes", () => {
+it("lists healthy drafts alongside recoverable damaged entries and exports their original bytes", async () => {
   const post = {
     id: "id",
     slug: "healthy",
@@ -183,15 +201,20 @@ it("lists healthy drafts alongside recoverable damaged entries and exports their
     commentsCount: 0,
     reactionsCount: 0,
   };
-  saveDraft(
+  await saveDraft(
     { post, sha: null, savedAt: post.createdAt, pinned: [], order: [] },
     null,
   );
   const raw = '{"body":"보존할 원문';
-  localStorage.setItem("blog:writer:draft:damaged", raw);
-  render(<ManagePosts posts={[]} initialTab="drafts" />);
+  await writeDraftRecord({ key: "blog:writer:draft:damaged", raw });
+  render(<ManagePosts posts={[]} initialTab="drafts" unavailable />);
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "서버 글 목록을 불러오지 못했습니다",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+  expect(refresh).toHaveBeenCalled();
   expect(
-    screen.getByRole("link", { name: "Healthy draft" }),
+    await screen.findByRole("link", { name: "Healthy draft" }),
   ).toBeInTheDocument();
   const download = screen.getByRole("link", { name: "원문 내려받기" });
   expect(decodeURIComponent(download.getAttribute("href")!.split(",")[1])).toBe(
@@ -199,8 +222,93 @@ it("lists healthy drafts alongside recoverable damaged entries and exports their
   );
   vi.stubGlobal("confirm", () => true);
   fireEvent.click(screen.getByRole("button", { name: "손상된 저장본 삭제" }));
-  expect(localStorage.getItem("blog:writer:draft:damaged")).toBeNull();
-  expect(readDraft("healthy")?.post.body).toBe("Saved body");
+  await waitFor(async () =>
+    expect(
+      await readDraftRecord({ key: "blog:writer:draft:damaged" }),
+    ).toBeNull(),
+  );
+  expect((await readDraft("healthy"))?.post.body).toBe("Saved body");
+});
+
+it("uses Seoul publication dates for published posts and creation or save dates for drafts", async () => {
+  const fields = {
+    category: { name: "Development", slug: "development" },
+    createdAt: "2026-01-01T00:00:00Z",
+    lastEditedAt: null,
+  };
+  const savedAt = "2026-07-24T15:00:00Z";
+  await saveDraft(
+    {
+      post: {
+        ...fields,
+        id: "local-id",
+        slug: "local-draft",
+        title: "Local draft",
+        body: "Saved body",
+        tags: [],
+        coverImage: { src: "" },
+        featured: false,
+        published: false,
+        publishedAt: "2026-08-01T00:00:00Z",
+        commentsCount: 0,
+        reactionsCount: 0,
+      },
+      sha: null,
+      savedAt,
+      pinned: [],
+      order: [],
+    },
+    null,
+  );
+  const publishedAt = "2026-07-22T15:00:00Z";
+  const createdDate = "2026-07-22T01:00:00Z";
+  const { container } = render(
+    <ManagePosts
+      posts={[
+        {
+          ...fields,
+          slug: "delayed-publication",
+          title: "Delayed publication",
+          published: true,
+          publishedAt,
+        },
+        {
+          ...fields,
+          slug: "without-publication-date",
+          title: "Post without publication date",
+          published: true,
+          createdAt: createdDate,
+        },
+        {
+          ...fields,
+          slug: "private",
+          title: "Private post",
+          published: false,
+          createdAt: publishedAt,
+          publishedAt: "2026-08-01T00:00:00Z",
+        },
+      ]}
+    />,
+  );
+  const dates = () =>
+    Array.from(container.querySelectorAll("time"), (time) => ({
+      value: time.dateTime,
+      text: time.textContent,
+    }));
+  expect(dates()).toEqual([
+    { value: publishedAt, text: "2026-07-23" },
+    { value: createdDate, text: "2026-07-22" },
+  ]);
+  fireEvent.click(screen.getByRole("combobox", { name: "정렬" }));
+  fireEvent.click(screen.getByRole("option", { name: "오래된순" }));
+  expect(dates().map((date) => date.value)).toEqual([createdDate, publishedAt]);
+  fireEvent.click(screen.getByRole("button", { name: "임시 저장" }));
+  await waitFor(() =>
+    expect(dates()).toEqual([
+      { value: publishedAt, text: "2026-07-23" },
+      { value: savedAt, text: "2026-07-25" },
+    ]),
+  );
 });
 
 it("deletes a published post with its current SHA", async () => {

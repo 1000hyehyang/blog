@@ -118,14 +118,6 @@
   background: var(--foreground);
   transition: width 160ms ease;
 }
-.caption {
-  display: block;
-  padding-top: 0.5rem;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  text-align: center;
-}
 .srOnly {
   position: absolute;
   width: 1px;

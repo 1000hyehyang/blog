@@ -1,64 +1,42 @@
 "use client";
 
-import { useEditor, useEditorState } from "@tiptap/react";
-import { upload } from "@vercel/blob/client";
+import { useEditor } from "@tiptap/react";
 import { useRouter } from "next/navigation";
-import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  List,
-  ListOrdered,
-  ListTodo,
-  Quote,
-  Table2,
-  Undo2,
-  Redo2,
-  ImagePlus,
-  X,
-} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
-import {
-  IMAGE_UPLOAD_EXTENSIONS,
-  IMAGE_UPLOAD_TYPES,
-  MAX_IMAGE_UPLOAD_BYTES,
-} from "@/config/images";
-import {
-  reservedDraftSlugs,
-  saveDraft,
-  removeDraft,
-  type LocalDraft,
-} from "./local-drafts";
-import { nextPostSlug, type StoredPost } from "@/lib/content/post-file";
-import { motion } from "framer-motion";
-import { PinnedCards, WriterCheckbox, WriterSelect } from "./writer-controls";
-import { pinnedConflictSchema, type PinnedPost } from "@/domain/pinned-posts";
+import { IMAGE_UPLOAD_TYPES } from "@/config/images";
+import { readRecovery, type LocalDraft } from "./local-drafts";
+import type { PostFields, StoredPost } from "@/domain/post";
+import { usePostPersistence } from "./use-post-persistence";
+import { WriterSelect } from "./writer-controls";
+import type { PinnedPost } from "@/domain/pinned-posts";
 import { usePinnedOrder } from "./use-pinned-order";
 import { TagInput } from "./tag-input";
-import { IconButton } from "./icon-button";
+import { EditorToolbar } from "./editor-toolbar";
 import { EditorBodySkeleton } from "./writer-skeleton";
 import { editorExtensions, hasUnsupportedHtml } from "./editor-extensions";
 import { TableOverlay } from "./table-overlay";
 import { ImageEditor, nextCoverImageSrc } from "./image-editor";
-import { ImageLayoutDialog, type PendingImage } from "./image-layout-dialog";
-import type { GroupImage, ImageGroupLayout } from "@/lib/image-group";
+import { ImageLayoutDialog } from "./image-layout-dialog";
 import { parseExternalHttpUrl } from "@/lib/link-preview";
 import styles from "./writer.module.css";
 import { WriterHeader } from "./writer-header";
-import { StatefulButton, type ButtonState } from "./stateful-button";
+import { PublishDialog } from "./publish-dialog";
+import { usePostImages } from "./use-post-images";
+import { useWriterFeedback } from "./use-writer-feedback";
+import { usePostRecovery } from "./use-post-recovery";
+import { WriteSkeleton } from "./writer-skeleton";
 
-const emptyFields = {
+const emptyFields: PostFields = {
   title: "",
   body: "",
-  tags: [] as string[],
+  tags: [],
   coverImage: { src: "" },
   galleryImage: { src: "" },
   category: { name: "Development", slug: "development" },
-  series: undefined as string | undefined,
+  series: undefined,
   featured: false,
-  featuredOrder: undefined as number | undefined,
+  featuredOrder: undefined,
   published: false,
 };
 type Props = {
@@ -69,74 +47,133 @@ type Props = {
   postSlugs?: string[];
   draft?: LocalDraft;
 };
-type Action = "publish" | "draft" | "delete";
-export function PostEditor({
+export function PostEditor(props: Props) {
+  const recoveryKey = props.draft
+    ? `draft:${props.draft.post.slug}`
+    : props.initial
+      ? `post:${props.initial.slug}`
+      : "new";
+  const [loaded, setLoaded] = useState<{
+    value: LocalDraft | null;
+    failed: boolean;
+  }>();
+  useEffect(() => {
+    let active = true;
+    readRecovery(recoveryKey).then(
+      (value) => {
+        if (active) setLoaded({ value, failed: false });
+      },
+      () => {
+        if (active) setLoaded({ value: null, failed: true });
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [recoveryKey]);
+  return loaded ? (
+    <LoadedPostEditor
+      key={loaded.value?.savedAt ?? recoveryKey}
+      {...props}
+      recovery={loaded.value}
+      recoveryKey={recoveryKey}
+      recoveryFailed={loaded.failed}
+    />
+  ) : (
+    <WriteSkeleton />
+  );
+}
+function LoadedPostEditor({
   initial,
   initialSha,
   writable,
   pinned = [],
   postSlugs = [],
   draft,
-}: Props) {
+  recovery: storedRecovery,
+  recoveryKey,
+  recoveryFailed,
+}: Props & {
+  recovery: LocalDraft | null;
+  recoveryKey: string;
+  recoveryFailed: boolean;
+}) {
   const router = useRouter();
-  const [fields, setFields] = useState({ ...emptyFields, ...initial });
-  const generatedSlug = useRef(initial?.slug ?? "");
-  const currentPin = initial?.slug ?? "__current__";
+  const recovery =
+    draft &&
+    storedRecovery &&
+    (Date.parse(storedRecovery.savedAt) <= Date.parse(draft.savedAt) ||
+      (storedRecovery.baseDraftSavedAt !== undefined &&
+        storedRecovery.baseDraftSavedAt !== draft.savedAt))
+      ? null
+      : storedRecovery;
+  const [fields, setFields] = useState<PostFields>({
+    ...emptyFields,
+    ...initial,
+    ...recovery?.post,
+  });
+  const bodyChanged = useRef(false);
+  const currentPin = initial?.slug ?? recovery?.post.slug ?? "__current__";
   const pins = usePinnedOrder(
     pinned,
     currentPin,
     Boolean(initial?.featured),
-    draft,
+    recovery ?? draft,
   );
-  const { order: pinnedOrder, setOrder: setPinnedOrder } = pins;
   const [tags, setTags] = useState(
-    initial?.tags.length ? `${initial.tags.join(",")},` : "",
+    (recovery?.post ?? initial)?.tags.length
+      ? `${(recovery?.post ?? initial)!.tags.join(",")},`
+      : "",
   );
-  const [sha, setSha] = useState(initialSha);
-  const [draftVersion, setDraftVersion] = useState(draft?.savedAt ?? null);
-  const [dirty, setDirty] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const busyRef = useRef(false);
-  const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState<{
-    action: Action;
-    state: ButtonState;
-  } | null>(null);
+  const [dirty, setDirty] = useState(Boolean(recovery));
   const publishDialog = useRef<HTMLDialogElement>(null);
   const [publishMode, setPublishMode] = useState(true);
-  const fileInput = useRef<HTMLInputElement>(null);
-  const imageLayoutDialog = useRef<HTMLDialogElement>(null);
-  const [pendingImages, setPendingImages] = useState<{
-    items: PendingImage[];
-    layout: ImageGroupLayout;
-    range: { from: number; to: number };
-    error: string;
-  } | null>(null);
-  const uploadTarget = useRef<"body" | "coverImage" | "galleryImage">("body");
+  const feedback = useWriterFeedback();
+  const { busy, message, setMessage, setFeedback, start, finish } = feedback;
+  const persistence = usePostPersistence({
+    feedback,
+    initial,
+    initialSha,
+    draft,
+    recovery,
+    postSlugs,
+    currentPin,
+    pins,
+    readFields: currentFields,
+    onSaved: async (post) => {
+      await clearRecovery();
+      if (post) setFields(post);
+      setDirty(false);
+      publishDialog.current?.close();
+    },
+  });
+  const { allocateId } = persistence;
   const unsupported = useMemo(
-    () => hasUnsupportedHtml(initial?.body ?? ""),
-    [initial?.body],
+    () => hasUnsupportedHtml(recovery?.post.body ?? initial?.body ?? ""),
+    [initial?.body, recovery?.post.body],
   );
   const extensions = useMemo(() => editorExtensions(), []);
   const editor = useEditor({
     extensions,
-    content: initial?.body ?? "",
+    content: recovery?.post.body ?? initial?.body ?? "",
     contentType: "markdown",
     immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
     editable: !unsupported,
-    onUpdate: ({ editor, transaction }) => {
+    onUpdate: ({ transaction }) => {
       if (!transaction.docChanged) return;
-      setFields((current) => ({
-        ...current,
-        body: editor.getMarkdown(),
-        coverImage: {
-          src: nextCoverImageSrc(transaction, current.coverImage.src),
-        },
-      }));
+      bodyChanged.current = true;
+      setFields((current) => {
+        const src = nextCoverImageSrc(transaction, current.coverImage.src);
+        return src === current.coverImage.src
+          ? current
+          : { ...current, coverImage: { src } };
+      });
       setDirty(true);
     },
     editorProps: {
       attributes: {
+        class: "prose",
         role: "textbox",
         "aria-label": "본문 편집기",
         "aria-multiline": "true",
@@ -180,23 +217,39 @@ export function PostEditor({
       },
     },
   });
-  const active = useEditorState({
+  const { clear: clearRecovery, flush: flushRecovery } = usePostRecovery({
+    key: recoveryKey,
+    recovery: storedRecovery,
+    sha: persistence.sha,
     editor,
-    selector: ({ editor }) => {
-      return {
-        bold: editor?.isActive("bold"),
-        italic: editor?.isActive("italic"),
-        underline: editor?.isActive("underline"),
-        strike: editor?.isActive("strike"),
-        bulletList: editor?.isActive("bulletList"),
-        orderedList: editor?.isActive("orderedList"),
-        taskList: editor?.isActive("taskList"),
-        blockquote: editor?.isActive("blockquote"),
-        codeBlock: editor?.isActive("codeBlock"),
-        codeLanguage: editor?.getAttributes("codeBlock").language as
-          string | undefined,
-      };
-    },
+    dirty,
+    fields,
+    tags,
+    order: pins.order,
+    readDraft: persistence.recoveryDraft,
+    onError: setMessage,
+  });
+  useEffect(() => {
+    if (recoveryFailed)
+      setMessage("작성 중이던 글을 불러오지 못했어요. 새로고침해 주세요.");
+  }, [recoveryFailed, setMessage]);
+  const {
+    fileInput,
+    imageLayoutDialog,
+    pendingImages,
+    queueImages,
+    chooseImage,
+    uploadPendingImages,
+    queueSelectedImages,
+    setLayout,
+    close,
+  } = usePostImages({
+    editor,
+    unsupported,
+    category: fields.category.slug,
+    allocateId,
+    update,
+    feedback,
   });
   useEffect(() => {
     editor?.setEditable(!busy && !unsupported);
@@ -208,7 +261,10 @@ export function PostEditor({
       event.returnValue = "";
     };
     const warnNavigation = (event: MouseEvent) => {
-      const anchor = (event.target as Element).closest?.("a[href]");
+      const anchor =
+        event.target instanceof Element
+          ? event.target.closest("a[href]")
+          : null;
       if (
         !anchor ||
         anchor.hasAttribute("download") ||
@@ -236,25 +292,6 @@ export function PostEditor({
     };
   }, [dirty, busy]);
 
-  function start(action?: Action) {
-    if (busyRef.current) return false;
-    busyRef.current = true;
-    setBusy(true);
-    setMessage("");
-    setFeedback(action ? { action, state: "loading" } : null);
-    return true;
-  }
-  function finish() {
-    busyRef.current = false;
-    setBusy(false);
-  }
-  async function showSuccess(action: Action) {
-    setFeedback({ action, state: "success" });
-    await new Promise((resolve) => setTimeout(resolve, 450));
-  }
-  function buttonState(action: Action): ButtonState {
-    return feedback?.action === action ? feedback.state : "idle";
-  }
   function update(values: Partial<typeof fields>) {
     setFields((current) => ({ ...current, ...values }));
     setDirty(true);
@@ -265,8 +302,13 @@ export function PostEditor({
     );
   }
   function currentFields() {
+    if (!editor) return null;
     return {
       ...fields,
+      body:
+        !unsupported && bodyChanged.current
+          ? editor.getMarkdown()
+          : fields.body,
       tags: [
         ...new Set(
           tags
@@ -277,277 +319,10 @@ export function PostEditor({
       ],
     };
   }
-  function allocateSlug() {
-    if (generatedSlug.current) return generatedSlug.current;
-    try {
-      generatedSlug.current = nextPostSlug([
-        ...postSlugs,
-        ...reservedDraftSlugs(),
-      ]);
-      return generatedSlug.current;
-    } catch {
-      throw new Error("임시 저장 글 번호를 확인하지 못했습니다.");
-    }
-  }
-
-  function imageFileError(file: File) {
-    return !IMAGE_UPLOAD_TYPES.includes(file.type) ||
-      !file.size ||
-      file.size > MAX_IMAGE_UPLOAD_BYTES
-      ? "8MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요."
-      : "";
-  }
-  async function uploadImageFile(file: File): Promise<GroupImage> {
-    const error = imageFileError(file);
-    if (error) throw new Error(error);
-    const blob = await upload(
-      `posts/${crypto.randomUUID()}.${IMAGE_UPLOAD_EXTENSIONS[file.type]}`,
-      file,
-      {
-        access: "public",
-        handleUploadUrl: "/api/write/images",
-        contentType: file.type,
-      },
-    );
-    return { src: blob.url, alt: file.name.replace(/\.[^.]+$/, "") };
-  }
-  function queueImages(
-    files: File[],
-    target: "body" | "coverImage" | "galleryImage",
-  ) {
-    if (!files.length) return;
-    if (target !== "body" || files.length === 1) {
-      void uploadSingleImage(files[0], target);
-      return;
-    }
-    const error = files.map(imageFileError).find(Boolean);
-    if (error) {
-      setMessage(error);
-      return;
-    }
-    if (files.length > 50) {
-      setMessage("사진은 한 번에 50장까지 첨부할 수 있습니다.");
-      return;
-    }
-    const items = files.map((file) => ({ file }));
-    const selection = editor?.state.selection;
-    setPendingImages({
-      items,
-      layout: "individual",
-      range: { from: selection?.from ?? 0, to: selection?.to ?? 0 },
-      error: "",
-    });
-    imageLayoutDialog.current?.showModal();
-  }
-  async function uploadPendingImages() {
-    if (!pendingImages || !editor || !start()) return;
-    editor.setEditable(false);
-    let items = pendingImages.items;
-    try {
-      for (let index = 0; index < items.length; index++) {
-        if (items[index].uploaded) continue;
-        const uploaded = await uploadImageFile(items[index].file);
-        items = items.map((item, itemIndex) =>
-          itemIndex === index ? { ...item, uploaded } : item,
-        );
-        setPendingImages((current) =>
-          current ? { ...current, items, error: "" } : null,
-        );
-      }
-      const images = items.map((item) => item.uploaded!);
-      const batchId = crypto.randomUUID();
-      const content =
-        pendingImages.layout === "individual"
-          ? images.map((image) => ({
-              type: "image",
-              attrs: { ...image, batchId },
-            }))
-          : {
-              type: "image",
-              attrs: {
-                src: images[0].src,
-                alt: images[0].alt,
-                layout: pendingImages.layout,
-                images,
-              },
-            };
-      if (!editor.commands.insertContentAt(pendingImages.range, content))
-        throw new Error("사진을 본문에 삽입하지 못했습니다.");
-      imageLayoutDialog.current?.close();
-    } catch (error) {
-      setPendingImages((current) =>
-        current
-          ? {
-              ...current,
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "이미지 업로드에 실패했습니다. 다시 시도해 주세요.",
-            }
-          : null,
-      );
-    } finally {
-      finish();
-    }
-  }
-  async function uploadSingleImage(
-    file: File,
-    target: "body" | "coverImage" | "galleryImage",
-  ) {
-    if (!editor || (target === "body" && unsupported) || !start()) return;
-    editor.setEditable(false);
-    try {
-      const image = await uploadImageFile(file);
-      if (target === "body") editor.chain().focus().setImage(image).run();
-      else update({ [target]: { src: image.src } });
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "이미지 업로드에 실패했습니다.",
-      );
-    } finally {
-      finish();
-    }
-  }
-  function chooseImage(target: "body" | "coverImage" | "galleryImage") {
-    uploadTarget.current = target;
-    fileInput.current?.click();
-  }
-
-  async function save(published: boolean) {
-    if (!editor || pins.conflict || !start("publish")) return;
-    try {
-      const slug = allocateSlug();
-      const order = pinnedOrder
-        .filter(
-          (value) => value !== currentPin || (fields.featured && published),
-        )
-        .map((value) => (value === currentPin ? slug : value));
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(slug)}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            post: { ...currentFields(), published },
-            sha,
-            pinned: { base: pins.base, order },
-          }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        const conflict = pinnedConflictSchema.safeParse(data.conflict);
-        if (response.status === 409 && conflict.success)
-          pins.setConflict(conflict.data.posts);
-        throw new Error(data.message);
-      }
-      setSha(data.sha);
-      setFields(data.post);
-      setDirty(false);
-      if (draftVersion) {
-        try {
-          removeDraft(slug, draftVersion);
-          setDraftVersion(null);
-        } catch {
-          setMessage(
-            "발행했습니다. 남아 있는 임시 저장본은 글 관리에서 확인해 주세요.",
-          );
-        }
-      }
-      await showSuccess("publish");
-      publishDialog.current?.close();
-      router.replace("/manage");
-      router.refresh();
-    } catch (error) {
-      setFeedback({ action: "publish", state: "error" });
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "저장에 실패했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.",
-      );
-    } finally {
-      finish();
-    }
-  }
-  async function storeDraft() {
-    if (!editor || !start("draft")) return;
-    try {
-      const slug = allocateSlug();
-      const now = new Date().toISOString();
-      const value: LocalDraft = {
-        post: {
-          id: initial?.id ?? crypto.randomUUID(),
-          createdAt: initial?.createdAt ?? now,
-          lastEditedAt: initial?.lastEditedAt ?? null,
-          commentsCount: 0,
-          reactionsCount: 0,
-          ...initial,
-          ...currentFields(),
-          title: fields.title.trim() || "제목 없음",
-          slug,
-        },
-        sha,
-        savedAt: now,
-        pinned: pins.posts,
-        order: pinnedOrder.map((value) =>
-          value === currentPin ? slug : value,
-        ),
-      };
-      saveDraft(value, draftVersion);
-      setDraftVersion(now);
-      setDirty(false);
-      await showSuccess("draft");
-      publishDialog.current?.close();
-      router.replace(`/write?draft=${encodeURIComponent(slug)}`);
-    } catch (error) {
-      setFeedback({ action: "draft", state: "error" });
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "임시 저장하지 못했습니다. 현재 내용은 유지됩니다.",
-      );
-    } finally {
-      finish();
-    }
-  }
-  async function remove() {
-    if (
-      !initial ||
-      !sha ||
-      !window.confirm("이 글을 삭제할까요?") ||
-      !start("delete")
-    )
-      return;
-    try {
-      const response = await fetch(
-        `/api/write/posts/${encodeURIComponent(initial.slug)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sha }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      setDirty(false);
-      await showSuccess("delete");
-      publishDialog.current?.close();
-      router.replace("/manage");
-      router.refresh();
-    } catch (error) {
-      setFeedback({ action: "delete", state: "error" });
-      setMessage(
-        error instanceof Error ? error.message : "삭제에 실패했습니다.",
-      );
-    } finally {
-      finish();
-    }
-  }
   async function logout() {
     if (!leave() || !start()) return;
     try {
+      if (!(await flushRecovery())) return;
       const response = await fetch("/api/write/session", { method: "DELETE" });
       if (!response.ok) throw new Error();
       setDirty(false);
@@ -564,127 +339,20 @@ export function PostEditor({
     setFeedback(null);
     publishDialog.current?.showModal();
   }
-  const formattingDisabled = !editor || unsupported;
   const categorySeries =
     getCategoryNavigation(fields.category.slug)?.series ?? [];
-  const toolbar = (
-    <fieldset className={styles.toolbar} disabled={busy} aria-label="본문 서식">
-      <IconButton
-        label="이미지"
-        disabled={formattingDisabled}
-        onClick={() => chooseImage("body")}
-      >
-        <ImagePlus size={20} />
-      </IconButton>
-      <span className={styles.fontLabel}>기본 서체</span>
-      <span className={styles.separator} />
-      {(
-        [
-          [
-            "굵게",
-            Bold,
-            active?.bold,
-            () => editor?.chain().focus().toggleBold().run(),
-          ],
-          [
-            "기울임",
-            Italic,
-            active?.italic,
-            () => editor?.chain().focus().toggleItalic().run(),
-          ],
-          [
-            "밑줄",
-            Underline,
-            active?.underline,
-            () => editor?.chain().focus().toggleUnderline().run(),
-          ],
-          [
-            "취소선",
-            Strikethrough,
-            active?.strike,
-            () => editor?.chain().focus().toggleStrike().run(),
-          ],
-          [
-            "인용",
-            Quote,
-            active?.blockquote,
-            () => editor?.chain().focus().toggleBlockquote().run(),
-          ],
-          [
-            "목록",
-            List,
-            active?.bulletList,
-            () => editor?.chain().focus().toggleBulletList().run(),
-          ],
-          [
-            "번호 목록",
-            ListOrdered,
-            active?.orderedList,
-            () => editor?.chain().focus().toggleOrderedList().run(),
-          ],
-          [
-            "체크리스트",
-            ListTodo,
-            active?.taskList,
-            () => editor?.chain().focus().toggleTaskList().run(),
-          ],
-          [
-            "표",
-            Table2,
-            false,
-            () =>
-              editor
-                ?.chain()
-                .focus()
-                .insertTable({ rows: 3, cols: 3, withHeaderRow: false })
-                .run(),
-          ],
-          [
-            "실행 취소",
-            Undo2,
-            false,
-            () => editor?.chain().focus().undo().run(),
-          ],
-          [
-            "다시 실행",
-            Redo2,
-            false,
-            () => editor?.chain().focus().redo().run(),
-          ],
-        ] as const
-      ).map(([label, Icon, pressed, command]) => (
-        <IconButton
-          key={label}
-          label={label}
-          aria-pressed={Boolean(pressed)}
-          disabled={formattingDisabled}
-          onClick={command}
-        >
-          <Icon size={19} strokeWidth={1.7} />
-        </IconButton>
-      ))}
-      {active?.codeBlock && (
-        <input
-          className={styles.codeLanguage}
-          aria-label="코드 언어"
-          placeholder="언어 (ts, js, python…)"
-          value={active.codeLanguage ?? ""}
-          maxLength={32}
-          disabled={formattingDisabled}
-          onChange={(event) =>
-            editor?.commands.updateAttributes("codeBlock", {
-              language: event.target.value.toLowerCase().replace(/\s/g, ""),
-            })
-          }
-        />
-      )}
-    </fieldset>
-  );
 
   return (
     <div className={styles.writer}>
       <h1 className="sr-only">{initial ? "글 수정" : "글쓰기"}</h1>
-      <WriterHeader onLogout={logout}>{toolbar}</WriterHeader>
+      <WriterHeader onLogout={logout}>
+        <EditorToolbar
+          editor={editor}
+          busy={busy}
+          unsupported={unsupported}
+          onChooseImage={() => chooseImage("body")}
+        />
+      </WriterHeader>
       <div className={styles.canvas}>
         <fieldset disabled={busy} className={styles.composition}>
           <div className={styles.categorySelectors}>
@@ -796,7 +464,7 @@ export function PostEditor({
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
             e.target.value = "";
-            queueImages(files, uploadTarget.current);
+            queueSelectedImages(files);
           }}
         />
       </div>
@@ -807,13 +475,9 @@ export function PostEditor({
         layout={pendingImages?.layout ?? "individual"}
         error={pendingImages?.error ?? ""}
         busy={busy}
-        onLayoutChange={(layout) =>
-          setPendingImages((current) =>
-            current ? { ...current, layout } : null,
-          )
-        }
+        onLayoutChange={setLayout}
         onConfirm={() => void uploadPendingImages()}
-        onClose={() => setPendingImages(null)}
+        onClose={close}
       />
 
       <footer className={styles.bottomBar}>
@@ -841,191 +505,22 @@ export function PostEditor({
         </div>
       </footer>
 
-      <motion.dialog
-        layoutScroll
-        ref={publishDialog}
-        className={styles.publishDialog}
-        aria-labelledby="publish-heading"
-        onCancel={(e) => {
-          if (busy) e.preventDefault();
-        }}
-        onClick={(event) => {
-          if (event.target === event.currentTarget && !busy)
-            publishDialog.current?.close();
-        }}
-      >
-        <div className={styles.dialogHeading}>
-          <div>
-            <p className="section-label">PUBLISH</p>
-            <h2 id="publish-heading">
-              {publishMode ? "발행 설정" : "임시 저장"}
-            </h2>
-          </div>
-          <button
-            type="button"
-            aria-label="발행 설정 닫기"
-            disabled={busy}
-            onClick={() => publishDialog.current?.close()}
-          >
-            <X size={20} />
-          </button>
-        </div>
-        <motion.div
-          layoutScroll
-          className={styles.dialogBody}
-          role="region"
-          aria-label="발행 옵션"
-        >
-          <fieldset className={styles.stack} disabled={busy}>
-            <div className={styles.fields}>
-              {(["coverImage", "galleryImage"] as const)
-                .filter(
-                  (key) =>
-                    key === "coverImage" || fields.category.slug === "art",
-                )
-                .map((key) => (
-                  <div key={key} className={styles.stack}>
-                    <label>
-                      {key === "coverImage" ? "대표 이미지" : "갤러리 이미지"}
-                      <input
-                        type="url"
-                        value={fields[key]?.src ?? ""}
-                        onChange={(e) =>
-                          update({ [key]: { src: e.target.value } })
-                        }
-                        placeholder="https://…"
-                      />
-                    </label>
-                    <button type="button" onClick={() => chooseImage(key)}>
-                      <ImagePlus size={16} />
-                      파일 선택
-                    </button>
-                  </div>
-                ))}
-            </div>
-            <section
-              className={styles.pinnedSection}
-              aria-labelledby="pinned-heading"
-            >
-              <div className={styles.pinnedHeading}>
-                <h3 id="pinned-heading">Pinned</h3>
-                <WriterCheckbox
-                  ariaLabel="Pinned"
-                  checked={fields.featured}
-                  disabled={busy}
-                  onChange={(checked) => {
-                    update({ featured: checked });
-                    setPinnedOrder((order) =>
-                      checked
-                        ? order.includes(currentPin)
-                          ? order
-                          : [...order, currentPin]
-                        : order.filter((value) => value !== currentPin),
-                    );
-                  }}
-                />
-              </div>
-              {pins.conflict && (
-                <div className={styles.notice} role="alert">
-                  <p>
-                    Pinned 목록이 변경되었습니다. 본문은 유지됩니다. 최신 목록을
-                    사용하거나 내 순서·해제 변경을 반영한 뒤 확인해 주세요. 새로
-                    고정된 글은 유지하고 해제된 글은 제외합니다.
-                  </p>
-                  <div className={styles.recoveryActions}>
-                    {(
-                      [
-                        ["latest", "최신 고정 목록 사용"],
-                        ["draft", "내 고정 변경 반영"],
-                      ] as const
-                    ).map(([choice, label]) => (
-                      <button
-                        key={choice}
-                        type="button"
-                        disabled={busy}
-                        onClick={() => {
-                          pins.resolve(choice, fields.featured);
-                          setDirty(true);
-                          setMessage("");
-                          setFeedback(null);
-                        }}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <PinnedCards
-                posts={[
-                  ...pins.posts.filter((post) => post.slug !== currentPin),
-                  {
-                    slug: currentPin,
-                    title: fields.title,
-                    coverImage: fields.coverImage,
-                  },
-                ]}
-                order={pinnedOrder}
-                disabled={busy}
-                onReorder={(order) => {
-                  setPinnedOrder(order);
-                  setDirty(true);
-                }}
-                onRemove={(slug) => {
-                  setPinnedOrder((order) =>
-                    order.filter((value) => value !== slug),
-                  );
-                  if (slug === currentPin) update({ featured: false });
-                  else setDirty(true);
-                }}
-              />
-            </section>
-            {!writable && publishMode && (
-              <p className={styles.notice}>현재 발행할 수 없습니다.</p>
-            )}
-          </fieldset>
-        </motion.div>
-        <p role="status" className={styles.dialogStatus}>
-          {message}
-        </p>
-        <div className={styles.dialogActions}>
-          {initial && sha && (
-            <StatefulButton
-              type="button"
-              state={buttonState("delete")}
-              label="삭제"
-              loadingLabel="삭제 중"
-              successLabel="삭제 완료"
-              disabled={busy || !writable}
-              onClick={remove}
-            />
-          )}
-          <StatefulButton
-            className={styles.primary}
-            type="button"
-            onClick={() => (publishMode ? save(true) : storeDraft())}
-            disabled={
-              busy ||
-              (publishMode && (!writable || Boolean(pins.conflict))) ||
-              !editor
-            }
-            state={buttonState(publishMode ? "publish" : "draft")}
-            label={
-              publishMode ? (initialSha ? "수정 완료" : "발행") : "임시 저장"
-            }
-            loadingLabel={
-              publishMode ? (initialSha ? "수정 중" : "발행 중") : "저장 중"
-            }
-            successLabel={
-              publishMode
-                ? initialSha
-                  ? "수정 완료"
-                  : "발행 완료"
-                : "저장 완료"
-            }
-          />
-        </div>
-      </motion.dialog>
+      <PublishDialog
+        publishDialog={publishDialog}
+        fields={fields}
+        publishMode={publishMode}
+        initial={initial}
+        initialSha={initialSha}
+        writable={writable}
+        editorReady={Boolean(editor)}
+        currentPin={currentPin}
+        pins={pins}
+        persistence={persistence}
+        feedback={feedback}
+        update={update}
+        chooseImage={chooseImage}
+        onDirty={() => setDirty(true)}
+      />
     </div>
   );
 }

@@ -1,8 +1,10 @@
 import { cleanup, render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MarkdownContent } from "./markdown";
-import { extractHeadings, toSlug } from "@/lib/content";
+import { toSlug } from "@/lib/content";
+import { extractHeadings } from "@/lib/content/headings";
 import { getReactNodeText } from "@/lib/react/get-node-text";
 
 vi.mock("server-only", () => ({}));
@@ -10,6 +12,61 @@ vi.mock("server-only", () => ({}));
 afterEach(() => cleanup());
 
 describe("MarkdownContent headings", () => {
+  it("preserves the targets and accessible labels of repeated footnote references", () => {
+    const { container } = render(
+      <MarkdownContent
+        source={"First[^note], second[^note].\n\n[^note]: Footnote."}
+      />,
+    );
+    const references = container.querySelectorAll<HTMLAnchorElement>(
+      "a[data-footnote-ref]",
+    );
+    const backlinks = container.querySelectorAll<HTMLAnchorElement>(
+      "a[data-footnote-backref]",
+    );
+    expect(references).toHaveLength(2);
+    expect(backlinks).toHaveLength(2);
+    for (const link of [...references, ...backlinks]) {
+      expect(document.getElementById(link.hash.slice(1))).toBeInTheDocument();
+      expect(link).not.toHaveAttribute("node");
+    }
+    expect(backlinks[0]).toHaveAttribute("aria-label");
+  });
+  it("ignores fenced code and shares unique IDs for entities, nested and Setext headings", () => {
+    expect(extractHeadings("~~~md\n# fake\n~~~")).toEqual([]);
+    const source =
+      "## Repeat\n\n## Repeat\n\n## Repeat-2\n\n## A &amp; B\n\nTitle\n=====\n\n> ## ++Nested++\n\n## !!!";
+    const headings = extractHeadings(source);
+    expect(headings.map(({ id }) => id)).toEqual([
+      "repeat",
+      "repeat-2",
+      "repeat-2-2",
+      "a-b",
+      "title",
+      "nested",
+      "section",
+    ]);
+    const { container } = render(<MarkdownContent source={source} />);
+    expect(
+      Array.from(
+        container.querySelectorAll(".markdown-heading"),
+        (node) => node.id,
+      ),
+    ).toEqual(headings.map(({ id }) => id));
+    expect(headings[3].text).toBe("A & B");
+  });
+  it("keeps headings inside tight lists out of paragraph wrappers", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownContent
+        source={"- 앞 문단\n  ## 첫 제목\n- 다음 문단\n  ### 다음 제목"}
+      />,
+    );
+
+    expect(html).toMatch(/<p>앞 문단\s*<\/p>\s*<h3/);
+    expect(html).toMatch(/<p>다음 문단\s*<\/p>\s*<h4/);
+    expect(html).not.toMatch(/<p>[^<]*<h[1-6]\b/);
+  });
+
   it("preserves the Markdown heading level for visual styling", () => {
     const { container } = render(
       <MarkdownContent

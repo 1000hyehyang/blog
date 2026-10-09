@@ -14,7 +14,7 @@ import {
 import { PostCoverImage } from "@/features/post/post-cover-image";
 import { siteConfig } from "@/config/site";
 import type { PostPreview } from "@/domain/post";
-import { formatDate } from "@/lib/content";
+import { formatDate, resolvePostPublishedAt } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -153,8 +153,8 @@ export function FeaturedPosts({ posts, eagerImageSource }: FeaturedPostsProps) {
                       <span className="text-secondary">
                         {siteConfig.author.nickname}
                       </span>
-                      <time dateTime={post.createdAt}>
-                        {formatDate(post.createdAt)}
+                      <time dateTime={resolvePostPublishedAt(post)}>
+                        {formatDate(resolvePostPublishedAt(post))}
                       </time>
                     </div>
                     <Link

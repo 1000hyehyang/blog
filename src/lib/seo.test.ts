@@ -6,6 +6,8 @@ import {
   absoluteUrl,
   buildPostJsonLd,
   buildWebsiteJsonLd,
+  getPostBreadcrumbs,
+  buildBreadcrumbJsonLd,
   serializeJsonLd,
 } from "./seo";
 
@@ -41,12 +43,17 @@ describe("SEO structured data", () => {
 
   it("includes article identity, dates and fallbacks for empty summaries", () => {
     expect(
+      buildPostJsonLd({ ...post, publishedAt: "2026-02-01T00:00:00Z" }),
+    ).toMatchObject({
+      datePublished: "2026-02-01T00:00:00Z",
+      dateModified: "2026-02-01T00:00:00Z",
+    });
+    expect(
       buildPostJsonLd({ ...post, excerpt: "", coverImage: { src: "" } }),
     ).toMatchObject({
       "@type": "BlogPosting",
       url: `${siteConfig.url}/article-id-1`,
       description: post.title,
-      image: `${siteConfig.url}${siteConfig.defaultImage}`,
       articleSection: "Study",
       datePublished: post.createdAt,
       dateModified: post.createdAt,
@@ -56,6 +63,47 @@ describe("SEO structured data", () => {
       buildPostJsonLd({ ...post, lastEditedAt: "2026-02-01T00:00:00Z" })
         .dateModified,
     ).toBe("2026-02-01T00:00:00Z");
+  });
+
+  it("only marks up a representative article image, not the site logo", () => {
+    expect(
+      buildPostJsonLd({ ...post, coverImage: { src: "" } }),
+    ).not.toHaveProperty("image");
+    expect(
+      buildPostJsonLd({
+        ...post,
+        coverImage: { src: "" },
+        galleryImage: { src: "/art.png" },
+      }).image,
+    ).toBe(`${siteConfig.url}/art.png`);
+  });
+
+  it("uses the configured category and series path in breadcrumbs", () => {
+    const items = getPostBreadcrumbs({
+      ...post,
+      category: { name: "Essay", slug: "essay" },
+      series: "life-updates",
+    });
+    expect(items.map((item) => item.href)).toEqual([
+      "/",
+      "/category/essay",
+      "/category/essay/series/life-updates",
+      "/article-id-1",
+    ]);
+    expect(buildBreadcrumbJsonLd(items).itemListElement).toEqual(
+      items.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        item: absoluteUrl(item.href),
+      })),
+    );
+    expect(
+      getPostBreadcrumbs({
+        ...post,
+        category: { name: "Other", slug: "other" },
+      })[1].href,
+    ).toBe("/posts");
   });
 
   it("identifies the homepage as a WebSite with the configured name", () => {

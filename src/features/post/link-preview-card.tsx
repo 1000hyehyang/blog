@@ -21,11 +21,14 @@ export function LinkPreviewCard({ preview }: { preview: LinkPreviewCardData }) {
       data-link-preview
     >
       {preview.image && (
-        <LinkPreviewImage src={getLinkPreviewImagePath(preview.url)} />
+        <LinkPreviewImage
+          key={preview.url}
+          src={getLinkPreviewImagePath(preview.url)}
+        />
       )}
       <span className="link-preview-card__content">
         <span className="link-preview-card__site">
-          <LinkPreviewFavicon src={preview.icon} />
+          <LinkPreviewFavicon key={preview.icon} src={preview.icon} />
           <span>{preview.siteName || preview.hostname}</span>
         </span>
         <span className="link-preview-card__text">

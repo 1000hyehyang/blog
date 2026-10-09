@@ -6,69 +6,36 @@ import { getAllPosts } from "@/infrastructure/github/posts";
 import { routes } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
 
-function toModifiedDate(post: {
-  createdAt: string;
-  lastEditedAt: string | null;
-}) {
-  const date = new Date(resolvePostModifiedAt(post));
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
-function getLatestModifiedDate(
-  posts: Array<{ createdAt: string; lastEditedAt: string | null }>,
-) {
-  return posts.reduce<Date | undefined>((latest, post) => {
-    const modified = toModifiedDate(post);
-    if (!modified || (latest && modified <= latest)) return latest;
-    return modified;
-  }, undefined);
-}
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getAllPosts();
-  const latestPostModifiedAt = getLatestModifiedDate(posts);
 
   const staticRoutes = [routes.home, routes.posts].map((route) => ({
     url: absoluteUrl(route),
-    ...(latestPostModifiedAt && { lastModified: latestPostModifiedAt }),
   }));
 
-  const categoryRoutes = siteConfig.navigation.map((item) => {
-    const latestCategoryPostModifiedAt = getLatestModifiedDate(
-      posts.filter((post) => post.category.slug === item.category),
-    );
+  const categoryRoutes = siteConfig.navigation
+    .filter((item) =>
+      posts.some((post) => post.category.slug === item.category),
+    )
+    .map((item) => ({ url: absoluteUrl(routes.category(item.category)) }));
 
-    return {
-      url: absoluteUrl(routes.category(item.category)),
-      ...(latestCategoryPostModifiedAt && {
-        lastModified: latestCategoryPostModifiedAt,
-      }),
-    };
-  });
-
-  const postRoutes = posts.map((post) => {
-    const modifiedAt = toModifiedDate(post);
-
-    return {
-      url: absoluteUrl(routes.post(post.id)),
-      ...(modifiedAt && { lastModified: modifiedAt }),
-    };
-  });
+  const postRoutes = posts.map((post) => ({
+    url: absoluteUrl(routes.post(post.id)),
+    lastModified: resolvePostModifiedAt(post),
+  }));
 
   const seriesRoutes = siteConfig.navigation.flatMap((category) =>
-    category.series.map((series) => {
-      const lastModified = getLatestModifiedDate(
-        posts.filter(
+    category.series
+      .filter((series) =>
+        posts.some(
           (post) =>
             post.category.slug === category.category &&
             post.series === series.slug,
         ),
-      );
-      return {
+      )
+      .map((series) => ({
         url: absoluteUrl(routes.series(category.category, series.slug)),
-        ...(lastModified && { lastModified }),
-      };
-    }),
+      })),
   );
 
   return [...staticRoutes, ...categoryRoutes, ...seriesRoutes, ...postRoutes];

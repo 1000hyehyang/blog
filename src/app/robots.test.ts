@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import robots from "./robots";
+import { siteConfig } from "@/config/site";
 
 describe("robots", () => {
   it("allows the public link preview image endpoint", () => {
@@ -12,6 +13,6 @@ describe("robots", () => {
   });
 
   it("publishes a sitemap URL without a duplicate slash", () => {
-    expect(robots().sitemap).toBe("http://localhost:3000/sitemap.xml");
+    expect(robots().sitemap).toBe(`${siteConfig.url}/sitemap.xml`);
   });
 });

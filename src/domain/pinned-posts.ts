@@ -1,21 +1,21 @@
 import { z } from "zod";
-import { slugSchema, type FilePostSummary } from "@/lib/content/post-file";
+import { slugSchema, type PostSummary } from "./post";
 
 export const pinnedOrderSchema = z.object({
   base: z.array(slugSchema).max(999),
   order: z.array(slugSchema).max(999),
 });
 export type PinnedOrder = z.infer<typeof pinnedOrderSchema>;
-export type PinnedPost = Pick<FilePostSummary, "slug" | "title" | "coverImage">;
+export type PinnedPost = Pick<PostSummary, "slug" | "title" | "coverImage">;
 
-export function pinnedPosts(posts: FilePostSummary[]): PinnedPost[] {
+export function pinnedPosts(posts: PostSummary[]): PinnedPost[] {
   return posts
     .filter((post) => post.published && post.featured)
     .sort(compareFeaturedPosts)
     .map(({ slug, title, coverImage }) => ({ slug, title, coverImage }));
 }
 
-export function compareFeaturedPosts(a: FilePostSummary, b: FilePostSummary) {
+export function compareFeaturedPosts(a: PostSummary, b: PostSummary) {
   return (
     (a.featuredOrder ?? 999) - (b.featuredOrder ?? 999) ||
     Date.parse(b.createdAt) - Date.parse(a.createdAt) ||
@@ -36,6 +36,23 @@ export const pinnedConflictSchema = z.object({
 
 export function samePinnedOrder(a: string[], b: string[]) {
   return a.length === b.length && a.every((slug, index) => slug === b[index]);
+}
+
+export function pinnedOrderRanks(
+  post: Pick<PostSummary, "slug" | "featured" | "published">,
+  current: string[],
+  order: string[],
+) {
+  const allowed = new Set(current);
+  allowed.delete(post.slug);
+  const currentPinned = post.featured && post.published;
+  if (currentPinned) allowed.add(post.slug);
+  const ranks = new Map(order.map((slug, index) => [slug, index]));
+  return ranks.size !== order.length ||
+    order.some((slug) => !allowed.has(slug)) ||
+    ranks.has(post.slug) !== currentPinned
+    ? null
+    : ranks;
 }
 
 // 해제한 고정은 복원하지 않고, 원격에서 추가한 고정만 로컬 순서 뒤에 붙인다.

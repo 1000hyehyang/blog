@@ -1,46 +1,17 @@
-import { z } from "zod";
-
+import {
+  storedPostSchema as postFileSchema,
+  type Post,
+  type StoredPost,
+} from "@/domain/post";
 import { createExcerpt } from "./excerpt";
-
-export const slugSchema = z
-  .string()
-  .min(1)
-  .max(100)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-  .refine((s) => !/^\d+$/.test(s), "숫자만으로 된 주소는 사용할 수 없습니다.");
-const imageUrl = z.union([
-  z.literal(""),
-  z
-    .string()
-    .url()
-    .refine((s) => /^https?:\/\//.test(s)),
-]);
-export const postFieldsSchema = z.object({
-  title: z.string().trim().min(1).max(200),
-  body: z.string().max(200_000),
-  category: z.object({
-    name: z.string().trim().min(1).max(100),
-    slug: z.string().regex(/^[a-z0-9-]+$/),
-  }),
-  series: slugSchema.optional(),
-  tags: z.array(z.string().trim().min(1).max(80)).max(30),
-  coverImage: z.object({ src: imageUrl }),
-  galleryImage: z.object({ src: imageUrl }).optional(),
-  featured: z.boolean(),
-  featuredOrder: z.number().int().nonnegative().optional(),
-  published: z.boolean(),
-});
-export const postFileSchema = postFieldsSchema.extend({
-  slug: slugSchema,
-  id: z.string().min(1),
-  createdAt: z.string().datetime(),
-  lastEditedAt: z.string().datetime().nullable(),
-  commentsCount: z.number().int().nonnegative().default(0),
-  reactionsCount: z.number().int().nonnegative().default(0),
-});
-export type StoredPost = z.infer<typeof postFileSchema>;
-export type FilePost = StoredPost & { excerpt: string };
-export type FilePostSummary = Omit<FilePost, "body">;
+export {
+  slugSchema,
+  postFieldsSchema,
+  storedPostSchema as postFileSchema,
+} from "@/domain/post";
+export type { StoredPost } from "@/domain/post";
+export type FilePost = Post;
+export type FilePostSummary = Omit<Post, "body">;
 
 export function nextPostSlug(slugs: string[]) {
   let latest = 0;

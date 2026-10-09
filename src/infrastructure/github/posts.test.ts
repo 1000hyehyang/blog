@@ -1,3 +1,10 @@
+import { savePost, deletePost, rebuildPostIndex } from "./post-mutations";
+import {
+  getStoredPost,
+  getStoredPostsWithSha,
+  getStoredPosts,
+} from "./post-store";
+import { POST_BODY_MAX_BYTES } from "@/domain/post";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, readdir } from "node:fs/promises";
 import {
@@ -19,18 +26,15 @@ import {
 } from "@/lib/content/post-index";
 import {
   getAllPosts,
-  getPost,
+  getPostContent,
+  getRecentPostContents,
   getPostSummary,
   getPosts,
   searchPosts,
-  savePost,
-  deletePost,
-  getStoredPostsWithSha,
-  getStoredPosts,
-  rebuildPostIndex,
 } from "./posts";
 import { invalidatePosts } from "@/lib/writer-api";
 import { cacheTag, revalidateTag } from "next/cache";
+import { withCommentCounts } from "./comment-counts";
 import * as site from "@/config/site";
 
 vi.mock("server-only", () => ({}));
@@ -41,7 +45,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 vi.mock("./comment-counts", () => ({
-  withCommentCounts: (posts: unknown) => posts,
+  withCommentCounts: vi.fn((posts: unknown) => posts),
 }));
 const sample: StoredPost = {
   id: "a",
@@ -63,6 +67,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
@@ -114,7 +119,6 @@ function githubStore(posts: StoredPost[], indexed = true) {
   const state = {
     conflict: false,
     invalidTree: false,
-    private: true,
     treeInput: null as null | {
       base_tree: string;
       tree: { path: string; content?: string; sha?: null }[];
@@ -123,7 +127,6 @@ function githubStore(posts: StoredPost[], indexed = true) {
   const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
     const parsed = new URL(url);
     const route = parsed.pathname.replace("/repos/owner/repo", "");
-    if (!route) return Response.json({ private: state.private });
     if (route === "/git/ref/heads/content")
       return Response.json({ object: { sha: head } });
     if (route.startsWith("/contents/")) {
@@ -132,8 +135,12 @@ function githubStore(posts: StoredPost[], indexed = true) {
         ? new Response(null, { status: 404 })
         : Response.json({
             type: "file",
-            encoding: "base64",
-            content: Buffer.from(content).toString("base64"),
+            encoding:
+              Buffer.byteLength(content) > 1_000_000 ? "none" : "base64",
+            content:
+              Buffer.byteLength(content) > 1_000_000
+                ? ""
+                : Buffer.from(content).toString("base64"),
             sha: blobSha(content),
           });
     }
@@ -185,9 +192,130 @@ function githubStore(posts: StoredPost[], indexed = true) {
 }
 
 describe("Markdown store", () => {
+  it("saves, searches across index boundaries, rereads and edits a maximum-size post", async () => {
+    const { files } = githubStore([]);
+    const body = "x".repeat(POST_BODY_MAX_BYTES - 30) + "끝 검색어 😀";
+    const start = performance.now();
+    const saved = await savePost(
+      "large",
+      { ...sample, id: undefined, body },
+      null,
+    );
+    expect((await getStoredPost("large"))?.post.body).toBe(body);
+    expect((await getPostContent(saved.post.id))?.body).toBe(body);
+    const document = searchDocument(saved.post);
+    const boundary = document.text.slice(99_995, 100_005);
+    expect((await searchPosts(boundary)).totalCount).toBe(1);
+    expect((await searchPosts("끝 검색어 😀")).totalCount).toBe(1);
+    const edited = await savePost(
+      "large",
+      { ...saved.post, body: body.slice(0, -30) + "재편집 검색어" },
+      saved.sha,
+    );
+    expect((await getStoredPost("large"))?.post.body).toBe(edited.post.body);
+    expect((await searchPosts("재편집 검색어")).totalCount).toBe(1);
+    expect((await searchPosts("끝 검색어 😀")).totalCount).toBe(0);
+    expect(files.get("content/posts/large.md")).toContain("재편집 검색어");
+    console.info("[size-check]", {
+      bodyBytes: Buffer.byteLength(body),
+      elapsedMs: Math.round(performance.now() - start),
+    });
+  }, 60_000);
+  it("reads public content for RSS without querying comments", async () => {
+    githubStore([
+      sample,
+      { ...sample, slug: "draft", id: "draft", published: false },
+    ]);
+    expect((await getPostContent(sample.id))?.body).toBe(sample.body);
+    expect(await getPostContent("draft")).toBeNull();
+    expect((await getRecentPostContents(10)).map((post) => post?.id)).toEqual([
+      sample.id,
+    ]);
+    expect(withCommentCounts).not.toHaveBeenCalled();
+    await getPostSummary(sample.id);
+    expect(withCommentCounts).not.toHaveBeenCalled();
+    await getPosts();
+    expect(withCommentCounts).toHaveBeenCalledOnce();
+  });
+  it("preserves first publication and only advances modification dates for content changes", async () => {
+    githubStore([]);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-01T00:00:00Z"));
+    const published = await savePost(
+      "first",
+      { ...sample, id: undefined },
+      null,
+    );
+    expect(published.post.createdAt).toBe("2026-02-01T00:00:00.000Z");
+    expect(published.post.publishedAt).toBe("2026-02-01T00:00:00.000Z");
+    expect(published.post.lastEditedAt).toBeNull();
+    vi.setSystemTime(new Date("2026-03-01T00:00:00Z"));
+    const unchanged = await savePost("first", published.post, published.sha);
+    expect(unchanged.post.lastEditedAt).toBeNull();
+    const edited = await savePost(
+      "first",
+      { ...unchanged.post, body: "new body" },
+      unchanged.sha,
+    );
+    expect(edited.post.lastEditedAt).toBe("2026-03-01T00:00:00.000Z");
+    vi.setSystemTime(new Date("2026-04-01T00:00:00Z"));
+    const featured = await savePost(
+      "first",
+      { ...edited.post, featured: true },
+      edited.sha,
+    );
+    expect(featured.post.publishedAt).toBe(published.post.publishedAt);
+    expect(featured.post.lastEditedAt).toBe(edited.post.lastEditedAt);
+  });
+  it("does not repeat the first page for missing, filtered or exhausted cursors", async () => {
+    githubStore([
+      sample,
+      {
+        ...sample,
+        id: "b",
+        slug: "b",
+        category: { name: "Study", slug: "study" },
+      },
+      { ...sample, id: "private", slug: "private", published: false },
+    ]);
+    for (const after of ["missing", "private", "b"]) {
+      expect(await getPosts({ category: "art", after })).toMatchObject({
+        posts: [],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      });
+    }
+    expect((await getPosts({ after: "b" })).posts).toEqual([]);
+    expect((await searchPosts("title", { after: "missing" })).posts).toEqual(
+      [],
+    );
+  });
+  it("publishes with the draft ID, keeps existing IDs immutable and rejects duplicate or invalid new IDs", async () => {
+    const id = "b4300eb9-7058-4f2b-82e0-857745ccc2a9";
+    const { fetchMock } = githubStore([]);
+    const created = await savePost("first", { ...sample, id }, null);
+    expect(created.post.id).toBe(id);
+    const edited = await savePost(
+      "first",
+      { ...sample, id: "changed-id" },
+      created.sha,
+    );
+    expect(edited.post.id).toBe(id);
+    const writes = fetchMock.mock.calls.filter(
+      ([, init]) => init?.method === "PATCH",
+    ).length;
+    await expect(savePost("second", { ...sample, id }, null)).rejects.toThrow(
+      "Duplicate post ID",
+    );
+    await expect(
+      savePost("second", { ...sample, id: "../invalid" }, null),
+    ).rejects.toThrow();
+    expect(
+      fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH"),
+    ).toHaveLength(writes);
+  });
   it("looks up published posts by ID rather than storage slug and omits bodies from lists", async () => {
-    expect((await getPost("fixture-id-8"))?.slug).toBe("post-8");
-    expect(await getPost("post-8")).toBeNull();
+    expect((await getPostContent("fixture-id-8"))?.slug).toBe("post-8");
+    expect(await getPostContent("post-8")).toBeNull();
     expect(await getPostSummary("fixture-id-8")).not.toHaveProperty("body");
     const posts = await getAllPosts();
     expect(posts).toHaveLength(8);
@@ -236,8 +364,9 @@ describe("Markdown store", () => {
   });
   it("creates the first post and index atomically on an empty branch", async () => {
     const { files, state } = githubStore([], false);
-    const result = await savePost("first", sample, null);
+    const result = await savePost("first", { ...sample, id: undefined }, null);
     expect(result.post.slug).toBe("first");
+    expect(result.post.id).toMatch(/^[a-f0-9-]{36}$/);
     expect(files.has("content/posts/first.md")).toBe(true);
     expect(files.has(INDEX_PATH)).toBe(true);
     expect(state.treeInput!.tree.some(({ path }) => path === INDEX_PATH)).toBe(
@@ -251,7 +380,7 @@ describe("Markdown store", () => {
     expect(await getAllPosts()).toEqual([]);
     expect(await getStoredPostsWithSha()).toEqual([]);
     expect((await searchPosts("body")).totalCount).toBe(0);
-    expect(await getPost(sample.id)).toBeNull();
+    expect(await getPostContent(sample.id)).toBeNull();
     expect(
       fetchMock.mock.calls.some(([url]) =>
         /\/git\/(trees|blobs)\/|\/contents\/content\/posts/.test(url),
@@ -393,7 +522,7 @@ describe("indexed reads and immediate writes", () => {
       ),
     ).toBe(false);
     const count = fetchMock.mock.calls.length;
-    expect((await getPost("id-4300"))?.body).toBe("Body 4300");
+    expect((await getPostContent("id-4300"))?.body).toBe("Body 4300");
     expect(
       fetchMock.mock.calls
         .slice(count)
@@ -431,7 +560,7 @@ describe("indexed reads and immediate writes", () => {
       new Set([...first.posts, ...second.posts].map(({ slug }) => slug)).size,
     ).toBe(24);
     expect((await searchPosts("private-secret")).totalCount).toBe(0);
-    expect(await getPost("private")).toBeNull();
+    expect(await getPostContent("private")).toBeNull();
     expect(
       fetchMock.mock.calls.some(([url]) =>
         url.includes("/contents/content/posts"),
@@ -452,7 +581,7 @@ describe("indexed reads and immediate writes", () => {
     });
     const { files } = githubStore([sample]);
     await getPosts();
-    await getPost("a");
+    await getPostContent("a");
     await searchPosts("body");
     const result = await savePost(
       "a",
@@ -469,7 +598,7 @@ describe("indexed reads and immediate writes", () => {
     expect(cacheTag).toHaveBeenCalledWith("posts");
     expect(revalidateTag).toHaveBeenCalledWith("posts", { expire: 0 });
     expect(result.post.category.name).toBe("Development");
-    expect((await getPost("a"))?.body).toBe("완전히 새 본문");
+    expect((await getPostContent("a"))?.body).toBe("완전히 새 본문");
     expect((await getPosts({ category: "art" })).posts).toEqual([]);
     expect(
       (await getPosts({ category: "development", series: "fixture-series" }))
@@ -481,21 +610,15 @@ describe("indexed reads and immediate writes", () => {
       "fixture-series",
     );
   });
-  it("removes deleted and unpublished articles from the catalog, detail, search, and cached reads", async () => {
+  it("removes deleted articles from the catalog, detail, search, and cached reads", async () => {
     const { files } = githubStore([sample]);
-    await getPost("a");
+    await getPostContent("a");
     await searchPosts("body");
-    const unpublished = await savePost(
-      "a",
-      { ...sample, published: false },
-      blobSha(serializePostFile(sample)),
-    );
+    await deletePost("a", blobSha(serializePostFile(sample)));
     invalidatePosts();
     expect(await getAllPosts()).toEqual([]);
-    expect(await getPost("a")).toBeNull();
+    expect(await getPostContent("a")).toBeNull();
     expect((await searchPosts("body")).totalCount).toBe(0);
-    await deletePost("a", unpublished.sha);
-    invalidatePosts();
     expect(files.has("content/posts/a.md")).toBe(false);
     expect(await getStoredPostsWithSha()).toEqual([]);
   });
@@ -529,7 +652,7 @@ describe("indexed reads and immediate writes", () => {
       ),
     ).toBe(false);
   });
-  it("rejects stale SHA, invalid series, private writes to public repos, and concurrent branch updates", async () => {
+  it("rejects stale SHA, invalid series, remote private writes, and concurrent branch updates", async () => {
     const { files, fetchMock, state } = githubStore([sample]);
     const sha = blobSha(serializePostFile(sample));
     await expect(savePost("a", sample, "f".repeat(40))).rejects.toMatchObject({
@@ -541,10 +664,9 @@ describe("indexed reads and immediate writes", () => {
     await expect(
       savePost("a", { ...sample, series: "react" }, sha),
     ).rejects.toMatchObject({ status: 400 });
-    state.private = false;
     await expect(
       savePost("a", { ...sample, published: false }, sha),
-    ).rejects.toMatchObject({ status: 400 });
+    ).rejects.toThrow();
     expect(fetchMock.mock.calls.every(([, init]) => !init?.method)).toBe(true);
     state.conflict = true;
     await expect(
@@ -604,7 +726,7 @@ describe("indexed reads and immediate writes", () => {
       ),
     ).toBe(false);
     expect(files.get("content/posts/a.md")).toBe(content);
-    expect((await getPost("a"))?.body).toBe(sample.body);
+    expect((await getPostContent("a"))?.body).toBe(sample.body);
   });
 });
 
@@ -652,7 +774,10 @@ describe("atomic pinned ordering", () => {
         base: ["b", "a"],
         order: ["b", "a"],
       }),
-    ).rejects.toMatchObject({ status: 409, conflict: undefined });
+    ).rejects.toMatchObject({
+      status: 409,
+      conflict: { kind: "post", id: "b" },
+    });
     expect(parsePostFile(files.get("content/posts/b.md")!, "b").body).toBe(
       "Local edited body",
     );
@@ -684,13 +809,10 @@ describe("atomic pinned ordering", () => {
   });
   it("unpins selected posts without changing their body", async () => {
     const { files } = githubStore([first, second]);
-    const result = await savePost(
-      "a",
-      first,
-      blobSha(serializePostFile(first)),
-      { base: ["a", "b"], order: ["a"] },
-    );
-    expect(result.pinned).toEqual(["a"]);
+    await savePost("a", first, blobSha(serializePostFile(first)), {
+      base: ["a", "b"],
+      order: ["a"],
+    });
     expect(parsePostFile(files.get("content/posts/b.md")!, "b")).toMatchObject({
       body: second.body,
       featured: false,

@@ -1,4 +1,5 @@
-import { scryptSync } from "node:crypto";
+import { scryptSync, webcrypto } from "node:crypto";
+import { issueSignedToken } from "@vercel/blob";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createWriterSession,
@@ -12,6 +13,13 @@ import { POST as imageUpload } from "@/app/api/write/images/route";
 import { POST as login, DELETE as logout } from "@/app/api/write/session/route";
 const state = vi.hoisted(() => ({ cookie: "" }));
 vi.mock("server-only", () => ({}));
+vi.mock("@vercel/blob", () => ({
+  issueSignedToken: vi.fn(async (options) => ({
+    delegationToken: `${Buffer.from(JSON.stringify(options)).toString("base64url")}.test-signature`,
+    clientSigningToken: "test-signing-key",
+    validUntil: options.validUntil,
+  })),
+}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => ({ value: state.cookie }) }),
 }));
@@ -25,6 +33,9 @@ const password = "test-password-not-a-production-secret";
 const salt = Buffer.alloc(16, 1);
 const hash = `scrypt:${salt.toString("hex")}:${scryptSync(password, salt, 64, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }).toString("hex")}`;
 beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubGlobal("crypto", webcrypto);
+  vi.stubEnv("BLOB_WEBHOOK_PUBLIC_KEY", "test-public-key");
   vi.stubEnv("WRITE_PASSWORD_HASH", hash);
   vi.stubEnv("WRITE_SESSION_SECRET", "a".repeat(40));
   vi.stubEnv("WRITE_ORIGIN", "https://blog.example");
@@ -35,6 +46,61 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer trust boundaries", () => {
+  it("accepts current post image folders while rejecting old and unsafe paths", async () => {
+    state.cookie = createWriterSession();
+    const id = "b4300eb9-7058-4f2b-82e0-857745ccc2a9";
+    const request = (pathname: string) =>
+      new Request("https://blog.example/api/write/images", {
+        method: "POST",
+        headers: {
+          origin: "https://blog.example",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "blob.generate-presigned-url",
+          payload: { pathname },
+        }),
+      });
+    for (const path of [
+      `posts/essay/${id}/${id}.webp`,
+      `posts/art/post-id/${id}.png`,
+    ]) {
+      const response = await imageUpload(request(path));
+      expect(response.status).toBe(200);
+      expect(issueSignedToken).toHaveBeenLastCalledWith({
+        pathname: path,
+        operations: ["put"],
+        allowedContentTypes: [
+          "image/png",
+          "image/jpeg",
+          "image/gif",
+          "image/webp",
+          "image/avif",
+        ],
+        maximumSizeInBytes: 20 * 1024 * 1024,
+        validUntil: expect.any(Number),
+      });
+      const expiry = vi.mocked(issueSignedToken).mock.calls.at(-1)![0]
+        .validUntil!;
+      expect(expiry).toBeGreaterThan(Date.now());
+      expect(expiry).toBeLessThanOrEqual(Date.now() + 5 * 60 * 1000);
+      expect(await response.json()).toMatchObject({
+        type: "blob.generate-presigned-url",
+        presignedUrlPayload: { signature: expect.any(String) },
+      });
+    }
+    for (const path of [
+      `posts/${id}.jpg`,
+      `posts/../${id}/${id}.png`,
+      `posts/essay/../${id}.png`,
+      `posts/essay/a%2Fb/${id}.png`,
+      `posts/essay/a\\b/${id}.png`,
+      `posts/essay/${id}/${id}.svg`,
+      `other/essay/${id}/${id}.png`,
+    ])
+      expect((await imageUpload(request(path))).status).toBe(400);
+    expect(issueSignedToken).toHaveBeenCalledTimes(2);
+  });
   it("verifies scrypt and rejects forged, expired, malformed and rotated sessions", async () => {
     expect(await verifyWriterPassword(password)).toBe(true);
     expect(await verifyWriterPassword("incorrect")).toBe(false);
@@ -69,7 +135,7 @@ describe("writer trust boundaries", () => {
               "content-type": "application/json",
             },
             body: JSON.stringify({
-              type: "blob.generate-client-token",
+              type: "blob.generate-presigned-url",
               payload: { pathname: "posts/a.png" },
             }),
           }),
@@ -77,6 +143,24 @@ describe("writer trust boundaries", () => {
       ).status,
     ).toBe(401);
     state.cookie = createWriterSession();
+    expect(
+      (
+        await imageUpload(
+          new Request("https://blog.example/api/write/images", {
+            method: "POST",
+            headers: {
+              origin: "https://attacker.example",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              type: "blob.generate-presigned-url",
+              payload: { pathname: "posts/a.png" },
+            }),
+          }),
+        )
+      ).status,
+    ).toBe(403);
+    expect(issueSignedToken).not.toHaveBeenCalled();
     expect(
       (await PUT(request("PUT", "https://attacker.example"), context)).status,
     ).toBe(403);

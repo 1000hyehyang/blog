@@ -6,7 +6,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { Agent, fetch as undiciFetch } from "undici";
 
 import { siteConfig } from "@/config/site";
-import { getPost } from "@/infrastructure/github/posts";
+import { getPostSummary } from "@/infrastructure/github/posts";
 import {
   isNonPublicIpAddress,
   parseExternalHttpUrl,
@@ -202,7 +202,9 @@ async function loadRemoteMetadata(url: string): Promise<LinkPreviewMetadata> {
 
   if (initialUrl.origin === new URL(siteConfig.url).origin) {
     const match = initialUrl.pathname.match(/^\/([^/]+)\/?$/);
-    const post = match ? await getPost(decodeURIComponent(match[1])) : null;
+    const post = match
+      ? await getPostSummary(decodeURIComponent(match[1]))
+      : null;
 
     if (post?.published) {
       return {

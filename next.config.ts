@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   allowedDevOrigins: ["127.0.0.1"],
   outputFileTracingIncludes: { "/*": ["./content/posts/**/*.md"] },
+  async headers() {
+    return process.env.VERCEL_ENV === "preview"
+      ? [
+          {
+            source: "/:path*",
+            headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+          },
+        ]
+      : [];
+  },
   images: {
     remotePatterns: remoteImagePatterns,
   },

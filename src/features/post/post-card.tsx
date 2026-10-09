@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { siteConfig } from "@/config/site";
 import type { PostSummary } from "@/domain/post";
-import { formatDate } from "@/lib/content";
+import { formatDate, resolvePostPublishedAt } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -83,8 +83,8 @@ export function PostCard({
                 <span className="text-secondary">
                   {siteConfig.author.nickname}
                 </span>
-                <time dateTime={post.createdAt}>
-                  {formatDate(post.createdAt)}
+                <time dateTime={resolvePostPublishedAt(post)}>
+                  {formatDate(resolvePostPublishedAt(post))}
                 </time>
               </span>
             </div>

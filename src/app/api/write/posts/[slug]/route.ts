@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { deletePost, savePost } from "@/infrastructure/github/posts";
+import { deletePost, savePost } from "@/infrastructure/github/post-mutations";
 import { slugSchema } from "@/lib/content/post-file";
 import { pinnedOrderSchema } from "@/domain/pinned-posts";
 import {
@@ -31,7 +31,7 @@ export async function DELETE(request: Request, context: Context) {
     const slug = slugSchema.parse((await context.params).slug);
     const { sha } = z
       .object({ sha: version })
-      .parse(await readWriterJson(request));
+      .parse(await readWriterJson(request, 4096));
     await deletePost(slug, sha);
     invalidatePosts();
     return { deleted: true };

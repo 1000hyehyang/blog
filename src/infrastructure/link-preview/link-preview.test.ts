@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Post } from "@/domain/post";
-import { getPost } from "@/infrastructure/github/posts";
+import { getPostSummary } from "@/infrastructure/github/posts";
 
 const remote = vi.hoisted(() => ({
   agents: [] as Array<{
@@ -22,7 +22,7 @@ vi.mock("next/cache", () => ({
   cacheLife: vi.fn(),
   cacheTag: vi.fn(),
 }));
-vi.mock("@/infrastructure/github/posts", () => ({ getPost: vi.fn() }));
+vi.mock("@/infrastructure/github/posts", () => ({ getPostSummary: vi.fn() }));
 vi.mock("node:dns/promises", () => ({
   default: { lookup: remote.lookup },
   lookup: remote.lookup,
@@ -50,7 +50,7 @@ describe("self-hosted link preview", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it("uses existing post data instead of fetching the deployed page", async () => {
-    vi.mocked(getPost).mockResolvedValue({
+    vi.mocked(getPostSummary).mockResolvedValue({
       title: "Internal post",
       excerpt: "Internal description",
       coverImage: { src: "https://images.example.com/cover.png" },
@@ -67,7 +67,7 @@ describe("self-hosted link preview", () => {
       image: "https://images.example.com/cover.png",
       siteName: "1000hyehyang Blog",
     });
-    expect(getPost).toHaveBeenCalledWith("20");
+    expect(getPostSummary).toHaveBeenCalledWith("20");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

@@ -6,3 +6,5 @@ playwright-report
 package-lock.json
 content/posts
 tests/fixtures/posts
+# 검색엔진 확인 파일은 다운로드한 원본을 유지한다.
+public/naver*.html

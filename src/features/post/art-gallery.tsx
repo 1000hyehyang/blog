@@ -19,7 +19,9 @@ export function ArtGallery({ posts, eagerImageSource }: ArtGalleryProps) {
       className="columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4"
     >
       {posts.map((post) => {
-        const image = post.galleryImage ?? post.coverImage;
+        const image = post.galleryImage?.src
+          ? post.galleryImage
+          : post.coverImage;
 
         return (
           <article

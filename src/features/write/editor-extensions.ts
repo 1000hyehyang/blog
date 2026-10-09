@@ -1,4 +1,5 @@
 import StarterKit from "@tiptap/starter-kit";
+import Paragraph from "@tiptap/extension-paragraph";
 import Image from "@tiptap/extension-image";
 import Link, { isAllowedUri } from "@tiptap/extension-link";
 import type { JSONContent } from "@tiptap/core";
@@ -20,6 +21,7 @@ import {
 import {
   hasImageSettings,
   readImageMetadata,
+  readImageDimensions,
   writeImageMetadata,
   type ImageMetadata,
 } from "@/lib/image-metadata";
@@ -27,6 +29,12 @@ import {
 // 문단 중간에서 표 토큰화를 시작하면 셀이 누락된다.
 const SafeTable = Table.extend({
   markdownTokenizer: { ...Table.config.markdownTokenizer!, start: () => -1 },
+});
+
+// Markdown 파서가 빈 문단을 제거하지 않도록 표식을 남긴다.
+const PreservedParagraph = Paragraph.extend({
+  renderMarkdown: (node, helpers) =>
+    node.content?.length ? helpers.renderChildren(node.content) : "&nbsp;",
 });
 
 // 블록 이미지에는 링크 마크를 붙일 수 없어 노드 속성에 저장한다.
@@ -138,6 +146,15 @@ const EditableImage = Image.extend({
         parseHTML: (element: HTMLElement) =>
           image(element)?.getAttribute("data-blog-image-batch"),
       },
+      dimensions: {
+        default: null,
+        rendered: false,
+        parseHTML: (element: HTMLElement) =>
+          readImageDimensions({
+            width: Number(image(element)?.getAttribute("width")),
+            height: Number(image(element)?.getAttribute("height")),
+          }) ?? null,
+      },
       layout: {
         default: null,
         parseHTML: (element: HTMLElement) =>
@@ -180,12 +197,21 @@ const EditableImage = Image.extend({
       return wrap([
         "figure",
         { "data-blog-image-group": writeImageGroup(group) },
-        ...group.images.map((item) => ["img", item]),
+        ...group.images.map(({ dimensions, ...item }) => [
+          "img",
+          { ...item, ...dimensions },
+        ]),
         ...(group.caption ? [["figcaption", {}, group.caption]] : []),
       ]);
     const image = [
       "img",
-      { src, alt, title, "data-blog-image-batch": batchId },
+      {
+        src,
+        alt,
+        title,
+        ...settings.dimensions,
+        "data-blog-image-batch": batchId,
+      },
     ] as const;
     if (!hasImageSettings(settings)) return wrap(image);
     return wrap([
@@ -247,7 +273,8 @@ const EditableImage = Image.extend({
 });
 export function editorExtensions() {
   return [
-    StarterKit.configure({ link: false }),
+    StarterKit.configure({ link: false, paragraph: false }),
+    PreservedParagraph,
     ImageAwareLink,
     EditableImage.configure({ allowBase64: false }),
     TaskList,
@@ -266,6 +293,7 @@ export function editorExtensions() {
 }
 
 export function hasUnsupportedHtml(source: string) {
+  if (!source.includes("<")) return false;
   const manager = new MarkdownManager();
   let unsupported = false;
   manager.instance.walkTokens(manager.instance.lexer(source), (token) => {

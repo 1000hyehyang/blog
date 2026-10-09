@@ -1,19 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { PostHeading } from "@/lib/content";
+import { usePrefersReducedMotion } from "@/lib/react/use-prefers-reduced-motion";
 
 const HEADER_OFFSET = 96;
 // 스크롤 좌표의 반올림 오차를 1px 보정한다.
 const ACTIVE_HEADING_OFFSET = HEADER_OFFSET + 1;
+const SCROLL_EASING_MS = 160;
 
 type PostTableOfContentsProps = {
   headings: PostHeading[];
 };
 
+function getHeadingScrollTop(element: HTMLElement) {
+  const top =
+    element.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+  const maxScroll = Math.max(
+    0,
+    document.documentElement.scrollHeight - window.innerHeight,
+  );
+  return Math.max(0, Math.min(top, maxScroll));
+}
+
 export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
   const [activeId, setActiveId] = useState(headings[0]?.id ?? "");
+  const scrollTarget = useRef<HTMLElement | null>(null);
+  const scrollFrame = useRef<number | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
+
+  function cancelScrollTarget() {
+    scrollTarget.current = null;
+    if (scrollFrame.current !== null) {
+      window.cancelAnimationFrame(scrollFrame.current);
+      scrollFrame.current = null;
+    }
+  }
 
   useEffect(() => {
     if (!headings.length) return;
@@ -44,6 +67,21 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
       });
     }
 
+    function alignScrollTarget() {
+      const target = scrollTarget.current;
+      if (target && reducedMotion)
+        window.scrollTo({
+          top: getHeadingScrollTop(target),
+          behavior: "instant",
+        });
+    }
+
+    const resizeObserver = new ResizeObserver(alignScrollTarget);
+    if (reducedMotion) resizeObserver.observe(document.body);
+    const cancelEvents = ["wheel", "pointerdown", "keydown"] as const;
+    for (const event of cancelEvents)
+      window.addEventListener(event, cancelScrollTarget, { passive: true });
+
     updateActiveHeading();
     window.addEventListener("scroll", scheduleActiveHeadingUpdate, {
       passive: true,
@@ -51,25 +89,58 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
     window.addEventListener("resize", scheduleActiveHeadingUpdate);
 
     return () => {
+      cancelScrollTarget();
+      resizeObserver.disconnect();
+      for (const event of cancelEvents)
+        window.removeEventListener(event, cancelScrollTarget);
       window.removeEventListener("scroll", scheduleActiveHeadingUpdate);
       window.removeEventListener("resize", scheduleActiveHeadingUpdate);
       if (animationFrame !== null) {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, [headings]);
+  }, [headings, reducedMotion]);
 
   if (!headings.length) return null;
 
   function scrollToHeading(id: string) {
     const element = document.getElementById(id);
     if (!element) return;
-
-    const top =
-      element.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-
-    window.scrollTo({ top, behavior: "smooth" });
+    cancelScrollTarget();
+    scrollTarget.current = element;
     setActiveId(id);
+
+    if (reducedMotion) {
+      window.scrollTo({
+        top: getHeadingScrollTop(element),
+        behavior: "instant",
+      });
+      return;
+    }
+
+    let position = window.scrollY;
+    let easedTarget = position;
+    let previousTime: number | null = null;
+    let previousTop = getHeadingScrollTop(element);
+    const advanceScroll = (time: number) => {
+      const top = getHeadingScrollTop(element);
+      const remaining = top - position;
+      const blend =
+        1 - Math.exp(-(time - (previousTime ?? time)) / SCROLL_EASING_MS);
+      // 목표와 위치를 차례로 보간해 움직이는 제목을 따라가면서 출발과 도착 모두 완만하게 만든다.
+      easedTarget += (top - easedTarget) * blend;
+      position += (easedTarget - position) * blend;
+      previousTime = time;
+      const finished =
+        Math.abs(remaining) <= 1 &&
+        Math.abs(top - easedTarget) <= 1 &&
+        top === previousTop;
+      previousTop = top;
+      window.scrollTo({ top: finished ? top : position, behavior: "instant" });
+      if (finished) cancelScrollTarget();
+      else scrollFrame.current = window.requestAnimationFrame(advanceScroll);
+    };
+    scrollFrame.current = window.requestAnimationFrame(advanceScroll);
   }
 
   return (
