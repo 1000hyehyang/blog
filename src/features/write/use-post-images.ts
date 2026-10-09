@@ -42,6 +42,7 @@ export function usePostImages({
     return uploadPostImage(file, category, allocateId());
   }
   function queueImages(files: File[], target: ImageTarget) {
+    if (target === "body" && (unsupported || !editor?.isEditable)) return;
     if (!files.length) return;
     if (target !== "body" || files.length === 1) {
       void uploadSingleImage(files[0], target);
@@ -67,7 +68,14 @@ export function usePostImages({
     imageLayoutDialog.current?.showModal();
   }
   async function uploadPendingImages() {
-    if (!pendingImages || !editor || !start()) return;
+    if (
+      !pendingImages ||
+      !editor ||
+      unsupported ||
+      !editor.isEditable ||
+      !start()
+    )
+      return;
     editor.setEditable(false);
     let items = pendingImages.items;
     try {

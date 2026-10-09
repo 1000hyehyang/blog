@@ -20,11 +20,18 @@ export default async function ManagePage({
         ? "/login?next=%2Fmanage%3Ftab%3Ddrafts"
         : "/login?next=%2Fmanage",
     );
-  const posts = await getStoredPostsWithSha();
+  let posts: Awaited<ReturnType<typeof getStoredPostsWithSha>> = [];
+  let unavailable = false;
+  try {
+    posts = await getStoredPostsWithSha();
+  } catch {
+    unavailable = true;
+  }
   return (
     <div className={styles.writer}>
       <WriterHeader />
       <ManagePosts
+        unavailable={unavailable}
         initialTab={query?.tab}
         posts={posts.map(
           ({

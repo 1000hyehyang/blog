@@ -90,7 +90,7 @@ function LoadedPostEditor({
   pinned = [],
   postSlugs = [],
   draft,
-  recovery,
+  recovery: storedRecovery,
   recoveryKey,
   recoveryFailed,
 }: Props & {
@@ -99,6 +99,14 @@ function LoadedPostEditor({
   recoveryFailed: boolean;
 }) {
   const router = useRouter();
+  const recovery =
+    draft &&
+    storedRecovery &&
+    (Date.parse(storedRecovery.savedAt) <= Date.parse(draft.savedAt) ||
+      (storedRecovery.baseDraftSavedAt !== undefined &&
+        storedRecovery.baseDraftSavedAt !== draft.savedAt))
+      ? null
+      : storedRecovery;
   const [fields, setFields] = useState<PostFields>({
     ...emptyFields,
     ...initial,
@@ -211,7 +219,8 @@ function LoadedPostEditor({
   });
   const { clear: clearRecovery, flush: flushRecovery } = usePostRecovery({
     key: recoveryKey,
-    recovery,
+    recovery: storedRecovery,
+    sha: persistence.sha,
     editor,
     dirty,
     fields,
@@ -296,7 +305,10 @@ function LoadedPostEditor({
     if (!editor) return null;
     return {
       ...fields,
-      body: bodyChanged.current ? editor.getMarkdown() : fields.body,
+      body:
+        !unsupported && bodyChanged.current
+          ? editor.getMarkdown()
+          : fields.body,
       tags: [
         ...new Set(
           tags

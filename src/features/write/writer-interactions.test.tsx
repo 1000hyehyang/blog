@@ -207,7 +207,12 @@ it("lists healthy drafts alongside recoverable damaged entries and exports their
   );
   const raw = '{"body":"보존할 원문';
   await writeDraftRecord({ key: "blog:writer:draft:damaged", raw });
-  render(<ManagePosts posts={[]} initialTab="drafts" />);
+  render(<ManagePosts posts={[]} initialTab="drafts" unavailable />);
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "서버 글 목록을 불러오지 못했습니다",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+  expect(refresh).toHaveBeenCalled();
   expect(
     await screen.findByRole("link", { name: "Healthy draft" }),
   ).toBeInTheDocument();

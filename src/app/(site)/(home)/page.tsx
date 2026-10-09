@@ -35,7 +35,9 @@ export default async function Home() {
     featured[0]?.coverImage.src ||
     recent.find((post) => post.coverImage.src)?.coverImage.src ||
     recentArt
-      .map((post) => post.galleryImage ?? post.coverImage)
+      .map((post) =>
+        post.galleryImage?.src ? post.galleryImage : post.coverImage,
+      )
       .find((image) => image.src)?.src;
 
   return (

@@ -138,6 +138,11 @@ export async function savePost(
     throw new PostStoreError(
       "글이 변경되었거나 같은 주소가 이미 존재합니다. 내용을 보관하고 다시 열어 주세요.",
       409,
+      {
+        kind: "post",
+        sha: previous?.sha ?? null,
+        id: previous?.post.id ?? null,
+      },
     );
   const now = new Date().toISOString();
   const post: FilePost = {

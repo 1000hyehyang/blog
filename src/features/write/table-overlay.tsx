@@ -78,6 +78,7 @@ export function TableOverlay({
   }, [editor, menu]);
 
   function findTarget(element: Element) {
+    if (!editor.isEditable) return null;
     const cell = element.closest("td, th");
     const tableElement = cell?.closest("table");
     const wrapper = tableElement?.closest(".tableWrapper");
@@ -194,7 +195,11 @@ export function TableOverlay({
           setTarget(null);
       }}
       onMouseLeave={(event) => {
-        if (!menu && !host.current?.contains(event.relatedTarget as Node))
+        if (
+          !menu &&
+          (!(event.relatedTarget instanceof Node) ||
+            !host.current?.contains(event.relatedTarget))
+        )
           setTarget(null);
       }}
       onClickCapture={(event) => {
@@ -210,7 +215,7 @@ export function TableOverlay({
       }}
     >
       {children}
-      {target && handlePosition && (
+      {editor.isEditable && target && handlePosition && (
         <>
           <span
             className={styles.tableGutter}

@@ -16,7 +16,9 @@ export function PostListing({
   const eagerImageSource = posts
     .map((post) =>
       category === "art"
-        ? (post.galleryImage ?? post.coverImage)
+        ? post.galleryImage?.src
+          ? post.galleryImage
+          : post.coverImage
         : post.coverImage,
     )
     .find((image) => image.src)?.src;

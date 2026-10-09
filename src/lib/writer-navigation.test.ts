@@ -3,6 +3,7 @@ import { writerDestination } from "./writer-navigation";
 import WritePage from "@/app/(writer)/write/page";
 import ManagePage from "@/app/(writer)/manage/page";
 import LoginPage from "@/app/(writer)/login/page";
+import { ManagePosts } from "@/features/write/manage-posts";
 
 const mocks = vi.hoisted(() => ({ authenticated: false, read: vi.fn() }));
 vi.mock("@/lib/writer-auth", () => ({
@@ -44,6 +45,21 @@ it("only permits known admin destinations, never external redirects", () => {
     "/write?slug=a&slug=b",
   ])
     expect(writerDestination(value)).toBe("/manage");
+});
+it("renders local draft management when the remote listing is unavailable", async () => {
+  mocks.authenticated = true;
+  mocks.read.mockRejectedValueOnce(new Error("GitHub unavailable"));
+  const page = await ManagePage({
+    searchParams: Promise.resolve({ tab: "drafts" }),
+  });
+  const management = page.props.children.find(
+    (child: { type: unknown }) => child.type === ManagePosts,
+  );
+  expect(management.props).toMatchObject({
+    posts: [],
+    initialTab: "drafts",
+    unavailable: true,
+  });
 });
 it("redirects before reading any protected content and retains the requested edit", async () => {
   await expect(

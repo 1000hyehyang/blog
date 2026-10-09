@@ -26,7 +26,9 @@ export class PostStoreError extends Error {
   constructor(
     message: string,
     public status: number,
-    public conflict?: { kind: "pinned"; posts: PinnedPost[] },
+    public conflict?:
+      | { kind: "pinned"; posts: PinnedPost[] }
+      | { kind: "post"; sha: string | null; id: string | null },
   ) {
     super(message);
   }

@@ -11,6 +11,7 @@ import {
 export function usePostRecovery({
   key,
   recovery,
+  sha,
   editor,
   dirty,
   fields,
@@ -21,6 +22,7 @@ export function usePostRecovery({
 }: {
   key: string;
   recovery: LocalDraft | null;
+  sha: string | null;
   editor: Editor | null;
   dirty: boolean;
   fields: PostFields;
@@ -33,7 +35,7 @@ export function usePostRecovery({
   const pending = useRef(Promise.resolve(true));
   const cleared = useRef(false);
   const changed = useRef(false);
-  const previous = useRef({ fields, tags, order });
+  const previous = useRef({ fields, tags, order, sha });
   function checkpoint() {
     if (!dirty || !changed.current || cleared.current) return;
     changed.current = false;
@@ -69,12 +71,13 @@ export function usePostRecovery({
       dirty &&
       (previous.current.fields !== fields ||
         previous.current.tags !== tags ||
-        previous.current.order !== order)
+        previous.current.order !== order ||
+        previous.current.sha !== sha)
     ) {
       markChanged();
     }
-    previous.current = { fields, tags, order };
-  }, [dirty, fields, tags, order]);
+    previous.current = { fields, tags, order, sha };
+  }, [dirty, fields, tags, order, sha]);
   useEffect(() => {
     const save = () => checkpointOnEvent();
     const interval = setInterval(save, 60_000);

@@ -774,7 +774,10 @@ describe("atomic pinned ordering", () => {
         base: ["b", "a"],
         order: ["b", "a"],
       }),
-    ).rejects.toMatchObject({ status: 409, conflict: undefined });
+    ).rejects.toMatchObject({
+      status: 409,
+      conflict: { kind: "post", id: "b" },
+    });
     expect(parsePostFile(files.get("content/posts/b.md")!, "b").body).toBe(
       "Local edited body",
     );

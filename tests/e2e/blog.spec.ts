@@ -50,6 +50,23 @@ test("헤더 검색창에서 엔터 시 검색 페이지로 이동한다", async
   ).toBeVisible();
 });
 
+test("중복 검색 파라미터와 잘못된 커서가 검색 화면을 깨뜨리지 않는다", async ({
+  page,
+}) => {
+  await page.goto("/search?q=fixture&q=next&cursor=post-1&cursor=post-2");
+  await expect(
+    page.getByRole("heading", { name: "검색어를 입력하세요" }),
+  ).toBeVisible();
+
+  await page.goto("/search?q=fixture&cursor=post-1&cursor=post-2");
+  await expect(page.locator("[data-post-card]")).toHaveCount(8);
+
+  await page.goto("/search?q=fixture&cursor=../invalid");
+  await expect(
+    page.getByRole("heading", { name: "검색 결과가 없습니다" }),
+  ).toBeVisible();
+});
+
 test("다크 모드를 전환한다", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "다크 모드로 전환" }).click();

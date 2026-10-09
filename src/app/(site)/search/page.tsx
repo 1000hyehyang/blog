@@ -14,21 +14,23 @@ export const metadata: Metadata = {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; cursor?: string }>;
+  searchParams: Promise<{ q?: string | string[]; cursor?: string | string[] }>;
 }) {
   const query = await searchParams;
-  const result = await searchPosts(query.q ?? "", { after: query.cursor });
+  const q = typeof query.q === "string" ? query.q : "";
+  const cursor = typeof query.cursor === "string" ? query.cursor : undefined;
+  const result = await searchPosts(q, { after: cursor });
   return (
     <div className="page-shell">
       <SearchResults
         posts={result.posts}
-        query={query.q}
+        query={q}
         totalCount={result.totalCount}
       />
       {result.pageInfo.endCursor && (
         <div className="mt-14 text-center">
           <Link
-            href={`${routes.search}?${new URLSearchParams({ q: query.q ?? "", cursor: result.pageInfo.endCursor })}`}
+            href={`${routes.search}?${new URLSearchParams({ q, cursor: result.pageInfo.endCursor })}`}
             className="inline-flex rounded-full border px-6 py-3 text-xs"
           >
             다음 포스트

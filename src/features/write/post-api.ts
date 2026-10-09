@@ -14,6 +14,14 @@ const errorSchema = z.object({
   message: z.string().optional(),
   conflict: z.unknown().optional(),
 });
+export const postConflictSchema = z.object({
+  kind: z.literal("post"),
+  sha: z
+    .string()
+    .regex(/^[a-f0-9]{40}$/)
+    .nullable(),
+  id: z.string().nullable(),
+});
 type SaveResult =
   | { ok: true; post: StoredPost; sha: string }
   | { ok: false; status: number; message?: string; conflict?: unknown };

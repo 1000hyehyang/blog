@@ -12,6 +12,26 @@ vi.mock("server-only", () => ({}));
 afterEach(() => cleanup());
 
 describe("MarkdownContent headings", () => {
+  it("preserves the targets and accessible labels of repeated footnote references", () => {
+    const { container } = render(
+      <MarkdownContent
+        source={"First[^note], second[^note].\n\n[^note]: Footnote."}
+      />,
+    );
+    const references = container.querySelectorAll<HTMLAnchorElement>(
+      "a[data-footnote-ref]",
+    );
+    const backlinks = container.querySelectorAll<HTMLAnchorElement>(
+      "a[data-footnote-backref]",
+    );
+    expect(references).toHaveLength(2);
+    expect(backlinks).toHaveLength(2);
+    for (const link of [...references, ...backlinks]) {
+      expect(document.getElementById(link.hash.slice(1))).toBeInTheDocument();
+      expect(link).not.toHaveAttribute("node");
+    }
+    expect(backlinks[0]).toHaveAttribute("aria-label");
+  });
   it("ignores fenced code and shares unique IDs for entities, nested and Setext headings", () => {
     expect(extractHeadings("~~~md\n# fake\n~~~")).toEqual([]);
     const source =

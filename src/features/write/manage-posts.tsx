@@ -37,9 +37,11 @@ const canDeletePost = (post: ManagedPost) =>
 export function ManagePosts({
   posts,
   initialTab = "published",
+  unavailable = false,
 }: {
   posts: ManagedPost[];
   initialTab?: string;
+  unavailable?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState(
@@ -137,6 +139,15 @@ export function ManagePosts({
   const current = Math.min(page, pages);
   return (
     <section className={styles.management}>
+      {unavailable && (
+        <p role="status" className={styles.notice}>
+          서버 글 목록을 불러오지 못했습니다. 임시 저장 글은 계속 관리할 수
+          있습니다.{" "}
+          <button type="button" onClick={() => router.refresh()}>
+            다시 시도
+          </button>
+        </p>
+      )}
       <div className={styles.managementHeading}>
         <h1>
           글 관리 <span>{filtered.length}</span>

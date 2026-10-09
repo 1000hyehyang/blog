@@ -9,6 +9,7 @@ const draftSchema = z
       .regex(/^[a-f0-9]{40}$/)
       .nullable(),
     savedAt: z.string().datetime(),
+    baseDraftSavedAt: z.string().datetime().nullable().optional(),
     pinned: z.array(
       postFileSchema.pick({ slug: true, title: true, coverImage: true }),
     ),

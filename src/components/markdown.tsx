@@ -78,11 +78,18 @@ function MarkdownParagraph({
   );
 }
 
-function MarkdownLink({ href, children }: ComponentProps<"a">) {
+function MarkdownLink({
+  href,
+  children,
+  node,
+  ...props
+}: ComponentProps<"a"> & { node?: Element }) {
+  void node;
   const external = href ? Boolean(parseExternalHttpUrl(href)) : false;
 
   return (
     <a
+      {...props}
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
