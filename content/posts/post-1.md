@@ -12,7 +12,7 @@
     "여씨 근황"
   ],
   "coverImage": {
-    "src": "https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/5653ce06-3d44-4fd9-876d-500324784df9-aNURyZRcMQ0MPQFJQjQXTNMcxFbfzB.jpg"
+    "src": "https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/5653ce06-3d44-4fd9-876d-500324784df9-aNURyZRcMQ0MPQFJQjQXTNMcxFbfzB.jpg"
   },
   "galleryImage": {
     "src": ""
@@ -77,7 +77,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 실제로 본인은 초딩 때 마법천자문 무한 회독으로 한자 3급 정도는 수월했다. 혼세마왕... 사랑했는데...
 
-![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/7e1f45a0-c54f-49a8-a038-767435158eda-FDQfXUoNZe9w7ofzPKfMEUn9JsrAW2.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A44%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%5C%22%EC%A0%80%EC%9A%94%5C%22%22%7D")
+![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/7e1f45a0-c54f-49a8-a038-767435158eda-FDQfXUoNZe9w7ofzPKfMEUn9JsrAW2.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A44%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%5C%22%EC%A0%80%EC%9A%94%5C%22%22%7D")
 
 > 개인적으로 쓰려고 만든건데 상공회의소에서 연락오진 않겠죠?  
 > 소식 없으면 저 상공회의소한테 고소당해서 빵 들어간거니까 알고 계세요.
@@ -90,7 +90,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 막학기가 끝나고는 소중한 사람들을 만나는 시간이었습니다 (。﹏。\*)
 
-![Frame 1707483505 (1)](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/befd39ee-3b58-4a98-84e4-d0b8633625d8-VnhNs4UM91wxiBEbMW1I7PFbcThfyB.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A47%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%B5%9C%EA%B3%A0%EC%9D%98%20%ED%8C%80%EC%9B%90%20POTG%22%7D")
+![Frame 1707483505 (1)](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/befd39ee-3b58-4a98-84e4-d0b8633625d8-VnhNs4UM91wxiBEbMW1I7PFbcThfyB.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A47%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%B5%9C%EA%B3%A0%EC%9D%98%20%ED%8C%80%EC%9B%90%20POTG%22%7D")
 
 융소에는 악명 높은 수업이 하나 있는데요 '종합설계'라는 과목입니다.
 
@@ -106,7 +106,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260702_145452](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/7cf1847e-70e6-4441-b3d0-26d9335138f6-fBGwYjZVvxwlCCzcew3qqTP5ZhBeo7.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A29%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%98%9E%EB%8B%88%EA%B0%80%20%EC%A2%8B%EC%95%84%ED%95%98%EB%8A%94%20%EB%A7%88%EB%A3%A8%22%7D")
+![20260702_145452](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/7cf1847e-70e6-4441-b3d0-26d9335138f6-fBGwYjZVvxwlCCzcew3qqTP5ZhBeo7.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A29%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%98%9E%EB%8B%88%EA%B0%80%20%EC%A2%8B%EC%95%84%ED%95%98%EB%8A%94%20%EB%A7%88%EB%A3%A8%22%7D")
 
 나의 영원한 뮤즈 옞니와 마루 팝업을 또 들렀어요
 
@@ -126,7 +126,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![화면 캡처 2026-10-04 235615](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/c7656c11-df50-4e47-8db6-91563eed2b68-ZidM6P59zjP7zn3nqlG5jMPvRLlD2m.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A30%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%B9%99%EC%88%98%20%EB%A7%88%EB%A3%A8%20%EB%95%8C%EB%AC%B8%EC%97%90%20%EB%B2%84%EB%A0%A4%EC%A7%84%20%EC%95%84%EC%9D%B4%EC%8A%A4%ED%81%AC%EB%A6%BC%20%EB%A7%88%EB%A3%A8%22%7D")
+![화면 캡처 2026-10-04 235615](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/c7656c11-df50-4e47-8db6-91563eed2b68-ZidM6P59zjP7zn3nqlG5jMPvRLlD2m.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A30%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%B9%99%EC%88%98%20%EB%A7%88%EB%A3%A8%20%EB%95%8C%EB%AC%B8%EC%97%90%20%EB%B2%84%EB%A0%A4%EC%A7%84%20%EC%95%84%EC%9D%B4%EC%8A%A4%ED%81%AC%EB%A6%BC%20%EB%A7%88%EB%A3%A8%22%7D")
 
 한치의 망설임도 없이 교환당한 아이스크림 마루. 표정때문에 더 불쌍해보임.
 
@@ -134,7 +134,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260715_164006](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/04a58938-3560-45b3-872c-fbc561e30a75-bu0aEXi7fYeLuvrhkdltIkDZAgnYyw.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%A5%98%EC%A7%80...%20%EC%95%88...%20%EB%AF%B8%EC%95%88%ED%95%B4%20%EB%B6%80%EC%9E%90%EA%B0%80%20%EB%90%98%EB%A9%B4%20%EB%84%88%EB%84%A4%EB%8F%84%20%EC%B1%99%EA%B2%A8%EC%A4%84%EA%B2%8C%22%7D")
+![20260715_164006](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/04a58938-3560-45b3-872c-fbc561e30a75-bu0aEXi7fYeLuvrhkdltIkDZAgnYyw.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%A5%98%EC%A7%80...%20%EC%95%88...%20%EB%AF%B8%EC%95%88%ED%95%B4%20%EB%B6%80%EC%9E%90%EA%B0%80%20%EB%90%98%EB%A9%B4%20%EB%84%88%EB%84%A4%EB%8F%84%20%EC%B1%99%EA%B2%A8%EC%A4%84%EA%B2%8C%22%7D")
 
 페덕인 나를 위해 먼 길 동행해준 옞니와 동은이에게 무한 감사 ヾ(＠⌒ー⌒＠)ノ
 
@@ -150,7 +150,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![1786451264800](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/e303534c-846b-416e-a269-0124ec378d9c-8HOmZh6Z5xWJeqQG0CZrEBiBKMnX5G.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fe303534c-846b-416e-a269-0124ec378d9c-8HOmZh6Z5xWJeqQG0CZrEBiBKMnX5G.jpg%22%2C%22alt%22%3A%221786451264800%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F247af437-936e-4f8c-8cec-28edfecdb773-xwpdSBsEoOQzmFbP4AOdBhOjlNI1jM.jpg%22%2C%22alt%22%3A%2220260811_185019%22%7D%5D%2C%22caption%22%3A%22%EB%8B%A8%ED%8C%90%20%EC%8A%B9%EB%B6%80%EB%A1%9C%20%EB%82%B4%20%EC%BD%94%EC%9D%B8%20%EB%8B%A4%20%EB%BA%8F%EC%96%B4%EA%B0%84%20%EC%BF%A0%ED%8C%8C%20%EB%85%80%EC%84%9D%20%EC%9D%91%EC%A7%95%ED%95%9C%EB%8B%A4%22%7D")
+![1786451264800](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/e303534c-846b-416e-a269-0124ec378d9c-8HOmZh6Z5xWJeqQG0CZrEBiBKMnX5G.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2Fe303534c-846b-416e-a269-0124ec378d9c-8HOmZh6Z5xWJeqQG0CZrEBiBKMnX5G.jpg%22%2C%22alt%22%3A%221786451264800%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F247af437-936e-4f8c-8cec-28edfecdb773-xwpdSBsEoOQzmFbP4AOdBhOjlNI1jM.jpg%22%2C%22alt%22%3A%2220260811_185019%22%7D%5D%2C%22caption%22%3A%22%EB%8B%A8%ED%8C%90%20%EC%8A%B9%EB%B6%80%EB%A1%9C%20%EB%82%B4%20%EC%BD%94%EC%9D%B8%20%EB%8B%A4%20%EB%BA%8F%EC%96%B4%EA%B0%84%20%EC%BF%A0%ED%8C%8C%20%EB%85%80%EC%84%9D%20%EC%9D%91%EC%A7%95%ED%95%9C%EB%8B%A4%22%7D")
 
 예진이랑 동은이 팟이랑 노는건 진심 개웃긴 콘텐츠다
 
@@ -164,7 +164,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260812_200545](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/f8ba8048-74ee-4c70-8a1d-a0710f18178c-rLl0tapCxkzTk97CvlkNPlCmxqcxTa.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A43%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%8A%B9%EB%A6%AC%EC%95%BC%20%EB%84%88%EB%9E%91%20%EC%B0%8D%EC%9D%80%20%EC%82%AC%EC%A7%84%EC%9D%80%20%EC%99%9C%20%EC%95%84%EB%AC%B4%EA%B2%83%EB%8F%84%20%EC%97%86%EB%83%90%3F%22%7D")
+![20260812_200545](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/f8ba8048-74ee-4c70-8a1d-a0710f18178c-rLl0tapCxkzTk97CvlkNPlCmxqcxTa.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A43%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%8A%B9%EB%A6%AC%EC%95%BC%20%EB%84%88%EB%9E%91%20%EC%B0%8D%EC%9D%80%20%EC%82%AC%EC%A7%84%EC%9D%80%20%EC%99%9C%20%EC%95%84%EB%AC%B4%EA%B2%83%EB%8F%84%20%EC%97%86%EB%83%90%3F%22%7D")
 
 그리고 독일로 멀리 멀리 떠나는 니케씨랑도 마지막 인사를 나눴는데요...
 
@@ -192,7 +192,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260829_125610](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/ea2f1cfd-4577-417d-a29c-edab34c6b356-rAehgpirkZR1HYVzXvD4WI3h2AA5cg.jpg "blog-image-group:v1:%7B%22layout%22%3A%22collage%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fea2f1cfd-4577-417d-a29c-edab34c6b356-rAehgpirkZR1HYVzXvD4WI3h2AA5cg.jpg%22%2C%22alt%22%3A%2220260829_125610%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fda0d88db-dfdb-4fd5-82dc-21b2e49ec894-QBInNgs8DdhSYgDOOrpGxYSBKy5YYp.jpg%22%2C%22alt%22%3A%2220260829_142353%22%7D%5D%2C%22caption%22%3A%22%EC%8B%A0%EC%9B%90%EC%9D%B4%EB%9E%91%20%EB%A8%B9%EC%97%88%EB%8D%98%20%EA%B2%83%EB%93%A4...%20%EC%9D%84%EC%A7%80%EA%B9%90%EA%B9%90%20%EA%B0%9C%EB%A7%9B%EC%9E%88%EC%97%88%EC%9D%8C%20%EB%98%90%20%EA%B0%80%EC%95%BC%EB%90%A8%22%7D")
+![20260829_125610](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/ea2f1cfd-4577-417d-a29c-edab34c6b356-rAehgpirkZR1HYVzXvD4WI3h2AA5cg.jpg "blog-image-group:v1:%7B%22layout%22%3A%22collage%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2Fea2f1cfd-4577-417d-a29c-edab34c6b356-rAehgpirkZR1HYVzXvD4WI3h2AA5cg.jpg%22%2C%22alt%22%3A%2220260829_125610%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2Fda0d88db-dfdb-4fd5-82dc-21b2e49ec894-QBInNgs8DdhSYgDOOrpGxYSBKy5YYp.jpg%22%2C%22alt%22%3A%2220260829_142353%22%7D%5D%2C%22caption%22%3A%22%EC%8B%A0%EC%9B%90%EC%9D%B4%EB%9E%91%20%EB%A8%B9%EC%97%88%EB%8D%98%20%EA%B2%83%EB%93%A4...%20%EC%9D%84%EC%A7%80%EA%B9%90%EA%B9%90%20%EA%B0%9C%EB%A7%9B%EC%9E%88%EC%97%88%EC%9D%8C%20%EB%98%90%20%EA%B0%80%EC%95%BC%EB%90%A8%22%7D")
 
 항상 먼저 만나자고 해주는 신원이. 덕분에 매년 보자나 우리. ++나 이제 백수니까 내가 집착할게.++
 
@@ -204,7 +204,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260905_161219\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/b8fbac13-189a-4911-9ee2-c29f44e2dabb-zmeTXkQTRH6OSygr9k71bU0ZuJJHPs.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A54%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%82%98%20%EB%82%A8%EC%9E%90%EB%A1%9C%20%ED%83%9C%EC%96%B4%EB%82%AC%EC%9C%BC%EB%A9%B4%20%ED%88%AC%EC%88%98%ED%96%88%EC%96%B4%EC%95%BC%20%EB%90%A8.%20%EC%A7%84%EC%8B%AC%EC%9C%BC%EB%A1%9C%20%EC%9A%B8%20%ED%8C%80%20%ED%88%AC%EC%88%98%20%EB%88%84%EA%B5%AC%EC%94%A8%EB%B3%B4%EB%8B%A8%20%EC%9E%98%20%EB%8D%98%EC%A7%88%20%EC%9E%90%EC%8B%A0%20%EC%9E%88%EC%9D%8C%20%3B%3B%3B%22%7D")
+![20260905_161219\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/b8fbac13-189a-4911-9ee2-c29f44e2dabb-zmeTXkQTRH6OSygr9k71bU0ZuJJHPs.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A54%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%82%98%20%EB%82%A8%EC%9E%90%EB%A1%9C%20%ED%83%9C%EC%96%B4%EB%82%AC%EC%9C%BC%EB%A9%B4%20%ED%88%AC%EC%88%98%ED%96%88%EC%96%B4%EC%95%BC%20%EB%90%A8.%20%EC%A7%84%EC%8B%AC%EC%9C%BC%EB%A1%9C%20%EC%9A%B8%20%ED%8C%80%20%ED%88%AC%EC%88%98%20%EB%88%84%EA%B5%AC%EC%94%A8%EB%B3%B4%EB%8B%A8%20%EC%9E%98%20%EB%8D%98%EC%A7%88%20%EC%9E%90%EC%8B%A0%20%EC%9E%88%EC%9D%8C%20%3B%3B%3B%22%7D")
 
 청호씨랑은 새로운 취미 생활을 시작했는데여
 
@@ -228,7 +228,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/8329977b-b3c8-4bc3-b267-294fa50d7ecf-8kgIsyMR4UfUwmVz3ssAGMgk1euYNA.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A77%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%22%7D")
+![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/8329977b-b3c8-4bc3-b267-294fa50d7ecf-8kgIsyMR4UfUwmVz3ssAGMgk1euYNA.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A77%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%22%7D")
 
 그리고 전에 봤던 정처기 실기 합격 소식을 듣고 매우 기뻤습니다
 
@@ -244,7 +244,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260912_205141\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/98628d98-c80c-44a8-aaea-b07787e24df3-P2EDtHVZWi8mKqcoMkcfFIKzeiNZLo.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F98628d98-c80c-44a8-aaea-b07787e24df3-P2EDtHVZWi8mKqcoMkcfFIKzeiNZLo.jpg%22%2C%22alt%22%3A%2220260912_205141%5B1%5D%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F9c4bc333-2e3d-49e2-8855-a92d59a582b5-mbi6Q8YMQSNqUOIl3wyg0rvg4mbfjz.jpg%22%2C%22alt%22%3A%2220260912_205050%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fcfd45be0-ac19-4795-a56f-b5f19e9abe7b-eDp5K60PPknscKMgkcMjd2wxrAZqQa.jpg%22%2C%22alt%22%3A%2220260912_174034%22%7D%5D%2C%22caption%22%3A%22%EA%B2%BD%EB%B3%B5%EA%B6%81%20%ED%95%9C%EB%B3%B5%20%EC%B6%95%EC%A0%9C%20%EB%95%8C%20%ED%95%9C%EB%B3%B5%EC%9D%84%20%EC%9E%85%EC%9C%BC%EB%A9%B4%20%EC%95%BC%EA%B0%84%20%EB%AC%B4%EB%A3%8C%20%EC%9E%85%EC%9E%A5%EC%9D%B4%20%EA%B0%80%EB%8A%A5%ED%96%88%EB%8B%B5%EB%8B%88%EB%8B%A4...%20%EC%95%BC%EA%B2%BD%EC%9D%B4%20%EB%84%88%EB%AC%B4%20%EC%9D%B4%EB%BB%90%EC%84%9C%20%EB%98%90%20%EA%B0%80%EA%B3%A0%20%EC%8B%B6%EC%9D%80%20%EA%B3%B3%22%7D")
+![20260912_205141\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/98628d98-c80c-44a8-aaea-b07787e24df3-P2EDtHVZWi8mKqcoMkcfFIKzeiNZLo.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F98628d98-c80c-44a8-aaea-b07787e24df3-P2EDtHVZWi8mKqcoMkcfFIKzeiNZLo.jpg%22%2C%22alt%22%3A%2220260912_205141%5B1%5D%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F9c4bc333-2e3d-49e2-8855-a92d59a582b5-mbi6Q8YMQSNqUOIl3wyg0rvg4mbfjz.jpg%22%2C%22alt%22%3A%2220260912_205050%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2Fcfd45be0-ac19-4795-a56f-b5f19e9abe7b-eDp5K60PPknscKMgkcMjd2wxrAZqQa.jpg%22%2C%22alt%22%3A%2220260912_174034%22%7D%5D%2C%22caption%22%3A%22%EA%B2%BD%EB%B3%B5%EA%B6%81%20%ED%95%9C%EB%B3%B5%20%EC%B6%95%EC%A0%9C%20%EB%95%8C%20%ED%95%9C%EB%B3%B5%EC%9D%84%20%EC%9E%85%EC%9C%BC%EB%A9%B4%20%EC%95%BC%EA%B0%84%20%EB%AC%B4%EB%A3%8C%20%EC%9E%85%EC%9E%A5%EC%9D%B4%20%EA%B0%80%EB%8A%A5%ED%96%88%EB%8B%B5%EB%8B%88%EB%8B%A4...%20%EC%95%BC%EA%B2%BD%EC%9D%B4%20%EB%84%88%EB%AC%B4%20%EC%9D%B4%EB%BB%90%EC%84%9C%20%EB%98%90%20%EA%B0%80%EA%B3%A0%20%EC%8B%B6%EC%9D%80%20%EA%B3%B3%22%7D")
 
 청호씨랑 경복궁에 한복 입고 들어가서 멋진 야경도 봐주었습니다.
 
@@ -278,7 +278,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 재수팟 친구들아 내가 이번 분기 취준은 그른 것 같다. 곧 만나줘라.
 
-![20260919_211104\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/09a9226c-ccf3-4cd0-82f4-a6f24e4b31c4-AZi9wfvIlhVVuSj0CFIhb5ZU1xXFwh.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F09a9226c-ccf3-4cd0-82f4-a6f24e4b31c4-AZi9wfvIlhVVuSj0CFIhb5ZU1xXFwh.jpg%22%2C%22alt%22%3A%2220260919_211104%5B1%5D%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F18dac6df-3419-4927-b52d-14ad2436f692-XxfJjrwgrnqrwK5sOYi16N9nUyqB7y.jpg%22%2C%22alt%22%3A%2220260919_210048%5B1%5D%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F28481c0f-92b7-487d-84b5-425ccde1e732-PGCCnvO2lESDkFQQ6rLwHsg9iEP5bm.jpg%22%2C%22alt%22%3A%2220260919_125048%5B1%5D%22%7D%5D%2C%22caption%22%3A%22%EB%A7%9B%EC%9E%88%EB%8A%94%20%EA%B1%B0%20%EC%82%AC%EC%A3%BC%EB%8A%94%20%EC%82%AC%EB%9E%8C%EC%9D%B4%20%EC%A0%A4%EB%A3%A8%20%EC%A2%8B%EC%95%84%22%7D")
+![20260919_211104\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/09a9226c-ccf3-4cd0-82f4-a6f24e4b31c4-AZi9wfvIlhVVuSj0CFIhb5ZU1xXFwh.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F09a9226c-ccf3-4cd0-82f4-a6f24e4b31c4-AZi9wfvIlhVVuSj0CFIhb5ZU1xXFwh.jpg%22%2C%22alt%22%3A%2220260919_211104%5B1%5D%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F18dac6df-3419-4927-b52d-14ad2436f692-XxfJjrwgrnqrwK5sOYi16N9nUyqB7y.jpg%22%2C%22alt%22%3A%2220260919_210048%5B1%5D%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F28481c0f-92b7-487d-84b5-425ccde1e732-PGCCnvO2lESDkFQQ6rLwHsg9iEP5bm.jpg%22%2C%22alt%22%3A%2220260919_125048%5B1%5D%22%7D%5D%2C%22caption%22%3A%22%EB%A7%9B%EC%9E%88%EB%8A%94%20%EA%B1%B0%20%EC%82%AC%EC%A3%BC%EB%8A%94%20%EC%82%AC%EB%9E%8C%EC%9D%B4%20%EC%A0%A4%EB%A3%A8%20%EC%A2%8B%EC%95%84%22%7D")
 
 생일 때는 청호씨가 엄청나게 맛있는 곳들을 데리고 가줘서 더욱 행복했던 날이었습니다.
 
@@ -354,7 +354,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260919_160403\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/fdee036b-80e5-4754-b5d7-1b8896b23594-q3INPqyeJzE5g8TQZAwzTxUFSItk4r.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A39%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EA%B7%B8%EB%8B%88%EA%B9%8C%20%EC%9D%BC%EB%B0%98%EC%9D%B8%20%EB%88%88%EC%97%90%EB%8A%94%20%EC%9D%B4%EA%B2%8C%20%EC%97%AC%EC%9E%90%EC%95%A0%EB%A1%9C%20%EB%B3%B4%EC%9D%B8%EB%8B%A4%EB%8A%94%EA%B1%B0%EC%A7%80%3F%3F%22%7D")
+![20260919_160403\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/fdee036b-80e5-4754-b5d7-1b8896b23594-q3INPqyeJzE5g8TQZAwzTxUFSItk4r.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A39%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EA%B7%B8%EB%8B%88%EA%B9%8C%20%EC%9D%BC%EB%B0%98%EC%9D%B8%20%EB%88%88%EC%97%90%EB%8A%94%20%EC%9D%B4%EA%B2%8C%20%EC%97%AC%EC%9E%90%EC%95%A0%EB%A1%9C%20%EB%B3%B4%EC%9D%B8%EB%8B%A4%EB%8A%94%EA%B1%B0%EC%A7%80%3F%3F%22%7D")
 
 그리고 페르소나를 좋아하는 여자친구를 위해 열심히 3주 피규어를 구해다 준 청호씨...
 
@@ -375,7 +375,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 ## 그 시절 내가 좋아했던 사람들 (현재 진행형임)
 
-![20260923_131758](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/7349f7df-6590-448b-a261-fb9a1934d879-vD3IS6XlGxwAggW8rfsokxWsFMiFsQ.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F7349f7df-6590-448b-a261-fb9a1934d879-vD3IS6XlGxwAggW8rfsokxWsFMiFsQ.jpg%22%2C%22alt%22%3A%2220260923_131758%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F699b6568-f767-49bd-813f-86b3db820c57-oNdtEpypmMCBTBl9DhucYfahFOXXRo.jpg%22%2C%22alt%22%3A%2220260923_141039%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2F47be3910-778d-4529-920f-919f4738efdf-BoOtAuFmjnCBrFpHBJPNi1kN9EUKEe.jpg%22%2C%22alt%22%3A%2220260923_161758%22%7D%5D%2C%22caption%22%3A%22%EB%82%9C%20%EC%96%B8%EB%8B%88%EB%AC%B4%EC%83%88%22%7D")
+![20260923_131758](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/7349f7df-6590-448b-a261-fb9a1934d879-vD3IS6XlGxwAggW8rfsokxWsFMiFsQ.jpg "blog-image-group:v1:%7B%22layout%22%3A%22slide%22%2C%22images%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F7349f7df-6590-448b-a261-fb9a1934d879-vD3IS6XlGxwAggW8rfsokxWsFMiFsQ.jpg%22%2C%22alt%22%3A%2220260923_131758%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F699b6568-f767-49bd-813f-86b3db820c57-oNdtEpypmMCBTBl9DhucYfahFOXXRo.jpg%22%2C%22alt%22%3A%2220260923_141039%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Flwypqyyyi252yaoo.public.blob.vercel-storage.com%2Fposts%2Fessay%2Fb4300eb9-7058-4f2b-82e0-857745ccc2a9%2F47be3910-778d-4529-920f-919f4738efdf-BoOtAuFmjnCBrFpHBJPNi1kN9EUKEe.jpg%22%2C%22alt%22%3A%2220260923_161758%22%7D%5D%2C%22caption%22%3A%22%EB%82%9C%20%EC%96%B8%EB%8B%88%EB%AC%B4%EC%83%88%22%7D")
 
 크림슨레드는 이제 내게 너무 멀어진 곳이지만... 그곳에서 만난 인연들은 항상 소중하게 생각합니다.
 
@@ -403,7 +403,7 @@ FLEX랑 KBS 보기 싫은 사람인데 마법천자문 베이스가 있다? 그�
 
 &nbsp;
 
-![20260927_134449](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/aa0b4b5d-f13d-4ae1-a717-b148f768c7ef-fkbd8BAUszwn7Gtu2YAhrHWshJeUBp.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22UMC%20%EB%94%94%EC%9E%90%EC%9D%B8%ED%8C%9F%20%EC%98%81%EC%9B%90%ED%95%B4%EB%9D%BC%22%7D")
+![20260927_134449](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/aa0b4b5d-f13d-4ae1-a717-b148f768c7ef-fkbd8BAUszwn7Gtu2YAhrHWshJeUBp.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22UMC%20%EB%94%94%EC%9E%90%EC%9D%B8%ED%8C%9F%20%EC%98%81%EC%9B%90%ED%95%B4%EB%9D%BC%22%7D")
 
 UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
@@ -439,7 +439,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 ## 이거 보여주려고 여기까지 썼다
 
-![20261003_091743\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/5653ce06-3d44-4fd9-876d-500324784df9-aNURyZRcMQ0MPQFJQjQXTNMcxFbfzB.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%82%9C%20%EC%9D%B4%20%EB%82%A0%EB%A7%8C%EC%9D%84%20%EC%9C%84%ED%95%B4%20%EC%82%B4%EC%95%84%EC%98%A8%EA%B1%B8%EA%B9%8C%3F%3F%22%7D")
+![20261003_091743\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/5653ce06-3d44-4fd9-876d-500324784df9-aNURyZRcMQ0MPQFJQjQXTNMcxFbfzB.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%82%9C%20%EC%9D%B4%20%EB%82%A0%EB%A7%8C%EC%9D%84%20%EC%9C%84%ED%95%B4%20%EC%82%B4%EC%95%84%EC%98%A8%EA%B1%B8%EA%B9%8C%3F%3F%22%7D")
 
 사실 이 블로그 첫 글은 이걸 쓰기 위한 빌드업이었음. 
 
@@ -473,7 +473,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 &nbsp;
 
-![1791131416095](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/1616a2e4-d6d2-4c82-a0c1-e9fa0376f139-tvOZvT5zsXW2FKMm4WhzO00uQBRGrF.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A53%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EA%B0%80%ED%82%A4%EC%98%B5%EC%9C%BC%EB%A1%9C%20%EB%82%A0%EC%94%A8%20%EB%A7%90%ED%95%98%EB%8A%94%20%EA%B2%8C%20%EB%84%88%EB%AC%B4%20%EC%9B%83%EA%B2%A8%22%7D")
+![1791131416095](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/1616a2e4-d6d2-4c82-a0c1-e9fa0376f139-tvOZvT5zsXW2FKMm4WhzO00uQBRGrF.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A53%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EA%B0%80%ED%82%A4%EC%98%B5%EC%9C%BC%EB%A1%9C%20%EB%82%A0%EC%94%A8%20%EB%A7%90%ED%95%98%EB%8A%94%20%EA%B2%8C%20%EB%84%88%EB%AC%B4%20%EC%9B%83%EA%B2%A8%22%7D")
 
 무튼 콘서트 날.. 아침은 꽤 쌀쌀했는데 마음은 따뜻해서 상관없었습니다 ^ - ^
 
@@ -497,7 +497,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 그래서 스팀 들어가서 봤더니
 
-![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/dd0eb83a-24ab-49ca-be24-9d303dd8dc4d-abMzuHK4pFXTrq3yKJqmnqBaBa0He6.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%3F%3F%3F%20%EB%82%98%20%EC%9D%B4%EB%A0%87%EA%B2%8C%20%EB%A7%8E%EC%9D%B4%20%ED%96%88%EB%8B%A4%EA%B3%A0%3F%3F%20%EC%8B%AC%EC%A7%80%EC%96%B4%20%EB%A6%AC%EB%A1%9C%EB%93%9C%EB%8A%94%20%EC%95%84%EC%A7%81%20%EB%B0%98%EB%8F%84%20%EC%95%88%20%EC%99%94%EC%9D%8C.%20%ED%8F%AC%ED%84%B0%EB%B8%94%EB%A1%9C%20%EB%84%88%EB%AC%B4%20%EB%A7%8E%EC%9D%B4%20%EB%8F%8C%EB%A0%B8%EC%96%B4%EC%84%9C%20%EA%B7%B8%EB%9F%B0%EA%B0%80%20%EB%A6%AC%EB%A1%9C%EB%93%9C%20%ED%95%98%EB%8A%94%EB%8D%B0%20%EC%A1%B0%EA%B8%88%20%ED%94%BC%EA%B3%A4%ED%95%B4%EC%84%9C%20%EA%B9%A8%EC%A7%80%EB%8F%84%20%EB%AA%BB%ED%96%88%EB%8A%94%EB%8D%B0%2040%EC%8B%9C%EA%B0%84%EC%9D%84%20%EB%84%98%EA%B2%8C%20%ED%96%88%EB%8D%98%20%EA%B1%B0%EC%9E%84..%22%7D")
+![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/dd0eb83a-24ab-49ca-be24-9d303dd8dc4d-abMzuHK4pFXTrq3yKJqmnqBaBa0He6.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%3F%3F%3F%20%EB%82%98%20%EC%9D%B4%EB%A0%87%EA%B2%8C%20%EB%A7%8E%EC%9D%B4%20%ED%96%88%EB%8B%A4%EA%B3%A0%3F%3F%20%EC%8B%AC%EC%A7%80%EC%96%B4%20%EB%A6%AC%EB%A1%9C%EB%93%9C%EB%8A%94%20%EC%95%84%EC%A7%81%20%EB%B0%98%EB%8F%84%20%EC%95%88%20%EC%99%94%EC%9D%8C.%20%ED%8F%AC%ED%84%B0%EB%B8%94%EB%A1%9C%20%EB%84%88%EB%AC%B4%20%EB%A7%8E%EC%9D%B4%20%EB%8F%8C%EB%A0%B8%EC%96%B4%EC%84%9C%20%EA%B7%B8%EB%9F%B0%EA%B0%80%20%EB%A6%AC%EB%A1%9C%EB%93%9C%20%ED%95%98%EB%8A%94%EB%8D%B0%20%EC%A1%B0%EA%B8%88%20%ED%94%BC%EA%B3%A4%ED%95%B4%EC%84%9C%20%EA%B9%A8%EC%A7%80%EB%8F%84%20%EB%AA%BB%ED%96%88%EB%8A%94%EB%8D%B0%2040%EC%8B%9C%EA%B0%84%EC%9D%84%20%EB%84%98%EA%B2%8C%20%ED%96%88%EB%8D%98%20%EA%B1%B0%EC%9E%84..%22%7D")
 
 여기에 포터블 플탐 500시간 더하면 될 거 같음.
 
@@ -515,7 +515,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 &nbsp;
 
-![20261003_135339(0)\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/c5dc9061-a638-4c6b-9849-67cac4592d2c-EqLpSmDpDLfH4Wyun6ElfrFomCyGQn.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3A%220ed3212d-1afa-497b-8201-1c73f72365ce%22%2C%22caption%22%3A%22%EB%82%B4%EA%B0%80%20%EC%98%AC%ED%95%B4%20%EC%B5%9C%EA%B3%A0%EB%A1%9C%20%EC%9E%98%ED%95%9C%20%EA%B1%B0%20%3A%20%ED%8E%9C%EB%9D%BC%EC%9D%B4%ED%8A%B8%20%EA%B5%AC%EB%A7%A4.%22%7D")
+![20261003_135339(0)\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/c5dc9061-a638-4c6b-9849-67cac4592d2c-EqLpSmDpDLfH4Wyun6ElfrFomCyGQn.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3A%220ed3212d-1afa-497b-8201-1c73f72365ce%22%2C%22caption%22%3A%22%EB%82%B4%EA%B0%80%20%EC%98%AC%ED%95%B4%20%EC%B5%9C%EA%B3%A0%EB%A1%9C%20%EC%9E%98%ED%95%9C%20%EA%B1%B0%20%3A%20%ED%8E%9C%EB%9D%BC%EC%9D%B4%ED%8A%B8%20%EA%B5%AC%EB%A7%A4.%22%7D")
 
 그리고 대망의 콘서트 시작
 
@@ -587,7 +587,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 &nbsp;
 
-![20261003_173947\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/319e10b2-9895-48ea-9985-27494665fcac-aTCu2bJluwqgFyP2Bi1e9grLqPoDIp.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3A%220ed3212d-1afa-497b-8201-1c73f72365ce%22%2C%22caption%22%3A%22%EB%B0%A4%ED%8B%B0%20S%EC%84%9D%20%ED%8B%B0%EC%85%94%EC%B8%A0%EB%8A%94%20%EA%B5%B3%EC%9D%B4%20%EC%B0%8D%EC%A7%80%20%EC%95%8A%EC%95%98%EB%8B%A4.%22%7D")
+![20261003_173947\[1\]](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/319e10b2-9895-48ea-9985-27494665fcac-aTCu2bJluwqgFyP2Bi1e9grLqPoDIp.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3A%220ed3212d-1afa-497b-8201-1c73f72365ce%22%2C%22caption%22%3A%22%EB%B0%A4%ED%8B%B0%20S%EC%84%9D%20%ED%8B%B0%EC%85%94%EC%B8%A0%EB%8A%94%20%EA%B5%B3%EC%9D%B4%20%EC%B0%8D%EC%A7%80%20%EC%95%8A%EC%95%98%EB%8B%A4.%22%7D")
 
 집 와서 행복하게 굿즈랑 특전 모아두고 찍어봤습니다. 
 
@@ -625,7 +625,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 본인도 한때 한 RPG 게임에 몰입했었다보니 공감이 가면서 재밌더라구요.
 
-![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/92859336-77b6-4a0b-98bf-a197ffd952a8-gU2oriOO50cgxt7PdK2MpUWziGjxjv.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%8C%80%ED%95%99%EA%B5%90%201%ED%95%99%EB%85%84%EC%9D%84%20%EB%B0%94%EC%B9%9C%20%EA%B2%8C%EC%9E%84.%20%EC%B4%88%EB%94%A9%20%EB%95%8C%20%EB%B0%94%EC%B9%9C%20%EA%B2%83%EB%8F%84%20%EC%9E%88%EB%8A%94%EB%8D%B0%20%EA%B3%84%EC%A0%95%EC%9D%B4%20%EB%82%A0%EC%95%84%EA%B0%90.%22%7D")
+![image](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/92859336-77b6-4a0b-98bf-a197ffd952a8-gU2oriOO50cgxt7PdK2MpUWziGjxjv.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A100%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EB%8C%80%ED%95%99%EA%B5%90%201%ED%95%99%EB%85%84%EC%9D%84%20%EB%B0%94%EC%B9%9C%20%EA%B2%8C%EC%9E%84.%20%EC%B4%88%EB%94%A9%20%EB%95%8C%20%EB%B0%94%EC%B9%9C%20%EA%B2%83%EB%8F%84%20%EC%9E%88%EB%8A%94%EB%8D%B0%20%EA%B3%84%EC%A0%95%EC%9D%B4%20%EB%82%A0%EC%95%84%EA%B0%90.%22%7D")
 
 이때 친추했던 사람들도 생각나고... 길드도 생각나서 오랜만에 들어가봤더니
 
@@ -635,7 +635,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 남아있는 건 당시 종결 맞추려고 똥꼬쇼하다가 파워 인플레때문에 접었던 나의 애정캐 린...
 
-![화면 캡처 2026-10-04 040412](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/cb5b7c34-3c6a-44b2-8581-4da920209e17-OrZwIAtrRN3MFUiJoXrDG1jkvUzjXU.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A55%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%80%2017%EA%B0%95%20%EC%9E%A5%EA%B0%91%EA%B3%BC%20%EB%B6%80%EC%B1%84%EB%A5%BC%20%EB%B3%B4%EC%95%84%EB%9D%BC%22%7D")
+![화면 캡처 2026-10-04 040412](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/cb5b7c34-3c6a-44b2-8581-4da920209e17-OrZwIAtrRN3MFUiJoXrDG1jkvUzjXU.png "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A55%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%80%2017%EA%B0%95%20%EC%9E%A5%EA%B0%91%EA%B3%BC%20%EB%B6%80%EC%B1%84%EB%A5%BC%20%EB%B3%B4%EC%95%84%EB%9D%BC%22%7D")
 
 무튼... 웹툰덕에 옛날 생각도 나면서 문득 아련해졌슴다.
 
@@ -643,7 +643,7 @@ UMC 활동을 하면서 만났던 인연들도 오랜만에 봤는데요!!
 
 &nbsp;
 
-![24041](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/6a51240d-e403-42cc-a019-062b47802b9a-efInPuY8YkqAKOxZf27JjDSPAS3j3o.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A31%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%AC%EC%95%84%EC%9B%8C%20%ED%82%A4%EC%9D%B4%EB%9D%BC%20%EB%A6%AC%EC%95%84%EC%B4%88%EC%BD%94%22%7D")
+![24041](https://lwypqyyyi252yaoo.public.blob.vercel-storage.com/posts/essay/b4300eb9-7058-4f2b-82e0-857745ccc2a9/6a51240d-e403-42cc-a019-062b47802b9a-efInPuY8YkqAKOxZf27JjDSPAS3j3o.jpg "blog-image:v1:%7B%22title%22%3Anull%2C%22width%22%3A31%2C%22height%22%3Anull%2C%22align%22%3A%22center%22%2C%22batchId%22%3Anull%2C%22caption%22%3A%22%EC%A0%AC%EC%95%84%EC%9B%8C%20%ED%82%A4%EC%9D%B4%EB%9D%BC%20%EB%A6%AC%EC%95%84%EC%B4%88%EC%BD%94%22%7D")
 
 [https://shop.winc.app/products/14920](https://shop.winc.app/products/14920)
 
