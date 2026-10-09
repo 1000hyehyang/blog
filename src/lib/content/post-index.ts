@@ -31,7 +31,11 @@ export const catalogSchema = z.array(
 );
 export type CatalogEntry = z.infer<typeof catalogSchema>[number];
 export const searchSchema = z.array(
-  z.object({ slug: slugSchema, text: z.string() }),
+  z.object({
+    slug: slugSchema,
+    text: z.string(),
+    part: z.number().int().nonnegative().optional(),
+  }),
 );
 export type SearchDocument = z.infer<typeof searchSchema>[number];
 export type IndexFile = { path: string; content: string };
@@ -81,12 +85,33 @@ export function decodeChunk(content: string): unknown {
   );
 }
 
-export function buildChunks<T extends { slug: string } | CatalogEntry>(
+export function buildChunks(
   kind: "catalog" | "search",
-  values: T[],
+  values: (SearchDocument | CatalogEntry)[],
 ) {
   const groups = new Map<string, { slug: string; json: string }[]>();
-  for (const value of values) {
+  const entries =
+    kind === "search"
+      ? searchSchema.parse(values).flatMap((value) => {
+          if (value.text.length <= 100_000) return [value];
+          const parts: SearchDocument[] = [];
+          let start = 0;
+          while (start < value.text.length) {
+            let end = Math.min(start + 100_000, value.text.length);
+            const code = value.text.charCodeAt(end - 1);
+            if (end < value.text.length && code >= 0xd800 && code <= 0xdbff)
+              end--;
+            parts.push({
+              slug: value.slug,
+              text: value.text.slice(start, end),
+              part: parts.length,
+            });
+            start = end;
+          }
+          return parts;
+        })
+      : values;
+  for (const value of entries) {
     const slug = "post" in value ? value.post.slug : value.slug;
     const bucket = indexBucket(slug);
     const group = groups.get(bucket) ?? [];
@@ -123,6 +148,32 @@ export function buildChunks<T extends { slug: string } | CatalogEntry>(
     emit(bucket, json);
   }
   return { refs, files };
+}
+
+export function matchingSearchSlugs(
+  documents: SearchDocument[],
+  query: string,
+) {
+  const groups = new Map<string, SearchDocument[]>();
+  for (const document of documents) {
+    const group = groups.get(document.slug) ?? [];
+    group.push(document);
+    groups.set(document.slug, group);
+  }
+  const matches: string[] = [];
+  for (const [slug, parts] of groups) {
+    parts.sort((a, b) => (a.part ?? 0) - (b.part ?? 0));
+    let tail = "";
+    for (const { text } of parts) {
+      const joined = tail + text;
+      if (joined.includes(query)) {
+        matches.push(slug);
+        break;
+      }
+      tail = query.length > 1 ? joined.slice(-(query.length - 1)) : "";
+    }
+  }
+  return matches;
 }
 
 export function assertUniquePosts(entries: CatalogEntry[]) {

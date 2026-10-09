@@ -18,11 +18,12 @@ type Options = {
   initial: StoredPost | null;
   initialSha: string | null;
   draft?: LocalDraft;
+  recovery?: LocalDraft | null;
   postSlugs: string[];
   currentPin: string;
   pins: ReturnType<typeof usePinnedOrder>;
   readFields: () => PostFields | null;
-  onSaved: (post?: StoredPost) => void;
+  onSaved: (post?: StoredPost) => void | Promise<void>;
 };
 
 export function usePostPersistence({
@@ -30,6 +31,7 @@ export function usePostPersistence({
   initial,
   initialSha,
   draft,
+  recovery,
   postSlugs,
   currentPin,
   pins,
@@ -37,9 +39,9 @@ export function usePostPersistence({
   onSaved,
 }: Options) {
   const router = useRouter();
-  const generatedSlug = useRef(initial?.slug ?? "");
-  const postId = useRef(initial?.id ?? "");
-  const [sha, setSha] = useState(initialSha);
+  const generatedSlug = useRef(recovery?.post.slug ?? initial?.slug ?? "");
+  const postId = useRef(recovery?.post.id ?? initial?.id ?? "");
+  const [sha, setSha] = useState(recovery?.sha ?? initialSha);
   const [draftVersion, setDraftVersion] = useState(draft?.savedAt ?? null);
   const { start, finish, setMessage, setFeedback, showSuccess } = feedback;
   const pinnedOrder = pins.order;
@@ -47,12 +49,12 @@ export function usePostPersistence({
   function allocateId() {
     return (postId.current ||= crypto.randomUUID());
   }
-  function allocateSlug() {
+  async function allocateSlug() {
     if (generatedSlug.current) return generatedSlug.current;
     try {
       generatedSlug.current = nextPostSlug([
         ...postSlugs,
-        ...reservedDraftSlugs(),
+        ...(await reservedDraftSlugs()),
       ]);
       return generatedSlug.current;
     } catch {
@@ -60,20 +62,18 @@ export function usePostPersistence({
     }
   }
 
-  async function save(published: boolean) {
+  async function save() {
     if (pins.conflict || !start("publish")) return;
     try {
       const fields = readFields();
       if (!fields) return;
-      const slug = allocateSlug();
+      const slug = await allocateSlug();
       const order = pinnedOrder
-        .filter(
-          (value) => value !== currentPin || (fields.featured && published),
-        )
+        .filter((value) => value !== currentPin || fields.featured)
         .map((value) => (value === currentPin ? slug : value));
       const data = await savePostRequest(
         slug,
-        { ...fields, id: allocateId(), published },
+        { ...fields, id: allocateId(), published: true },
         sha,
         { base: pins.base, order },
       );
@@ -86,7 +86,7 @@ export function usePostPersistence({
       setSha(data.sha);
       if (draftVersion) {
         try {
-          removeDraft(slug, draftVersion);
+          await removeDraft(slug, draftVersion);
           setDraftVersion(null);
         } catch {
           setMessage(
@@ -95,7 +95,7 @@ export function usePostPersistence({
         }
       }
       await showSuccess("publish");
-      onSaved(data.post);
+      await onSaved(data.post);
       router.replace("/manage");
       router.refresh();
     } catch (error) {
@@ -114,7 +114,7 @@ export function usePostPersistence({
     try {
       const fields = readFields();
       if (!fields) return;
-      const slug = allocateSlug();
+      const slug = await allocateSlug();
       const now = new Date().toISOString();
       const value: LocalDraft = {
         post: {
@@ -135,10 +135,10 @@ export function usePostPersistence({
           value === currentPin ? slug : value,
         ),
       };
-      saveDraft(value, draftVersion);
+      await saveDraft(value, draftVersion);
       setDraftVersion(now);
       await showSuccess("draft");
-      onSaved();
+      await onSaved();
       router.replace(`/write?draft=${encodeURIComponent(slug)}`);
     } catch (error) {
       setFeedback({ action: "draft", state: "error" });
@@ -162,7 +162,7 @@ export function usePostPersistence({
     try {
       await deletePostRequest(initial.slug, sha);
       await showSuccess("delete");
-      onSaved();
+      await onSaved();
       router.replace("/manage");
       router.refresh();
     } catch (error) {
@@ -174,5 +174,27 @@ export function usePostPersistence({
       finish();
     }
   }
-  return { sha, allocateId, save, storeDraft, remove };
+  async function recoveryDraft(): Promise<LocalDraft | null> {
+    const fields = readFields();
+    if (!fields) return null;
+    const now = new Date().toISOString();
+    const slug = await allocateSlug();
+    return {
+      post: {
+        createdAt: initial?.createdAt ?? now,
+        lastEditedAt: initial?.lastEditedAt ?? null,
+        commentsCount: 0,
+        reactionsCount: 0,
+        ...initial,
+        ...fields,
+        id: allocateId(),
+        slug,
+      },
+      sha,
+      savedAt: now,
+      pinned: pins.posts,
+      order: pinnedOrder.map((value) => (value === currentPin ? slug : value)),
+    };
+  }
+  return { sha, allocateId, save, storeDraft, remove, recoveryDraft };
 }

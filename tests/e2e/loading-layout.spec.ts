@@ -1,5 +1,9 @@
 import { expect, test, type Locator } from "@playwright/test";
-import { createTestSession } from "./writer-credentials";
+import {
+  testSessionCookie,
+  testSessionSecure,
+  createTestSession,
+} from "./writer-credentials";
 
 async function expectSameBox(placeholder: Locator, content: Locator) {
   const before = await placeholder.boundingBox();
@@ -27,16 +31,20 @@ test("writer skeleton matches the loaded editor layout", async ({
   try {
     const cookies = [
       {
-        name: "blog-writer",
+        name: testSessionCookie,
+        secure: testSessionSecure,
         value: createTestSession(),
-        url: baseURL!,
+        domain: "127.0.0.1",
+        path: "/",
       },
     ];
     await loadingContext.addCookies(cookies);
     await page.context().addCookies(cookies);
     const loadingPage = await loadingContext.newPage();
     await loadingPage.goto(`${baseURL}/write`);
-    const skeleton = loadingPage.getByLabel("글쓰기 화면 불러오는 중");
+    const skeleton = loadingPage.locator(
+      '[aria-label="글쓰기 화면 불러오는 중"]:visible',
+    );
     await expect(skeleton).toBeVisible();
     await page.goto("/write");
     await expect(
@@ -112,7 +120,10 @@ test("art skeleton aligns its heading, tabs and gallery with the page", async ({
       loadingPage.evaluate(() => document.fonts.ready),
       page.evaluate(() => document.fonts.ready),
     ]);
-    await expectSameBox(skeleton.locator("h1"), page.locator("h1"));
+    await expectSameBox(
+      skeleton.locator("h1"),
+      page.getByRole("heading", { name: "Art", exact: true }),
+    );
     await expectSameBox(
       skeleton.locator('[role="tablist"]'),
       page.getByRole("tablist", { name: "Art 글 보기" }),

@@ -60,19 +60,55 @@ function branchPath() {
 }
 async function request(endpoint: string, init: RequestInit = {}) {
   const { base, token } = config();
-  const response = await fetch(`${base}${endpoint}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "Content-Type": "application/json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-    cache: "no-store",
-    signal: init.signal
-      ? AbortSignal.any([init.signal, AbortSignal.timeout(15_000)])
-      : AbortSignal.timeout(15_000),
-  });
+  const operation = endpoint.startsWith("/contents/")
+    ? "contents"
+    : endpoint.split("/").slice(1, 3).join("/") || "repository";
+  let response: Response;
+  try {
+    response = await fetch(`${base}${endpoint}`, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept:
+          new Headers(init.headers).get("Accept") ??
+          "application/vnd.github+json",
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      cache: "no-store",
+      signal: init.signal
+        ? AbortSignal.any([init.signal, AbortSignal.timeout(15_000)])
+        : AbortSignal.timeout(15_000),
+    });
+  } catch (error) {
+    console.error("[github] Request failed", {
+      operation,
+      method: init.method ?? "GET",
+      reason:
+        error instanceof Error &&
+        ["TimeoutError", "AbortError"].includes(error.name)
+          ? error.name
+          : "network",
+    });
+    throw new PostStoreError(
+      "GitHub 연결을 완료하지 못했습니다. 다시 시도해 주세요.",
+      502,
+    );
+  }
+  if (!response.ok && response.status !== 404)
+    console.error("[github] Request failed", {
+      operation,
+      method: init.method ?? "GET",
+      status: response.status,
+      requestId: response.headers
+        .get("x-github-request-id")
+        ?.replace(/[^a-zA-Z0-9:-]/g, "")
+        .slice(0, 100),
+      retryAfter: response.headers
+        .get("retry-after")
+        ?.replace(/[^0-9]/g, "")
+        .slice(0, 10),
+    });
   if (response.status === 409 || response.status === 422)
     throw new PostStoreError(
       "다른 변경이 먼저 저장되었습니다. 현재 내용을 보관하고 글을 다시 열어 주세요.",
@@ -100,13 +136,17 @@ export async function headRef() {
 async function readContent(filePath: string, ref: string) {
   const response = await request(
     `/contents/${filePath}?ref=${encodeURIComponent(ref)}`,
+    { headers: { Accept: "application/vnd.github.object+json" } },
   );
   if (response.status === 404) return null;
   const file = await response.json();
-  if (file.type !== "file" || file.encoding !== "base64")
+  if (file.type !== "file" || !["base64", "none"].includes(file.encoding))
     throw new PostStoreError("지원하지 않는 콘텐츠 파일입니다.", 502);
   return {
-    content: Buffer.from(file.content, "base64").toString("utf8"),
+    content:
+      file.encoding === "none"
+        ? await readBlob(gitShaSchema.parse(file.sha))
+        : Buffer.from(file.content, "base64").toString("utf8"),
     sha: gitShaSchema.parse(file.sha),
   };
 }

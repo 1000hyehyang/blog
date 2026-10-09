@@ -5,10 +5,11 @@ import { ZodError } from "zod";
 import { isWriter, sameOrigin } from "./writer-auth";
 import { readLimitedResponseText } from "./limited-response";
 import { PostStoreError } from "@/infrastructure/github/post-store";
+import { POST_REQUEST_MAX_BYTES } from "@/domain/post";
 
 export async function readWriterJson(
   request: Request,
-  limit = 300_000,
+  limit = POST_REQUEST_MAX_BYTES,
 ): Promise<unknown> {
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new PostStoreError("JSON 요청이 필요합니다.", 415);
@@ -19,7 +20,16 @@ export async function readWriterJson(
         limit,
       ),
     );
-  } catch {
+  } catch (error) {
+    console.error("[writer] JSON request failed", {
+      limitBytes: limit,
+      reason:
+        error instanceof SyntaxError
+          ? "invalid-json"
+          : error instanceof Error && error.message === "Response was too large"
+            ? "request-size"
+            : "request-read",
+    });
     throw new PostStoreError("요청이 너무 크거나 올바르지 않습니다.", 400);
   }
 }
@@ -51,6 +61,32 @@ export async function writerRequest(
         : error instanceof ZodError
           ? 400
           : 502;
+    console.error("[writer] Action failed", {
+      method: request.method,
+      status,
+      reason:
+        error instanceof PostStoreError
+          ? "storage"
+          : error instanceof ZodError
+            ? "validation"
+            : "unexpected",
+      ...(error instanceof ZodError && {
+        fields: error.issues
+          .map((issue) => issue.path[0])
+          .filter((field) =>
+            [
+              "post",
+              "body",
+              "title",
+              "sha",
+              "pinned",
+              "category",
+              "series",
+              "tags",
+            ].includes(String(field)),
+          ),
+      }),
+    });
     return NextResponse.json(
       {
         ...(error instanceof PostStoreError && error.conflict

@@ -24,7 +24,7 @@ export function DamagedDrafts({ drafts }: { drafts: DamagedDraft[] }) {
             </a>{" "}
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 if (
                   !window.confirm(
                     "복구가 필요한 임시 저장본을 삭제할까요? 필요한 원문을 먼저 내려받아 주세요.",
@@ -32,7 +32,7 @@ export function DamagedDrafts({ drafts }: { drafts: DamagedDraft[] }) {
                 )
                   return;
                 try {
-                  removeDamagedDraft(draft);
+                  await removeDamagedDraft(draft);
                   setError("");
                 } catch (cause) {
                   setError(

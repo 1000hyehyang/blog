@@ -8,6 +8,7 @@ import type { Post } from "@/domain/post";
 import {
   summarize,
   searchDocument,
+  matchingSearchSlugs,
   type IndexManifest,
   type CatalogEntry,
 } from "@/lib/content/post-index";
@@ -48,13 +49,13 @@ async function publicSearchChunk(sha: string) {
   cacheLife("max");
   return readSearchChunk(sha);
 }
-async function matchingSlugs(sha: string, query: string) {
+async function matchingSlugs(shas: string[], query: string) {
   "use cache";
   cacheLife({ stale: 30, revalidate: 300, expire: 3600 });
-  // ponytail: new queries scan a chunk; add a search index if measured latency warrants it.
-  return (await publicSearchChunk(sha))
-    .filter(({ text }) => text.includes(query))
-    .map(({ slug }) => slug);
+  return matchingSearchSlugs(
+    (await batches(shas, publicSearchChunk)).flat(),
+    query,
+  );
 }
 async function publicBody(slug: string, sha: string) {
   "use cache";
@@ -167,10 +168,11 @@ export async function searchPosts(
   const manifest = await publicManifest();
   const matches = new Set<string>();
   if (manifest) {
-    const chunks = await batches(manifest.search, ({ sha }) =>
-      matchingSlugs(sha, normalized),
-    );
-    for (const slugs of chunks) for (const slug of slugs) matches.add(slug);
+    for (const slug of await matchingSlugs(
+      manifest.search.map(({ sha }) => sha),
+      normalized,
+    ))
+      matches.add(slug);
   } else {
     for (const { post } of await localPosts())
       if (post.published && searchDocument(post).text.includes(normalized))

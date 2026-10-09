@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createTestSession } from "./writer-credentials";
+import {
+  testSessionCookie,
+  testSessionSecure,
+  createTestSession,
+} from "./writer-credentials";
 
 test("public routes and both 404 pages retain the blog frame", async ({
   page,
@@ -35,7 +39,6 @@ test("public routes and both 404 pages retain the blog frame", async ({
 
 test("login, management and editing retain the writer frame", async ({
   page,
-  baseURL,
 }, testInfo) => {
   await page.goto("/login");
   await expect(page.getByLabel("비밀번호", { exact: true })).toBeVisible();
@@ -53,9 +56,11 @@ test("login, management and editing retain the writer frame", async ({
   });
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: baseURL ?? "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
     },
   ]);
   await page.goto("/manage");

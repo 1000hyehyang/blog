@@ -1,4 +1,4 @@
-export const MAX_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024;
+export const MAX_IMAGE_UPLOAD_BYTES = 20 * 1024 * 1024;
 export const IMAGE_UPLOAD_EXTENSIONS: Readonly<Record<string, string>> = {
   "image/png": "png",
   "image/jpeg": "jpg",

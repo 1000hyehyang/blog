@@ -35,7 +35,6 @@ import {
   PostStoreError,
   usesGitHubStorage,
   headRef,
-  gitJson,
   readBlob,
   getStoredPost,
   snapshot,
@@ -108,7 +107,9 @@ export async function savePost(
       503,
     );
   slugSchema.parse(slug);
-  const fields = postFieldsSchema.parse(input);
+  const fields = postFieldsSchema
+    .extend({ published: z.literal(true) })
+    .parse(input);
   const navigation = getCategoryNavigation(fields.category.slug);
   const validationMessage = postValidationMessage(
     fields,
@@ -137,11 +138,6 @@ export async function savePost(
     throw new PostStoreError(
       "글이 변경되었거나 같은 주소가 이미 존재합니다. 내용을 보관하고 다시 열어 주세요.",
       409,
-    );
-  if (!fields.published && !(await gitJson("")).private)
-    throw new PostStoreError(
-      "공개 저장소에는 비공개로 저장할 수 없습니다. 임시 저장을 사용해 주세요.",
-      400,
     );
   const now = new Date().toISOString();
   const post: FilePost = {
@@ -209,7 +205,6 @@ export async function savePost(
   return {
     post,
     sha: blobSha(serializePostFile(post)),
-    ...(ordering && { pinned: ordering.order }),
   };
 }
 export async function deletePost(slug: string, sha: string) {

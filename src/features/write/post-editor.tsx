@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
 import { IMAGE_UPLOAD_TYPES } from "@/config/images";
-import type { LocalDraft } from "./local-drafts";
+import { readRecovery, type LocalDraft } from "./local-drafts";
 import type { PostFields, StoredPost } from "@/domain/post";
 import { usePostPersistence } from "./use-post-persistence";
 import { WriterSelect } from "./writer-controls";
@@ -24,6 +24,8 @@ import { WriterHeader } from "./writer-header";
 import { PublishDialog } from "./publish-dialog";
 import { usePostImages } from "./use-post-images";
 import { useWriterFeedback } from "./use-writer-feedback";
+import { usePostRecovery } from "./use-post-recovery";
+import { WriteSkeleton } from "./writer-skeleton";
 
 const emptyFields: PostFields = {
   title: "",
@@ -45,31 +47,77 @@ type Props = {
   postSlugs?: string[];
   draft?: LocalDraft;
 };
-export function PostEditor({
+export function PostEditor(props: Props) {
+  const recoveryKey = props.draft
+    ? `draft:${props.draft.post.slug}`
+    : props.initial
+      ? `post:${props.initial.slug}`
+      : "new";
+  const [loaded, setLoaded] = useState<{
+    value: LocalDraft | null;
+    failed: boolean;
+  }>();
+  useEffect(() => {
+    let active = true;
+    readRecovery(recoveryKey).then(
+      (value) => {
+        if (active) setLoaded({ value, failed: false });
+      },
+      () => {
+        if (active) setLoaded({ value: null, failed: true });
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [recoveryKey]);
+  return loaded ? (
+    <LoadedPostEditor
+      key={loaded.value?.savedAt ?? recoveryKey}
+      {...props}
+      recovery={loaded.value}
+      recoveryKey={recoveryKey}
+      recoveryFailed={loaded.failed}
+    />
+  ) : (
+    <WriteSkeleton />
+  );
+}
+function LoadedPostEditor({
   initial,
   initialSha,
   writable,
   pinned = [],
   postSlugs = [],
   draft,
-}: Props) {
+  recovery,
+  recoveryKey,
+  recoveryFailed,
+}: Props & {
+  recovery: LocalDraft | null;
+  recoveryKey: string;
+  recoveryFailed: boolean;
+}) {
   const router = useRouter();
   const [fields, setFields] = useState<PostFields>({
     ...emptyFields,
     ...initial,
+    ...recovery?.post,
   });
   const bodyChanged = useRef(false);
-  const currentPin = initial?.slug ?? "__current__";
+  const currentPin = initial?.slug ?? recovery?.post.slug ?? "__current__";
   const pins = usePinnedOrder(
     pinned,
     currentPin,
     Boolean(initial?.featured),
-    draft,
+    recovery ?? draft,
   );
   const [tags, setTags] = useState(
-    initial?.tags.length ? `${initial.tags.join(",")},` : "",
+    (recovery?.post ?? initial)?.tags.length
+      ? `${(recovery?.post ?? initial)!.tags.join(",")},`
+      : "",
   );
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(Boolean(recovery));
   const publishDialog = useRef<HTMLDialogElement>(null);
   const [publishMode, setPublishMode] = useState(true);
   const feedback = useWriterFeedback();
@@ -79,11 +127,13 @@ export function PostEditor({
     initial,
     initialSha,
     draft,
+    recovery,
     postSlugs,
     currentPin,
     pins,
     readFields: currentFields,
-    onSaved: (post) => {
+    onSaved: async (post) => {
+      await clearRecovery();
       if (post) setFields(post);
       setDirty(false);
       publishDialog.current?.close();
@@ -91,13 +141,13 @@ export function PostEditor({
   });
   const { allocateId } = persistence;
   const unsupported = useMemo(
-    () => hasUnsupportedHtml(initial?.body ?? ""),
-    [initial?.body],
+    () => hasUnsupportedHtml(recovery?.post.body ?? initial?.body ?? ""),
+    [initial?.body, recovery?.post.body],
   );
   const extensions = useMemo(() => editorExtensions(), []);
   const editor = useEditor({
     extensions,
-    content: initial?.body ?? "",
+    content: recovery?.post.body ?? initial?.body ?? "",
     contentType: "markdown",
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
@@ -159,6 +209,21 @@ export function PostEditor({
       },
     },
   });
+  const { clear: clearRecovery, flush: flushRecovery } = usePostRecovery({
+    key: recoveryKey,
+    recovery,
+    editor,
+    dirty,
+    fields,
+    tags,
+    order: pins.order,
+    readDraft: persistence.recoveryDraft,
+    onError: setMessage,
+  });
+  useEffect(() => {
+    if (recoveryFailed)
+      setMessage("작성 중이던 글을 불러오지 못했어요. 새로고침해 주세요.");
+  }, [recoveryFailed, setMessage]);
   const {
     fileInput,
     imageLayoutDialog,
@@ -245,6 +310,7 @@ export function PostEditor({
   async function logout() {
     if (!leave() || !start()) return;
     try {
+      if (!(await flushRecovery())) return;
       const response = await fetch("/api/write/session", { method: "DELETE" });
       if (!response.ok) throw new Error();
       setDirty(false);

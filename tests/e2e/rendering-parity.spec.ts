@@ -1,6 +1,11 @@
+import { writeDraftRecord } from "../draft-storage";
 import { readFileSync } from "node:fs";
 import { expect, test, type Locator } from "@playwright/test";
-import { createTestSession } from "./writer-credentials";
+import {
+  testSessionCookie,
+  testSessionSecure,
+  createTestSession,
+} from "./writer-credentials";
 
 const body = readFileSync("tests/fixtures/posts/post-8.md", "utf8").replace(
   /^---\r?\n[\s\S]*?\r?\n---\r?\n/,
@@ -88,9 +93,11 @@ for (const theme of ["light", "dark"]) {
   }) => {
     await page.context().addCookies([
       {
-        name: "blog-writer",
+        name: testSessionCookie,
+        secure: testSessionSecure,
         value: createTestSession(),
-        url: "http://127.0.0.1:3100",
+        domain: "127.0.0.1",
+        path: "/",
         httpOnly: true,
         sameSite: "Strict",
       },
@@ -109,32 +116,30 @@ for (const theme of ["light", "dark"]) {
     await page.evaluate(() => document.fonts.ready);
     const expected = await appearance(published, false);
 
-    await page.evaluate((body) => {
-      localStorage.setItem(
-        "blog:writer:draft:parity",
-        JSON.stringify({
-          post: {
-            id: "parity",
-            slug: "parity",
-            title: "Rendering parity",
-            body,
-            tags: [],
-            category: { name: "Development", slug: "development" },
-            coverImage: { src: "" },
-            featured: false,
-            published: false,
-            createdAt: "2026-01-01T00:00:00Z",
-            lastEditedAt: null,
-            commentsCount: 0,
-            reactionsCount: 0,
-          },
-          sha: null,
-          savedAt: "2026-01-01T00:00:00Z",
-          pinned: [],
-          order: [],
-        }),
-      );
-    }, body);
+    await page.evaluate(writeDraftRecord, {
+      key: "blog:writer:draft:parity",
+      raw: JSON.stringify({
+        post: {
+          id: "parity",
+          slug: "parity",
+          title: "Rendering parity",
+          body,
+          tags: [],
+          category: { name: "Development", slug: "development" },
+          coverImage: { src: "" },
+          featured: false,
+          published: false,
+          createdAt: "2026-01-01T00:00:00Z",
+          lastEditedAt: null,
+          commentsCount: 0,
+          reactionsCount: 0,
+        },
+        sha: null,
+        savedAt: "2026-01-01T00:00:00Z",
+        pinned: [],
+        order: [],
+      }),
+    });
     await page.goto("/write?draft=parity");
     const editor = page.getByRole("textbox", { name: "본문 편집기" });
     await expect(editor.locator("pre")).toBeVisible();

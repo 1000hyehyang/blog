@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useHydrated } from "@/lib/react/use-hydrated";
 import { PostEditor } from "./post-editor";
-import { readDraft } from "./local-drafts";
+import { readDraft, type LocalDraft } from "./local-drafts";
 import { WriteSkeleton } from "./writer-skeleton";
 import styles from "./writer.module.css";
 import type { PinnedPost } from "@/domain/pinned-posts";
@@ -18,13 +18,22 @@ export function DraftEditor(props: Props) {
   );
 }
 function LoadedDraftEditor({ id, writable, pinned }: Props) {
-  const [draft] = useState(() => {
-    try {
-      return readDraft(id);
-    } catch {
-      return null;
-    }
-  });
+  const [draft, setDraft] = useState<LocalDraft | null>();
+  useEffect(() => {
+    let active = true;
+    readDraft(id).then(
+      (value) => {
+        if (active) setDraft(value);
+      },
+      () => {
+        if (active) setDraft(null);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [id]);
+  if (draft === undefined) return <WriteSkeleton />;
   if (!draft)
     return (
       <div className={styles.writer}>

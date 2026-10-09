@@ -219,7 +219,7 @@ export function PublishDialog({
         <StatefulButton
           className={styles.primary}
           type="button"
-          onClick={() => (publishMode ? save(true) : storeDraft())}
+          onClick={() => (publishMode ? save() : storeDraft())}
           disabled={
             busy ||
             (publishMode && (!writable || Boolean(pins.conflict))) ||

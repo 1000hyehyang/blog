@@ -228,4 +228,32 @@ describe("검색과 테마 UI", () => {
     await screen.findByRole("button", { name: "음악 끄기" });
     expect(window.localStorage.getItem("blog-music-enabled")).toBe("true");
   });
+
+  it("keeps rendering and playing music when preference reads and writes fail", async () => {
+    const { MusicToggle } = await import("@/components/layout/music-toggle");
+    const get = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new DOMException("blocked", "SecurityError");
+      });
+    const set = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("quota", "QuotaExceededError");
+      });
+    try {
+      render(<MusicToggle />);
+      fireEvent.click(await screen.findByRole("button", { name: "음악 켜기" }));
+      expect(
+        await screen.findByRole("button", { name: "음악 끄기" }),
+      ).toBeEnabled();
+      fireEvent.click(screen.getByRole("button", { name: "음악 끄기" }));
+      expect(
+        await screen.findByRole("button", { name: "음악 켜기" }),
+      ).toBeEnabled();
+    } finally {
+      get.mockRestore();
+      set.mockRestore();
+    }
+  });
 });

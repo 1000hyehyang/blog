@@ -49,7 +49,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("writer trust boundaries", () => {
-  it("accepts post image folders and legacy uploads while rejecting unsafe paths", async () => {
+  it("accepts current post image folders while rejecting old and unsafe paths", async () => {
     state.cookie = createWriterSession();
     const id = "b4300eb9-7058-4f2b-82e0-857745ccc2a9";
     const request = (pathname: string) =>
@@ -66,17 +66,17 @@ describe("writer trust boundaries", () => {
       });
     for (const path of [
       `posts/essay/${id}/${id}.webp`,
-      `posts/art/legacy-post/${id}.png`,
-      `posts/${id}.jpg`,
+      `posts/art/post-id/${id}.png`,
     ]) {
       const response = await imageUpload(request(path));
       expect(response.status).toBe(200);
       expect(await response.json()).toMatchObject({
-        maximumSizeInBytes: 8 * 1024 * 1024,
+        maximumSizeInBytes: 20 * 1024 * 1024,
         addRandomSuffix: true,
       });
     }
     for (const path of [
+      `posts/${id}.jpg`,
       `posts/../${id}/${id}.png`,
       `posts/essay/../${id}.png`,
       `posts/essay/a%2Fb/${id}.png`,

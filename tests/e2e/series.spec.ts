@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { categories } from "../../src/config/categories";
-import { createTestSession } from "./writer-credentials";
+import {
+  testSessionCookie,
+  testSessionSecure,
+  createTestSession,
+} from "./writer-credentials";
 
 test("series detail responses include the skeleton and canonical URL", async ({
   page,
@@ -109,9 +113,11 @@ test("series select only appears for categories with series and shares category 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.context().addCookies([
     {
-      name: "blog-writer",
+      name: testSessionCookie,
+      secure: testSessionSecure,
       value: createTestSession(),
-      url: "http://127.0.0.1:3100",
+      domain: "127.0.0.1",
+      path: "/",
       httpOnly: true,
       sameSite: "Strict",
     },

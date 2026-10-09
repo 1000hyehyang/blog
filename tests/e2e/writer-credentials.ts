@@ -2,6 +2,11 @@ import { createHmac, scryptSync } from "node:crypto";
 
 export const testPassword = "731204!";
 export const testSessionSecret = "e2e-only-session-secret-not-for-deployment";
+export const testSessionCookie =
+  process.env.BLOG_E2E_PRODUCTION === "1"
+    ? "__Host-blog-writer"
+    : "blog-writer";
+export const testSessionSecure = process.env.BLOG_E2E_PRODUCTION === "1";
 const salt = Buffer.alloc(16, 2);
 export const testHash = `scrypt:${salt.toString("hex")}:${scryptSync(testPassword, salt, 64, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }).toString("hex")}`;
 

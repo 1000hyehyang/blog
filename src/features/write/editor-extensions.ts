@@ -293,6 +293,7 @@ export function editorExtensions() {
 }
 
 export function hasUnsupportedHtml(source: string) {
+  if (!source.includes("<")) return false;
   const manager = new MarkdownManager();
   let unsupported = false;
   manager.instance.walkTokens(manager.instance.lexer(source), (token) => {

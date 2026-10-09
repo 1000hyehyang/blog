@@ -9,7 +9,16 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PostEditor } from "./post-editor";
 import type { StoredPost } from "@/lib/content/post-file";
-import { readDraft, saveDraft, type LocalDraft } from "./local-drafts";
+import {
+  readDraft,
+  saveDraft,
+  readRecovery,
+  type LocalDraft,
+} from "./local-drafts";
+import {
+  readDraftRecord,
+  writeDraftRecord,
+} from "../../../tests/draft-storage";
 import { DraftEditor } from "./draft-editor";
 import { Editor } from "@tiptap/react";
 import { act } from "@testing-library/react";
@@ -81,12 +90,198 @@ beforeEach(() => {
     },
   });
 });
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  await Promise.all(
+    ["new", "post:sample-post", "draft:sample-post", "draft:post-1"].map(
+      (key) => readRecovery(key).catch(() => null),
+    ),
+  );
   localStorage.clear();
   vi.unstubAllGlobals();
 });
 describe("writer data preservation", () => {
+  it("backs up changes each minute during continuous editing and skips unchanged intervals", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    try {
+      render(
+        <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+      );
+      const element = await screen.findByRole("textbox", {
+        name: "본문 편집기",
+      });
+      const editor = (element as HTMLElement & { editor: Editor }).editor;
+      act(() => editor.commands.insertContentAt(1, "첫 번째 변경"));
+      act(() => vi.advanceTimersByTime(30_000));
+      expect(await readRecovery("post:sample-post")).toBeNull();
+      fireEvent.change(screen.getByLabelText("제목"), {
+        target: { value: "작성 중인 제목" },
+      });
+      act(() => vi.advanceTimersByTime(29_000));
+      expect(await readRecovery("post:sample-post")).toBeNull();
+      fireEvent.change(screen.getByLabelText("제목"), {
+        target: { value: "1분 직전 제목" },
+      });
+      act(() => vi.advanceTimersByTime(1000));
+      const first = await readRecovery("post:sample-post");
+      expect(first?.post.title).toBe("1분 직전 제목");
+      expect(first?.post.body).toContain("첫 번째 변경");
+      act(() => vi.advanceTimersByTime(60_000));
+      expect((await readRecovery("post:sample-post"))?.savedAt).toBe(
+        first?.savedAt,
+      );
+      act(() => editor.commands.insertContentAt(1, "다음 변경"));
+      act(() => vi.advanceTimersByTime(60_000));
+      const next = await readRecovery("post:sample-post");
+      expect(next?.post.body).toContain("다음 변경");
+      expect(next?.savedAt).not.toBe(first?.savedAt);
+    } finally {
+      cleanup();
+      vi.useRealTimers();
+    }
+  });
+
+  it("saves the latest title and body before logging out without waiting for autosave", async () => {
+    vi.stubGlobal("confirm", () => true);
+    const fetchMock = vi.fn(async () => {
+      const recovery = await readRecovery("post:sample-post");
+      expect(recovery?.post.title).toBe("로그아웃 직전 제목");
+      expect(recovery?.post.body).toContain("마지막 본문");
+      return Response.json({ loggedOut: true });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    const element = await screen.findByRole("textbox", { name: "본문 편집기" });
+    const editor = (element as HTMLElement & { editor: Editor }).editor;
+    fireEvent.change(screen.getByLabelText("제목"), {
+      target: { value: "로그아웃 직전 제목" },
+    });
+    act(() => editor.commands.insertContentAt(1, "마지막 본문"));
+    fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/login"));
+    expect(fetchMock).toHaveBeenCalledWith("/api/write/session", {
+      method: "DELETE",
+    });
+    expect((await readRecovery("post:sample-post"))?.post.title).toBe(
+      "로그아웃 직전 제목",
+    );
+  });
+
+  it("keeps editing and the session when recovery fails during logout and supports retry", async () => {
+    vi.stubGlobal("confirm", () => true);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ loggedOut: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    const element = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.change(screen.getByLabelText("제목"), {
+      target: { value: "저장 실패 시 보존할 제목" },
+    });
+    const storage = indexedDB;
+    vi.stubGlobal("indexedDB", {
+      open: () => {
+        throw new Error("access denied");
+      },
+    });
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
+      await screen.findAllByText(
+        "자동 저장에 실패했어요. 이동 전 내용을 복사해 주세요.",
+      );
+      await waitFor(() =>
+        expect(element).toHaveAttribute("contenteditable", "true"),
+      );
+      expect(screen.getByLabelText("제목")).toHaveValue(
+        "저장 실패 시 보존할 제목",
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(mocks.replace).not.toHaveBeenCalled();
+    } finally {
+      vi.stubGlobal("indexedDB", storage);
+    }
+    fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/login"));
+    expect((await readRecovery("post:sample-post"))?.post.title).toBe(
+      "저장 실패 시 보존할 제목",
+    );
+  });
+
+  it("flushes unsaved edits on unmount and restores them without overwriting the manual draft", async () => {
+    const draft: LocalDraft = {
+      post: initial,
+      sha: "a".repeat(40),
+      savedAt: "2026-01-01T00:00:00Z",
+      pinned: [],
+      order: [],
+    };
+    await saveDraft(draft, null);
+    const view = render(
+      <PostEditor
+        initial={initial}
+        initialSha={draft.sha}
+        draft={draft}
+        writable
+      />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.change(screen.getByLabelText("제목"), {
+      target: { value: "미저장 수정" },
+    });
+    view.unmount();
+    await waitFor(async () =>
+      expect((await readRecovery("draft:sample-post"))?.post.title).toBe(
+        "미저장 수정",
+      ),
+    );
+    expect((await readDraft("sample-post"))?.post.title).toBe(initial.title);
+    render(
+      <PostEditor
+        initial={initial}
+        initialSha={draft.sha}
+        draft={draft}
+        writable
+      />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    expect(screen.getByLabelText("제목")).toHaveValue("미저장 수정");
+  });
+
+  it("preserves the recovery copy after a failed publish and removes it only after a valid success", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ message: "failed" }, { status: 502 }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ post: initial, sha: "b".repeat(40) }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.change(screen.getByLabelText("제목"), {
+      target: { value: "미저장 수정" },
+    });
+    fireEvent(window, new Event("pagehide"));
+    await waitFor(async () =>
+      expect((await readRecovery("post:sample-post"))?.post.title).toBe(
+        "미저장 수정",
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    const retry = await screen.findByRole("button", { name: "다시 시도" });
+    expect(await readRecovery("post:sample-post")).not.toBeNull();
+    fireEvent.click(retry);
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
+    expect(await readRecovery("post:sample-post")).toBeNull();
+  });
   it("retains the local recovery draft when a successful response is malformed and supports retry", async () => {
     const draft: LocalDraft = {
       post: { ...initial, published: false },
@@ -95,7 +290,7 @@ describe("writer data preservation", () => {
       pinned: [],
       order: [],
     };
-    saveDraft(draft, null);
+    await saveDraft(draft, null);
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(Response.json({ post: null, sha: "b".repeat(40) }))
@@ -116,11 +311,11 @@ describe("writer data preservation", () => {
     fireEvent.click(screen.getByRole("button", { name: "발행" }));
     const retry = await screen.findByRole("button", { name: "다시 시도" });
     expect(retry).toBeEnabled();
-    expect(readDraft(draft.post.slug)?.post.body).toBe(initial.body);
+    expect((await readDraft(draft.post.slug))?.post.body).toBe(initial.body);
     expect(mocks.replace).not.toHaveBeenCalled();
     fireEvent.click(retry);
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
-    expect(readDraft(draft.post.slug)).toBeNull();
+    expect(await readDraft(draft.post.slug)).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -213,7 +408,9 @@ describe("writer data preservation", () => {
         name: "임시 저장",
       }),
     );
-    await waitFor(() => expect(readDraft("post-1")?.post.id).toBe(id));
+    await waitFor(async () =>
+      expect((await readDraft("post-1"))?.post.id).toBe(id),
+    );
     await waitFor(() => expect(mocks.replace).toHaveBeenCalled());
     view.unmount();
 
@@ -265,7 +462,7 @@ describe("writer data preservation", () => {
       pinned: oldPins,
       order: ["second", "first"],
     };
-    saveDraft(draft, null);
+    await saveDraft(draft, null);
     const view = render(
       <DraftEditor id={draft.post.slug} writable pinned={latestPins} />,
     );
@@ -286,10 +483,10 @@ describe("writer data preservation", () => {
         name: "임시 저장",
       }),
     );
-    await waitFor(() =>
-      expect(readDraft(draft.post.slug)?.pinned).toEqual(latestPins),
+    await waitFor(async () =>
+      expect((await readDraft(draft.post.slug))?.pinned).toEqual(latestPins),
     );
-    expect(readDraft(draft.post.slug)?.post.body).toBe(initial.body);
+    expect((await readDraft(draft.post.slug))?.post.body).toBe(initial.body);
     await waitFor(() => expect(mocks.replace).toHaveBeenCalled());
     view.unmount();
     const fetchMock = vi
@@ -357,7 +554,7 @@ describe("writer data preservation", () => {
   });
 
   it("allocates a new URL without reading or overwriting damaged draft bodies", async () => {
-    localStorage.setItem("blog:writer:draft:post-12", "{");
+    await writeDraftRecord({ key: "blog:writer:draft:post-12", raw: "{" });
     const fetchMock = vi
       .fn()
       .mockResolvedValue(Response.json({ message: "test" }, { status: 400 }));
@@ -368,7 +565,9 @@ describe("writer data preservation", () => {
     fireEvent.click(screen.getByRole("button", { name: "발행" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock.mock.calls[0][0]).toBe("/api/write/posts/post-13");
-    expect(localStorage.getItem("blog:writer:draft:post-12")).toBe("{");
+    expect(await readDraftRecord({ key: "blog:writer:draft:post-12" })).toBe(
+      "{",
+    );
   });
   it("shows a preview card when a standalone Markdown URL is pasted", async () => {
     const url = "https://github.com/1000hyehyang";

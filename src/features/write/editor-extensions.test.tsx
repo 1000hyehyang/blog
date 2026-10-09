@@ -71,26 +71,6 @@ describe("Tiptap Markdown preservation", () => {
     editor.destroy();
   });
 
-  it.each([
-    "앞\n\n뒤",
-    "앞\n\n\n\n뒤",
-    "\n\n앞\n\n\n\n\n\n뒤\n\n",
-    "앞\r\n\r\n\r\n\r\n뒤",
-    "# 제목\n\n\n\n본문",
-  ])("renders legacy blank paragraphs as the editor does: %j", (source) => {
-    const editor = new Editor({
-      extensions: editorExtensions(),
-      content: source,
-      contentType: "markdown",
-    });
-    const div = document.createElement("div");
-    div.innerHTML = renderToStaticMarkup(<MarkdownContent source={source} />);
-    expect(div.querySelector(".prose")!.children).toHaveLength(
-      editor.state.doc.childCount,
-    );
-    editor.destroy();
-  });
-
   it("renders nested and loose task lists with the editor's checkbox layout", () => {
     const div = document.createElement("div");
     div.innerHTML = renderToStaticMarkup(

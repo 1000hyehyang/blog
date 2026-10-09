@@ -1,4 +1,14 @@
 import "@testing-library/jest-dom/vitest";
+import { beforeEach } from "vitest";
+import { IDBFactory } from "fake-indexeddb";
+
+beforeEach(() => {
+  Object.defineProperty(globalThis, "indexedDB", {
+    configurable: true,
+    writable: true,
+    value: new IDBFactory(),
+  });
+});
 
 process.env.LOCAL_CONTENT_PATH = "tests/fixtures/posts";
 

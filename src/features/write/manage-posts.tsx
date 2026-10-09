@@ -33,7 +33,7 @@ const postDate = (post: ManagedPost) =>
 const postKey = (post: ManagedPost) =>
   `${post.localVersion ? "local" : "stored"}:${post.slug}`;
 const canDeletePost = (post: ManagedPost) =>
-  Boolean(post.localVersion || (post.sha && post.sha !== "local"));
+  Boolean(post.localVersion || post.sha);
 export function ManagePosts({
   posts,
   initialTab = "published",
@@ -55,30 +55,38 @@ export function ManagePosts({
   const [removed, setRemoved] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   useEffect(() => {
-    function refresh() {
+    let active = true;
+    async function refresh() {
       try {
-        const snapshot = readDrafts();
+        const snapshot = await readDrafts();
+        if (!active) return;
         setDrafts(snapshot.drafts);
         setDamaged(snapshot.damaged);
         setError("");
       } catch {
+        if (!active) return;
         setError("브라우저의 임시 저장소에 접근하지 못했습니다.");
       }
     }
     refresh();
-    window.addEventListener("storage", refresh);
+    const channel =
+      typeof BroadcastChannel !== "undefined"
+        ? new BroadcastChannel("writer-drafts")
+        : null;
+    channel?.addEventListener("message", refresh);
     window.addEventListener("writer-drafts", refresh);
     return () => {
-      window.removeEventListener("storage", refresh);
+      active = false;
+      channel?.close();
       window.removeEventListener("writer-drafts", refresh);
     };
   }, []);
   async function removePost(post: ManagedPost) {
     if (post.localVersion) {
-      removeDraft(post.slug, post.localVersion);
+      await removeDraft(post.slug, post.localVersion);
       return;
     }
-    if (!post.sha || post.sha === "local") return;
+    if (!post.sha) return;
     await deletePostRequest(post.slug, post.sha, "글을 삭제하지 못했습니다.");
     setRemoved((slugs) => [...slugs, post.slug]);
   }

@@ -16,7 +16,11 @@ const STORAGE_KEY = "blog-music-enabled";
 
 function readStoredPreference() {
   if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(STORAGE_KEY) === "true";
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
 }
 
 function useMusicToggle() {
@@ -39,7 +43,11 @@ function useMusicToggle() {
   useEffect(() => {
     if (!isMounted) return;
 
-    window.localStorage.setItem(STORAGE_KEY, String(isPlaying));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, String(isPlaying));
+    } catch {
+      // 설정 저장이 막혀도 현재 페이지의 재생은 유지한다.
+    }
 
     const audio =
       audioRef.current ??

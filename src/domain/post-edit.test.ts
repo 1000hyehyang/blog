@@ -66,10 +66,10 @@ it("preserves identity and publication history across drafts, publishing and rep
     publishedAt: published.publishedAt,
     lastEditedAt: later.now,
   });
-  const legacy = { ...previous, publishedAt: undefined };
-  expect(applyPostEdit(legacy, fields, options).publishedAt).toBe(
-    previous.createdAt,
-  );
+  const postWithoutPublicationDate = { ...previous, publishedAt: undefined };
+  expect(
+    applyPostEdit(postWithoutPublicationDate, fields, options).publishedAt,
+  ).toBe(previous.createdAt);
 });
 
 it("only marks content edits and compares structured values without changing the input", () => {

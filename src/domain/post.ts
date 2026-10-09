@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const POST_BODY_MAX_BYTES = 5 * 1024 * 1024;
+// JSON 제어 문자 이스케이프는 원문 한 바이트를 최대 여섯 바이트로 만든다.
+export const POST_REQUEST_MAX_BYTES = POST_BODY_MAX_BYTES * 6 + 128 * 1024;
+
 export const slugSchema = z
   .string()
   .min(1)
@@ -15,7 +19,14 @@ const imageUrl = z.union([
 ]);
 export const postFieldsSchema = z.object({
   title: z.string().trim().min(1).max(200),
-  body: z.string().max(200_000),
+  body: z
+    .string()
+    .max(POST_BODY_MAX_BYTES)
+    .refine(
+      (body) =>
+        new TextEncoder().encode(body).byteLength <= POST_BODY_MAX_BYTES,
+      "본문은 UTF-8 기준 5 MiB까지 저장할 수 있습니다.",
+    ),
   category: z.object({
     name: z.string().trim().min(1).max(100),
     slug: z.string().regex(/^[a-z0-9-]+$/),
@@ -32,7 +43,7 @@ export const storedPostSchema = postFieldsSchema.extend({
   slug: slugSchema,
   id: z.string().min(1),
   createdAt: z.string().datetime(),
-  // undefined는 기존 글, null은 아직 공개한 적 없는 초안을 뜻한다.
+  // 현재 글의 발행일이 없으면 생성일을 사용하고, null은 미발행 초안이다.
   publishedAt: z.string().datetime().nullable().optional(),
   lastEditedAt: z.string().datetime().nullable(),
   commentsCount: z.number().int().nonnegative().default(0),

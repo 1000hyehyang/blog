@@ -11,7 +11,7 @@ export function imageFileError(file: File) {
   return !IMAGE_UPLOAD_TYPES.includes(file.type) ||
     !file.size ||
     file.size > MAX_IMAGE_UPLOAD_BYTES
-    ? "8MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요."
+    ? "20MB 이하의 PNG, JPEG, GIF, WebP, AVIF 이미지를 선택해 주세요."
     : "";
 }
 
