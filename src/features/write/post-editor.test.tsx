@@ -29,7 +29,7 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   refresh: vi.fn(),
 }));
-vi.mock("@vercel/blob/client", () => ({ upload: mocks.upload }));
+vi.mock("@vercel/blob/client", () => ({ uploadPresigned: mocks.upload }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }),
 }));

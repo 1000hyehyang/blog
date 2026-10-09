@@ -1,4 +1,4 @@
-import { upload } from "@vercel/blob/client";
+import { uploadPresigned } from "@vercel/blob/client";
 import {
   IMAGE_UPLOAD_EXTENSIONS,
   IMAGE_UPLOAD_TYPES,
@@ -36,7 +36,7 @@ export async function uploadPostImage(
   } finally {
     URL.revokeObjectURL(source);
   }
-  const blob = await upload(
+  const blob = await uploadPresigned(
     `posts/${category}/${postId}/${crypto.randomUUID()}.${IMAGE_UPLOAD_EXTENSIONS[file.type]}`,
     file,
     {
