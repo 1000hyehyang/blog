@@ -15,6 +15,7 @@ import {
   readRecovery,
   saveRecovery,
   type LocalDraft,
+  type RecoveryDraft,
 } from "./local-drafts";
 import {
   readDraftRecord,
@@ -112,7 +113,7 @@ describe("writer data preservation", () => {
         pinned: [],
         order: [],
       };
-      const recovery: LocalDraft = {
+      const recovery: RecoveryDraft = {
         ...draft,
         post: { ...initial, title: "오래된 자동 복구" },
         sha: "a".repeat(40),
@@ -177,6 +178,7 @@ describe("writer data preservation", () => {
         ...draft,
         post: { ...initial, title: "다른 탭" },
         savedAt: "2026-01-02T00:00:00Z",
+        baseDraftSavedAt: draft.savedAt,
       },
       null,
     );
@@ -255,10 +257,11 @@ describe("writer data preservation", () => {
   });
 
   it("requires explicit conflict resolution and persists the accepted SHA across recovery", async () => {
-    const recovery: LocalDraft = {
+    const recovery: RecoveryDraft = {
       post: { ...initial, title: "유지할 작성 내용" },
       sha: "a".repeat(40),
       savedAt: "2026-01-01T00:00:00Z",
+      baseDraftSavedAt: null,
       pinned: [],
       order: [],
     };
@@ -970,30 +973,40 @@ describe("writer data preservation", () => {
       "https://example.com/art.png",
     );
   });
-  it("preserves the original Markdown on metadata-only edits and retains it after a conflict", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ message: "충돌입니다" }, { status: 409 }),
+  it.each([
+    initial.body,
+    "![photo](<https://example.com/a).png>)\n\n![space](<https://example.com/a b.png>)\n\nEdit here",
+  ])(
+    "preserves the original Markdown on metadata-only edits and retains it after a conflict: %s",
+    async (body) => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(
+          Response.json({ message: "충돌입니다" }, { status: 409 }),
+        );
+      vi.stubGlobal("fetch", fetchMock);
+      render(
+        <PostEditor
+          initial={{ ...initial, body }}
+          initialSha={"a".repeat(40)}
+          writable
+        />,
       );
-    vi.stubGlobal("fetch", fetchMock);
-    render(
-      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
-    );
-    await screen.findByRole("textbox", { name: "본문 편집기" });
-    fireEvent.change(screen.getByLabelText("제목"), {
-      target: { value: "수정 제목" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "완료" }));
-    fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
-    await within(screen.getByRole("dialog")).findByText("충돌입니다");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
-      sha: "a".repeat(40),
-      post: { body: initial.body, title: "수정 제목" },
-    });
-    expect(screen.getByLabelText("제목")).toHaveValue("수정 제목");
-    expect(mocks.replace).not.toHaveBeenCalled();
-  });
+      await screen.findByRole("textbox", { name: "본문 편집기" });
+      fireEvent.change(screen.getByLabelText("제목"), {
+        target: { value: "수정 제목" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "완료" }));
+      fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+      await within(screen.getByRole("dialog")).findByText("충돌입니다");
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+        sha: "a".repeat(40),
+        post: { body, title: "수정 제목" },
+      });
+      expect(screen.getByLabelText("제목")).toHaveValue("수정 제목");
+      expect(mocks.replace).not.toHaveBeenCalled();
+    },
+  );
   it("inserts the returned image URL and keeps it after an upload failure", async () => {
     render(
       <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,

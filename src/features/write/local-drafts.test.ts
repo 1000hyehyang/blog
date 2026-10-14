@@ -15,6 +15,7 @@ import {
   saveRecovery,
   trackRecoveryWrite,
   type LocalDraft,
+  type RecoveryDraft,
 } from "./local-drafts";
 
 const draft: LocalDraft = {
@@ -38,6 +39,7 @@ const draft: LocalDraft = {
   pinned: [],
   order: [],
 };
+const recovery: RecoveryDraft = { ...draft, baseDraftSavedAt: null };
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -46,18 +48,28 @@ it("waits for an in-flight recovery save before reopening the editor", async () 
   let release!: () => void;
   const pending = new Promise<void>((resolve) => {
     release = resolve;
-  }).then(() => saveRecovery("new", draft, null));
+  }).then(() => saveRecovery("new", recovery, null));
   trackRecoveryWrite("new", pending);
   const read = readRecovery("new");
   release();
-  expect(await read).toEqual(draft);
+  expect(await read).toEqual(recovery);
+});
+
+it("rejects recovery without a baseline without changing its raw data or a manual draft", async () => {
+  await saveDraft(draft, null);
+  const raw = JSON.stringify(draft);
+  await writeDraftRecord({ key: "new", raw, store: "recovery" });
+  await expect(readRecovery("new")).rejects.toThrow();
+  await expect(saveRecovery("new", recovery, null)).rejects.toThrow();
+  expect(await readDraftRecord({ key: "new", store: "recovery" })).toBe(raw);
+  expect(await readDraft(draft.post.slug)).toEqual(draft);
 });
 
 it("preserves unfinished image URLs in recovery while keeping manual draft validation", async () => {
   await saveDraft(draft, null);
-  await saveRecovery("new", draft, null);
+  await saveRecovery("new", recovery, null);
   const edited = {
-    ...draft,
+    ...recovery,
     post: {
       ...draft.post,
       body: "Latest unsaved body",
@@ -140,6 +152,7 @@ it("round trips a maximum-size draft and recovery copy without overwriting eithe
     "draft:post-1",
     {
       ...large,
+      baseDraftSavedAt: draft.savedAt,
       post: { ...large.post, title: "", body: large.post.body + "unsaved" },
     },
     null,

@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCategoryNavigation, siteConfig } from "@/config/site";
 import { IMAGE_UPLOAD_TYPES } from "@/config/images";
-import { readRecovery, type LocalDraft } from "./local-drafts";
+import {
+  readRecovery,
+  type LocalDraft,
+  type RecoveryDraft,
+} from "./local-drafts";
 import type { PostFields, StoredPost } from "@/domain/post";
 import { usePostPersistence } from "./use-post-persistence";
 import { WriterSelect } from "./writer-controls";
@@ -54,7 +58,7 @@ export function PostEditor(props: Props) {
       ? `post:${props.initial.slug}`
       : "new";
   const [loaded, setLoaded] = useState<{
-    value: LocalDraft | null;
+    value: RecoveryDraft | null;
     failed: boolean;
   }>();
   useEffect(() => {
@@ -94,7 +98,7 @@ function LoadedPostEditor({
   recoveryKey,
   recoveryFailed,
 }: Props & {
-  recovery: LocalDraft | null;
+  recovery: RecoveryDraft | null;
   recoveryKey: string;
   recoveryFailed: boolean;
 }) {
@@ -103,8 +107,7 @@ function LoadedPostEditor({
     draft &&
     storedRecovery &&
     (Date.parse(storedRecovery.savedAt) <= Date.parse(draft.savedAt) ||
-      (storedRecovery.baseDraftSavedAt !== undefined &&
-        storedRecovery.baseDraftSavedAt !== draft.savedAt))
+      storedRecovery.baseDraftSavedAt !== draft.savedAt)
       ? null
       : storedRecovery;
   const [fields, setFields] = useState<PostFields>({

@@ -23,6 +23,77 @@ function rendered(source: string) {
   return div;
 }
 describe("Tiptap Markdown preservation", () => {
+  it.each([
+    [
+      "![photo](https://example.com/photo.png)",
+      "https://example.com/photo.png",
+    ],
+    ["![photo](<https://example.com/a).png>)", "https://example.com/a).png"],
+    ["![photo](<https://example.com/a b.png>)", "https://example.com/a b.png"],
+    [
+      String.raw`![photo](<https://example.com/a\\b.png>)`,
+      String.raw`https://example.com/a\b.png`,
+    ],
+    [
+      String.raw`![photo](<https://example.com/a\<b\>.png>)`,
+      "https://example.com/a<b>.png",
+    ],
+    [
+      String.raw`![photo](<https://example.com/a\&copy;.png>)`,
+      "https://example.com/a&copy;.png",
+    ],
+  ])("preserves image destinations after body edits: %s", (source, src) => {
+    for (const settings of [
+      {},
+      { title: 'Image "title"', caption: "Keep caption", width: 65 },
+      {
+        layout: "collage",
+        images: [
+          { src, alt: "photo" },
+          { src: "/second.png", alt: "second" },
+        ],
+        caption: "Keep group caption",
+        linkHref: "https://example.com/target",
+        linkTitle: "Keep link title",
+      },
+    ]) {
+      const editor = new Editor({
+        extensions: editorExtensions(),
+        content: `${source}\n\nEdit here`,
+        contentType: "markdown",
+      });
+      try {
+        expect(editor.state.doc.firstChild?.attrs.src).toBe(src);
+        editor.commands.setNodeSelection(0);
+        editor.commands.updateAttributes("image", settings);
+        editor.commands.insertContentAt(
+          editor.state.doc.content.size - 1,
+          " edited",
+        );
+        const expected = editor.state.doc.firstChild!.attrs;
+        const expectedText = editor.state.doc.textContent;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const output = editor.getMarkdown();
+          expect(hasUnsupportedHtml(output)).toBe(false);
+          const view = rendered(output);
+          expect(view.querySelectorAll("img")).toHaveLength(1);
+          expect(view.querySelector("img")?.getAttribute("src")).toBe(
+            rendered(source).querySelector("img")?.getAttribute("src"),
+          );
+          editor.commands.setContent(output, { contentType: "markdown" });
+          const images: Record<string, unknown>[] = [];
+          editor.state.doc.descendants((node) => {
+            if (node.type.name === "image") images.push(node.attrs);
+          });
+          expect(images).toEqual([expected]);
+          expect(editor.state.doc.textContent).toBe(expectedText);
+        }
+      } finally {
+        editor.destroy();
+      }
+    }
+  });
+
   it("keeps intrinsic image sizes through Markdown and HTML round trips", () => {
     const editor = new Editor({ extensions: editorExtensions() });
     const dimensions = { width: 800, height: 600 };

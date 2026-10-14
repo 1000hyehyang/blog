@@ -9,7 +9,6 @@ const draftSchema = z
       .regex(/^[a-f0-9]{40}$/)
       .nullable(),
     savedAt: z.string().datetime(),
-    baseDraftSavedAt: z.string().datetime().nullable().optional(),
     pinned: z.array(
       postFileSchema.pick({ slug: true, title: true, coverImage: true }),
     ),
@@ -25,6 +24,7 @@ const draftSchema = z
   }, "Pinned 순서를 읽을 수 없습니다.");
 export type LocalDraft = z.infer<typeof draftSchema>;
 const recoverySchema = draftSchema.safeExtend({
+  baseDraftSavedAt: z.string().datetime().nullable(),
   post: postFileSchema.extend({
     title: z.string(),
     body: z.string(),
@@ -33,6 +33,7 @@ const recoverySchema = draftSchema.safeExtend({
     galleryImage: z.object({ src: z.string() }).optional(),
   }),
 });
+export type RecoveryDraft = z.infer<typeof recoverySchema>;
 export type DamagedDraft = { key: string; raw: string };
 const recoveryWrites = new Map<string, Promise<unknown>>();
 
@@ -248,7 +249,7 @@ function writeVersion(
     });
   });
 }
-export async function readRecovery(key: string): Promise<LocalDraft | null> {
+export async function readRecovery(key: string): Promise<RecoveryDraft | null> {
   await recoveryWrites.get(key);
   const raw = await withStore<string | undefined>(
     "recovery",
@@ -261,7 +262,7 @@ export async function readRecovery(key: string): Promise<LocalDraft | null> {
 }
 export async function saveRecovery(
   key: string,
-  value: LocalDraft,
+  value: RecoveryDraft,
   expected: string | null,
 ) {
   await writeVersion("recovery", key, recoverySchema.parse(value), expected);

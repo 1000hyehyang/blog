@@ -256,13 +256,14 @@ const EditableImage = Image.extend({
     const markdownAlt = alt
       .replace(/([\\\[\]])/g, "\\$1")
       .replace(/[\r\n]/g, " ");
+    const markdownSrc = `<${src.replace(/[\\<>&]/g, "\\$&")}>`;
     const group = asImageGroup({ layout, images, caption });
     const title = writeImageMetadata({ ...settings, caption });
     const image = group
-      ? `![${markdownAlt}](${src} "${writeImageGroup(group)}")`
+      ? `![${markdownAlt}](${markdownSrc} "${writeImageGroup(group)}")`
       : title
-        ? `![${markdownAlt}](${src} "${markdownTitle(title)}")`
-        : `![${markdownAlt}](${src})`;
+        ? `![${markdownAlt}](${markdownSrc} "${markdownTitle(title)}")`
+        : `![${markdownAlt}](${markdownSrc})`;
     if (!linkHref) return image;
     const destination = linkHref
       .replace(/</g, "%3C")

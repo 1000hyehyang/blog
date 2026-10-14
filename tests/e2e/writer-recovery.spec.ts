@@ -21,6 +21,70 @@ test.beforeEach(async ({ page }) => {
   ]);
 });
 
+test("preserves image destinations through metadata saves, body edits and reopening", async ({
+  page,
+}) => {
+  await page.goto("/manage");
+  const sources = [
+    "http://127.0.0.1:3100/og-blog.png?name=a).png",
+    "http://127.0.0.1:3100/og-blog.png?name=a b.png",
+  ];
+  const body = `![photo](<${sources[0]}>)\n\n![space](<${sources[1]}>)\n\nEdit here`;
+  const key = "blog:writer:draft:image-destinations";
+  await page.evaluate(writeDraftRecord, {
+    key,
+    raw: JSON.stringify({
+      post: {
+        id: "image-destinations",
+        slug: "image-destinations",
+        title: "Image destinations",
+        body,
+        category: { name: "Development", slug: "development" },
+        tags: [],
+        coverImage: { src: sources[0] },
+        featured: false,
+        published: false,
+        createdAt: "2026-01-01T00:00:00Z",
+        lastEditedAt: null,
+        commentsCount: 0,
+        reactionsCount: 0,
+      },
+      sha: null,
+      savedAt: "2026-01-01T00:00:00Z",
+      pinned: [],
+      order: [],
+    }),
+  });
+  await page.goto("/write?draft=image-destinations");
+  const editor = page.getByRole("textbox", { name: "본문 편집기" });
+  await expect(editor.locator("img")).toHaveCount(2);
+  async function save() {
+    await page.getByRole("button", { name: "임시 저장", exact: true }).click();
+    const conflict = page.getByRole("button", { name: "내 고정 변경 반영" });
+    if (await conflict.count()) await conflict.click();
+    const dialog = page.getByRole("dialog", { name: "임시 저장" });
+    await dialog
+      .getByRole("button", { name: "임시 저장", exact: true })
+      .click();
+    await expect(dialog).not.toBeVisible();
+    return JSON.parse((await page.evaluate(readDraftRecord, { key }))!);
+  }
+  await page.getByLabel("제목", { exact: true }).fill("Updated metadata");
+  expect((await save()).post.body).toBe(body);
+  await page.reload();
+  await expect(editor.locator("img")).toHaveCount(2);
+  await editor.press("ControlOrMeta+End");
+  await page.keyboard.type(" edited");
+  await expect(editor.locator("p").last()).toHaveText("Edit here edited");
+  const saved = await save();
+  expect(saved.post.coverImage.src).toBe(sources[0]);
+  await page.reload();
+  await expect(editor.locator("img")).toHaveCount(2);
+  for (const [index, src] of sources.entries())
+    await expect(editor.locator("img").nth(index)).toHaveAttribute("src", src);
+  await expect(editor.locator("p").last()).toHaveText("Edit here edited");
+});
+
 test("restores unfinished image URLs and the latest body after logout", async ({
   page,
 }) => {

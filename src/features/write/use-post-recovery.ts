@@ -5,7 +5,7 @@ import {
   saveRecovery,
   removeRecovery,
   trackRecoveryWrite,
-  type LocalDraft,
+  type RecoveryDraft,
 } from "./local-drafts";
 
 export function usePostRecovery({
@@ -21,14 +21,14 @@ export function usePostRecovery({
   onError,
 }: {
   key: string;
-  recovery: LocalDraft | null;
+  recovery: RecoveryDraft | null;
   sha: string | null;
   editor: Editor | null;
   dirty: boolean;
   fields: PostFields;
   tags: string;
   order: string[];
-  readDraft: () => Promise<LocalDraft | null>;
+  readDraft: () => Promise<RecoveryDraft | null>;
   onError: (message: string) => void;
 }) {
   const version = useRef(recovery?.savedAt ?? null);

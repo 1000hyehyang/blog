@@ -8,6 +8,7 @@ import {
   saveDraft,
   removeDraft,
   type LocalDraft,
+  type RecoveryDraft,
 } from "./local-drafts";
 import type { usePinnedOrder } from "./use-pinned-order";
 import type { useWriterFeedback } from "./use-writer-feedback";
@@ -22,7 +23,7 @@ type Options = {
   initial: StoredPost | null;
   initialSha: string | null;
   draft?: LocalDraft;
-  recovery?: LocalDraft | null;
+  recovery?: RecoveryDraft | null;
   postSlugs: string[];
   currentPin: string;
   pins: ReturnType<typeof usePinnedOrder>;
@@ -201,7 +202,7 @@ export function usePostPersistence({
       finish();
     }
   }
-  async function recoveryDraft(): Promise<LocalDraft | null> {
+  async function recoveryDraft(): Promise<RecoveryDraft | null> {
     const fields = readFields();
     if (!fields) return null;
     const now = new Date().toISOString();
