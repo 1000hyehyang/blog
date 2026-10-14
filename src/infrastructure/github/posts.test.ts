@@ -1,10 +1,22 @@
 import { savePost, deletePost, rebuildPostIndex } from "./post-mutations";
+import { randomBytes } from "node:crypto";
 import {
   getStoredPost,
   getStoredPostsWithSha,
   getStoredPosts,
 } from "./post-store";
 import { POST_BODY_MAX_BYTES } from "@/domain/post";
+import {
+  POST_CHUNK_MAX_BYTES,
+  POST_HTTP_MAX_BYTES,
+  POST_METADATA_MAX_BYTES,
+} from "@/lib/post-transfer";
+import { savePostRequest } from "@/features/write/post-api";
+import {
+  POST as stagePostChunk,
+  PUT as publishPost,
+} from "@/app/api/write/posts/[slug]/route";
+import { createPostChunk, readPostTransfer } from "./post-transfer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, readdir } from "node:fs/promises";
 import {
@@ -38,6 +50,10 @@ import { withCommentCounts } from "./comment-counts";
 import * as site from "@/config/site";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/writer-auth", () => ({
+  isWriter: () => true,
+  sameOrigin: () => true,
+}));
 vi.mock("next/cache", () => ({
   cacheLife: vi.fn(),
   cacheTag: vi.fn(),
@@ -152,6 +168,13 @@ function githubStore(posts: StoredPost[], indexed = true) {
         content: Buffer.from(content).toString("base64"),
       });
     }
+    if (route === "/git/blobs" && init.method === "POST") {
+      const { content, encoding } = JSON.parse(init.body as string);
+      expect(encoding).toBe("utf-8");
+      const sha = blobSha(content);
+      blobs.set(sha, content);
+      return Response.json({ sha });
+    }
     if (route === `/git/commits/${head}`)
       return Response.json({ tree: state.invalidTree ? {} : { sha: root } });
     if (route === "/git/trees" && init.method === "POST") {
@@ -190,6 +213,198 @@ function githubStore(posts: StoredPost[], indexed = true) {
   vi.stubGlobal("fetch", fetchMock);
   return { files, blobs, fetchMock, state, head };
 }
+
+describe("bounded post publication", () => {
+  it.each([
+    ["small ASCII", () => "body"],
+    ["ASCII", () => "x".repeat(POST_BODY_MAX_BYTES)],
+    [
+      "Korean and emoji",
+      () => "가😀".repeat(Math.floor(POST_BODY_MAX_BYTES / 7)),
+    ],
+    ["JSON escaping", () => "\u0000".repeat(POST_BODY_MAX_BYTES)],
+    [
+      "BOM characters at chunk boundaries",
+      () => {
+        const serialized = JSON.stringify({
+          post: {
+            ...sample,
+            id: "17cf938a-ac2a-4c82-a63a-f35d90d52d29",
+            body: "",
+          },
+          sha: null,
+          pinned: { base: [], order: [] },
+        });
+        const prefix = Buffer.byteLength(
+          serialized.slice(0, serialized.indexOf('"body":"') + 8),
+        );
+        const first = POST_CHUNK_MAX_BYTES - prefix;
+        return (
+          "x".repeat(first) +
+          "\uFEFF" +
+          "x".repeat(POST_CHUNK_MAX_BYTES - 3) +
+          "\uFEFF" +
+          "x".repeat(POST_BODY_MAX_BYTES - first - POST_CHUNK_MAX_BYTES - 3)
+        );
+      },
+    ],
+    [
+      "high-entropy text",
+      () =>
+        randomBytes(POST_BODY_MAX_BYTES)
+          .toString("base64")
+          .slice(0, POST_BODY_MAX_BYTES),
+    ],
+  ])(
+    "publishes a %s body with bounded requests and one atomic commit",
+    async (_name, makeBody) => {
+      const { files, fetchMock: githubFetch, state } = githubStore([]);
+      const requestSizes: number[] = [];
+      const responseSizes: number[] = [];
+      const methods: string[] = [];
+      vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
+        if (!url.startsWith("/api/write/posts/")) return githubFetch(url, init);
+        const size = Buffer.byteLength(init.body as string);
+        requestSizes.push(size);
+        if (size > POST_HTTP_MAX_BYTES)
+          return new Response("FUNCTION_PAYLOAD_TOO_LARGE", { status: 413 });
+        methods.push(init.method!);
+        const request = new Request(`https://blog.example${url}`, init);
+        const context = { params: Promise.resolve({ slug: "large" }) };
+        const response =
+          init.method === "POST"
+            ? await stagePostChunk(request, context)
+            : await publishPost(request, context);
+        responseSizes.push(Buffer.byteLength(await response.clone().text()));
+        if (init.method === "PUT")
+          expect(await response.clone().json()).not.toHaveProperty("post.body");
+        if (init.method === "POST") {
+          expect(state.treeInput).toBeNull();
+          expect(files.has("content/posts/large.md")).toBe(false);
+        }
+        return response;
+      });
+      const body = makeBody();
+      const result = await savePostRequest(
+        "large",
+        {
+          ...sample,
+          id: "17cf938a-ac2a-4c82-a63a-f35d90d52d29",
+          body,
+        },
+        null,
+        { base: [], order: [] },
+      );
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error(result.message);
+      expect(result.post.body).toBe(body);
+      expect((await getStoredPost("large"))?.post.body).toBe(body);
+      expect(methods.at(-1)).toBe("PUT");
+      expect(methods.filter((method) => method === "PUT")).toHaveLength(1);
+      const uploads = methods.filter((method) => method === "POST").length;
+      if (_name === "small ASCII") expect(uploads).toBe(0);
+      else expect(uploads).toBeGreaterThan(1);
+      expect(Math.max(...requestSizes)).toBeLessThanOrEqual(
+        POST_HTTP_MAX_BYTES,
+      );
+      expect(Math.max(...responseSizes)).toBeLessThan(POST_METADATA_MAX_BYTES);
+      expect(
+        githubFetch.mock.calls.filter(
+          ([url, init]) =>
+            url.includes("/git/refs/") && init?.method === "PATCH",
+        ),
+      ).toHaveLength(1);
+      console.info("[post-transfer-check]", {
+        kind: _name,
+        bodyBytes: Buffer.byteLength(body),
+        requests: requestSizes.length,
+        largestRequestBytes: Math.max(...requestSizes),
+        largestResponseBytes: Math.max(...responseSizes),
+      });
+    },
+    90_000,
+  );
+
+  it("leaves published data untouched if a chunk upload fails", async () => {
+    const { files, fetchMock: githubFetch, state } = githubStore([sample]);
+    const before = new Map(files);
+    let uploads = 0;
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
+      if (!url.startsWith("/api/write/posts/")) return githubFetch(url, init);
+      expect(init.method).toBe("POST");
+      if (++uploads === 2)
+        return new Response("Upstream failed", { status: 502 });
+      return stagePostChunk(new Request(`https://blog.example${url}`, init), {
+        params: Promise.resolve({ slug: sample.slug }),
+      });
+    });
+    const result = await savePostRequest(
+      sample.slug,
+      {
+        ...sample,
+        body: "x".repeat(POST_BODY_MAX_BYTES),
+      },
+      blobSha(serializePostFile(sample)),
+      { base: [], order: [] },
+    );
+    expect(result).toMatchObject({ ok: false, status: 502 });
+    expect(files).toEqual(before);
+    expect(state.treeInput).toBeNull();
+  });
+
+  it("rejects oversized, malformed and corrupted transfer content before committing", async () => {
+    const { blobs, state } = githubStore([]);
+    await expect(
+      createPostChunk("x".repeat(POST_CHUNK_MAX_BYTES + 1)),
+    ).rejects.toMatchObject({ status: 400 });
+    const oversized = "x".repeat(POST_CHUNK_MAX_BYTES + 1);
+    const sha = blobSha(oversized);
+    blobs.set(sha, oversized);
+    await expect(readPostTransfer([sha])).rejects.toMatchObject({
+      status: 400,
+    });
+    const malformed = await createPostChunk("not JSON");
+    await expect(readPostTransfer([malformed.sha])).rejects.toMatchObject({
+      status: 400,
+    });
+    const broken = blobSha("expected");
+    blobs.set(broken, "different");
+    await expect(readPostTransfer([broken])).rejects.toMatchObject({
+      status: 502,
+    });
+    expect(state.treeInput).toBeNull();
+  });
+
+  it("rejects invalid publication requests before reading or writing storage", async () => {
+    const { fetchMock } = githubStore([]);
+    const context = { params: Promise.resolve({ slug: "large" }) };
+    for (const payload of [
+      { post: sample, sha: null },
+      { chunks: Array(100).fill("a".repeat(40)) },
+      {
+        post: {
+          ...sample,
+          coverImage: {
+            src: `https://example.com/${"x".repeat(POST_METADATA_MAX_BYTES)}`,
+          },
+        },
+        sha: null,
+        pinned: { base: [], order: [] },
+      },
+    ]) {
+      const response = await publishPost(
+        new Request("https://blog.example/api/write/posts/large", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }),
+        context,
+      );
+      expect(response.status).toBe(400);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
 
 describe("Markdown store", () => {
   it("saves, searches across index boundaries, rereads and edits a maximum-size post", async () => {

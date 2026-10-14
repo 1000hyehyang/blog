@@ -28,6 +28,11 @@ export function SiteHeader() {
   useEffect(() => {
     if (!menuOpen) return;
 
+    const desktop = window.matchMedia("(min-width: 48rem)");
+    function closeOnDesktop() {
+      if (desktop.matches) setOpenMenuPath(null);
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpenMenuPath(null);
@@ -55,6 +60,7 @@ export function SiteHeader() {
     const menuButton = menuButtonRef.current;
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
+    desktop.addEventListener("change", closeOnDesktop);
     const frame = requestAnimationFrame(() =>
       drawerRef.current?.querySelector<HTMLElement>("button")?.focus(),
     );
@@ -63,6 +69,7 @@ export function SiteHeader() {
       cancelAnimationFrame(frame);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      desktop.removeEventListener("change", closeOnDesktop);
       menuButton?.focus();
     };
   }, [menuOpen]);

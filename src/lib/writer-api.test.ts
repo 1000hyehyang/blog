@@ -1,7 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { readWriterJson, writerRequest } from "./writer-api";
-import { POST_BODY_MAX_BYTES, postFieldsSchema } from "@/domain/post";
+import {
+  POST_BODY_MAX_BYTES,
+  POST_REQUEST_MAX_BYTES,
+  postFieldsSchema,
+} from "@/domain/post";
+import { POST_HTTP_MAX_BYTES } from "./post-transfer";
 import { PostStoreError, gitJson } from "@/infrastructure/github/post-store";
 
 vi.mock("server-only", () => ({}));
@@ -19,21 +24,25 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-it("accepts large Korean text and the worst JSON escaping within the body byte limit", async () => {
+it("keeps the 5 MiB content budget separate from the smaller HTTP request budget", async () => {
   for (const body of [
     "가".repeat(Math.floor(POST_BODY_MAX_BYTES / 3)),
     "\u0000".repeat(POST_BODY_MAX_BYTES),
   ]) {
     const raw = JSON.stringify({ post: { body } });
-    const parsed = await readWriterJson(
+    const request = () =>
       new Request("http://localhost/api/write/posts/post-1", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: raw,
-      }),
-    );
+      });
+    const parsed = await readWriterJson(request(), POST_REQUEST_MAX_BYTES);
     expect(parsed).toEqual({ post: { body } });
     expect(postFieldsSchema.shape.body.safeParse(body).success).toBe(true);
+    expect(Buffer.byteLength(raw)).toBeGreaterThan(POST_HTTP_MAX_BYTES);
+    await expect(readWriterJson(request())).rejects.toMatchObject({
+      status: 400,
+    });
   }
   expect(
     postFieldsSchema.shape.body.safeParse(

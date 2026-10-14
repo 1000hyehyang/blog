@@ -17,6 +17,52 @@ test("홈과 주요 탐색 UI를 표시한다", async ({ page }) => {
   await getVisibleSearchbox(page);
 });
 
+test("모바일 메뉴를 연 채 화면을 넓히면 스크롤과 키보드 탐색을 복원한다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 767, height: 800 });
+  await page.goto("/");
+  const initialOverflow = await page.evaluate(
+    () => document.body.style.overflow,
+  );
+  const menuButton = page.locator('[aria-controls="mobile-menu"]');
+  const drawer = page.getByRole("navigation", { name: "모바일 메뉴" });
+  await menuButton.click();
+  await expect(drawer).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("hidden");
+
+  await page.setViewportSize({ width: 768, height: 800 });
+  await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#mobile-menu")).toHaveCount(0);
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe(initialOverflow);
+  const desktopLink = page
+    .getByRole("navigation", { name: "주요 메뉴" })
+    .getByRole("link")
+    .last();
+  await desktopLink.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("searchbox").first()).toBeFocused();
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 767, height: 800 });
+  await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+  await menuButton.click();
+  await expect(drawer).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#mobile-menu")).toHaveCount(0);
+  await expect(menuButton).toBeFocused();
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe(initialOverflow);
+});
+
 test("Featured 캐러셀의 화살표와 페이지 버튼으로 이동한다", async ({
   page,
 }) => {

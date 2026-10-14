@@ -8,7 +8,11 @@ import {
   sameOrigin,
   allowLoginAttempt,
 } from "./writer-auth";
-import { PUT, DELETE } from "@/app/api/write/posts/[slug]/route";
+import {
+  POST as uploadChunk,
+  PUT,
+  DELETE,
+} from "@/app/api/write/posts/[slug]/route";
 import { POST as imageUpload } from "@/app/api/write/images/route";
 import { POST as login, DELETE as logout } from "@/app/api/write/session/route";
 const state = vi.hoisted(() => ({ cookie: "" }));
@@ -124,6 +128,7 @@ describe("writer trust boundaries", () => {
         body: "{}",
       });
     expect((await PUT(request("PUT"), context)).status).toBe(401);
+    expect((await uploadChunk(request("POST"), context)).status).toBe(401);
     expect((await DELETE(request("DELETE"), context)).status).toBe(401);
     expect(
       (
@@ -163,6 +168,10 @@ describe("writer trust boundaries", () => {
     expect(issueSignedToken).not.toHaveBeenCalled();
     expect(
       (await PUT(request("PUT", "https://attacker.example"), context)).status,
+    ).toBe(403);
+    expect(
+      (await uploadChunk(request("POST", "https://attacker.example"), context))
+        .status,
     ).toBe(403);
     expect(
       (await DELETE(request("DELETE", "https://attacker.example"), context))

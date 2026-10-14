@@ -476,36 +476,80 @@ describe("writer data preservation", () => {
     expect(screen.getByLabelText("제목")).toHaveValue("미저장 수정");
   });
 
-  it("preserves the recovery copy after a failed publish and removes it only after a valid success", async () => {
+  it("backs up the latest edits before publishing and preserves them until a valid success", async () => {
     const fetchMock = vi
       .fn()
+      .mockImplementationOnce(async () => {
+        const recovery = await readRecovery("post:sample-post");
+        expect(recovery?.post.title).toBe("미저장 수정");
+        expect(recovery?.post.body).toContain("발행 직전 본문");
+        return new Response("FUNCTION_PAYLOAD_TOO_LARGE", { status: 413 });
+      })
       .mockResolvedValueOnce(
-        Response.json({ message: "failed" }, { status: 502 }),
-      )
-      .mockResolvedValueOnce(
-        Response.json({ post: initial, sha: "b".repeat(40) }),
+        Response.json({
+          post: { ...initial, body: undefined },
+          sha: "b".repeat(40),
+        }),
       );
     vi.stubGlobal("fetch", fetchMock);
     render(
       <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
     );
-    await screen.findByRole("textbox", { name: "본문 편집기" });
+    const element = await screen.findByRole("textbox", { name: "본문 편집기" });
+    const editor = (element as HTMLElement & { editor: Editor }).editor;
     fireEvent.change(screen.getByLabelText("제목"), {
       target: { value: "미저장 수정" },
     });
-    fireEvent(window, new Event("pagehide"));
-    await waitFor(async () =>
-      expect((await readRecovery("post:sample-post"))?.post.title).toBe(
-        "미저장 수정",
-      ),
-    );
+    act(() => editor.commands.insertContentAt(1, "발행 직전 본문"));
+    expect(await readRecovery("post:sample-post")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
     const retry = await screen.findByRole("button", { name: "다시 시도" });
-    expect(await readRecovery("post:sample-post")).not.toBeNull();
+    expect((await readRecovery("post:sample-post"))?.post).toMatchObject({
+      title: "미저장 수정",
+      body: expect.stringContaining("발행 직전 본문"),
+    });
     fireEvent.click(retry);
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
     expect(await readRecovery("post:sample-post")).toBeNull();
+  });
+  it("stops publishing when the recovery write fails and allows retry after storage recovers", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ post: initial, sha: "b".repeat(40) }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <PostEditor initial={initial} initialSha={"a".repeat(40)} writable />,
+    );
+    const element = await screen.findByRole("textbox", { name: "본문 편집기" });
+    fireEvent.change(screen.getByLabelText("제목"), {
+      target: { value: "보관 실패에도 남은 제목" },
+    });
+    const storage = indexedDB;
+    vi.stubGlobal("indexedDB", {
+      open: () => {
+        throw new Error("access denied");
+      },
+    });
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "완료" }));
+      fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+      const retry = await screen.findByRole("button", { name: "다시 시도" });
+      expect(retry).toBeEnabled();
+      await waitFor(() =>
+        expect(element).toHaveAttribute("contenteditable", "true"),
+      );
+      expect(screen.getByLabelText("제목")).toHaveValue(
+        "보관 실패에도 남은 제목",
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(mocks.replace).not.toHaveBeenCalled();
+    } finally {
+      vi.stubGlobal("indexedDB", storage);
+    }
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
   it("retains the local recovery draft when a successful response is malformed and supports retry", async () => {
     const draft: LocalDraft = {
@@ -600,7 +644,7 @@ describe("writer data preservation", () => {
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "수정 완료" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-    expect(serialize).toHaveBeenCalledOnce();
+    expect(serialize).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).post.body).toContain(
       "latestfirst",
     );

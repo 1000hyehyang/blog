@@ -27,6 +27,7 @@ type Options = {
   currentPin: string;
   pins: ReturnType<typeof usePinnedOrder>;
   readFields: () => PostFields | null;
+  beforePublish: () => Promise<boolean>;
   onSaved: (post?: StoredPost) => void | Promise<void>;
 };
 
@@ -40,6 +41,7 @@ export function usePostPersistence({
   currentPin,
   pins,
   readFields,
+  beforePublish,
   onSaved,
 }: Options) {
   const router = useRouter();
@@ -71,6 +73,10 @@ export function usePostPersistence({
     try {
       const fields = readFields();
       if (!fields) return;
+      if (!(await beforePublish()))
+        throw new Error(
+          "발행 전에 작성 내용을 보관하지 못했습니다. 브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.",
+        );
       const slug = await allocateSlug();
       const order = pinnedOrder
         .filter((value) => value !== currentPin || fields.featured)

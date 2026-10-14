@@ -140,6 +140,7 @@ function LoadedPostEditor({
     currentPin,
     pins,
     readFields: currentFields,
+    beforePublish: () => flushRecovery(),
     onSaved: async (post) => {
       await clearRecovery();
       if (post) setFields(post);

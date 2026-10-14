@@ -1,4 +1,9 @@
-import type { ComponentProps, CSSProperties, ReactNode } from "react";
+import {
+  Suspense,
+  type ComponentProps,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import type { Element } from "hast";
 import ReactMarkdown, { type Components } from "react-markdown";
 
@@ -69,7 +74,17 @@ function MarkdownParagraph({
       <p>{children}</p>
       <div className="standalone-link-widget">
         {youtubeVideo ? (
-          <YouTubeEmbed video={youtubeVideo} />
+          <Suspense
+            fallback={
+              <div
+                className="youtube-player"
+                aria-busy="true"
+                aria-label="미리보기 불러오는 중"
+              />
+            }
+          >
+            <YouTubeEmbed video={youtubeVideo} />
+          </Suspense>
         ) : (
           <ExternalLinkPreview href={externalUrl} />
         )}

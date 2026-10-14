@@ -1,6 +1,7 @@
 import "server-only";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { readLimitedResponseText } from "@/lib/limited-response";
 import type { PinnedPost } from "@/domain/pinned-posts";
 import { resolvePostPublishedAt } from "@/lib/content";
 import {
@@ -152,11 +153,25 @@ async function readContent(filePath: string, ref: string) {
     sha: gitShaSchema.parse(file.sha),
   };
 }
-export async function readBlob(sha: string) {
-  const file = await gitJson(`/git/blobs/${gitShaSchema.parse(sha)}`);
+export async function readBlob(sha: string, maximumBytes?: number) {
+  const response = await request(`/git/blobs/${gitShaSchema.parse(sha)}`);
+  if (!response.ok) throw new PostStoreError("콘텐츠를 찾을 수 없습니다.", 503);
+  let file;
+  try {
+    file =
+      maximumBytes === undefined
+        ? await response.json()
+        : JSON.parse(
+            await readLimitedResponseText(response, maximumBytes * 2 + 16_384),
+          );
+  } catch {
+    throw new PostStoreError("콘텐츠가 너무 크거나 올바르지 않습니다.", 400);
+  }
   if (file.encoding !== "base64")
     throw new PostStoreError("콘텐츠를 읽을 수 없습니다.", 502);
   const content = Buffer.from(file.content, "base64").toString("utf8");
+  if (maximumBytes !== undefined && Buffer.byteLength(content) > maximumBytes)
+    throw new PostStoreError("전송한 글 조각이 너무 큽니다.", 400);
   if (blobSha(content) !== sha)
     throw new PostStoreError("콘텐츠 무결성 확인에 실패했습니다.", 502);
   return content;

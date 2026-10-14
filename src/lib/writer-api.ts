@@ -5,11 +5,11 @@ import { ZodError } from "zod";
 import { isWriter, sameOrigin } from "./writer-auth";
 import { readLimitedResponseText } from "./limited-response";
 import { PostStoreError } from "@/infrastructure/github/post-store";
-import { POST_REQUEST_MAX_BYTES } from "@/domain/post";
+import { POST_HTTP_MAX_BYTES } from "./post-transfer";
 
 export async function readWriterJson(
   request: Request,
-  limit = POST_REQUEST_MAX_BYTES,
+  limit = POST_HTTP_MAX_BYTES,
 ): Promise<unknown> {
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new PostStoreError("JSON 요청이 필요합니다.", 415);
