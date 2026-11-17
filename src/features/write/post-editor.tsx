@@ -457,10 +457,6 @@ function LoadedPostEditor({
               setDirty(true);
             }}
           />
-          <p className={styles.notice}>
-            업로드한 이미지는 발행 전에도 URL을 아는 사람이 볼 수 있습니다.
-            글에서 지우거나 글을 삭제해도 이미지 파일은 보관됩니다.
-          </p>
         </fieldset>
         <input
           ref={fileInput}

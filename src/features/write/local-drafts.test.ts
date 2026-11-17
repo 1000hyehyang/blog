@@ -10,7 +10,6 @@ import {
   saveDraft,
   readNewRecoveries,
   newRecoveryHref,
-  writerBackup,
   removeDamagedDraft,
   removeDraft,
   readRecovery,
@@ -174,7 +173,7 @@ it("serializes concurrent writes and rejects stale overwrite and deletion", asyn
   expect(await readDraft("post-1")).toEqual(saved);
 });
 
-it("lists independent new recoveries and preserves excluded records in backups", async () => {
+it("lists independent new recoveries without deleting excluded records", async () => {
   const key = `new:${crypto.randomUUID()}`;
   const broken = {
     key: `new:${crypto.randomUUID()}`,
@@ -193,37 +192,10 @@ it("lists independent new recoveries and preserves excluded records in backups",
   expect(result.recoveries.map(({ key }) => key).sort()).toEqual([key]);
   expect(result.damaged).toEqual([broken]);
   expect(() => newRecoveryHref("new")).toThrow();
-  expect((await writerBackup()).recovery.some(({ key }) => key === "new")).toBe(
-    true,
-  );
+  expect(await readRecovery("new")).toEqual(recovery);
   expect(newRecoveryHref(key)).toBe(`/write?new=${key.slice(4)}`);
   expect(() => newRecoveryHref("post:existing")).toThrow();
   await removeDamagedDraft(broken);
   expect((await readNewRecoveries()).damaged).toEqual([]);
   expect(await readRecovery("post:existing")).toEqual(recovery);
-});
-
-it("exports manual drafts, all recovery copies and damaged values without modifying them", async () => {
-  await saveDraft(draft, null);
-  await saveRecovery("post:existing", recovery, null);
-  const damaged = { key: "blog:writer:draft:broken", raw: "{unfinished" };
-  await writeDraftRecord(damaged);
-  const backup = await writerBackup();
-  expect(backup.version).toBe(1);
-  expect(backup.drafts).toEqual(
-    expect.arrayContaining([
-      damaged,
-      {
-        key: "blog:writer:draft:post-1",
-        raw: await readDraftRecord({ key: "blog:writer:draft:post-1" }),
-      },
-    ]),
-  );
-  expect(backup.recovery).toEqual([
-    {
-      key: "post:existing",
-      raw: await readDraftRecord({ key: "post:existing", store: "recovery" }),
-    },
-  ]);
-  expect(await readDraftRecord({ key: damaged.key })).toBe(damaged.raw);
 });

@@ -4,19 +4,19 @@ import {
   getMarkdownCodeLanguage,
   highlightMarkdownCode,
   tokenizeMarkdownCode,
-  MAX_HIGHLIGHT_CODE_LENGTH,
+  MAX_EDITOR_HIGHLIGHT_CODE_LENGTH,
 } from "./markdown-code";
 
 describe("markdown code highlighting", () => {
-  it("bounds highlighting in both the published renderer and the editor", async () => {
-    const code = "x".repeat(MAX_HIGHLIGHT_CODE_LENGTH + 1);
+  it("preserves published code highlighting while limiting editor tokenization", async () => {
+    const code = "x".repeat(MAX_EDITOR_HIGHLIGHT_CODE_LENGTH + 1);
     expect(
       await highlightMarkdownCode(code, getMarkdownCodeLanguage("language-js")),
-    ).toBeNull();
+    ).toContain("<pre");
     expect(await tokenizeMarkdownCode(code, "js")).toEqual([]);
     expect(
       await highlightMarkdownCode(
-        "x".repeat(MAX_HIGHLIGHT_CODE_LENGTH),
+        "x".repeat(MAX_EDITOR_HIGHLIGHT_CODE_LENGTH),
         getMarkdownCodeLanguage("language-js"),
       ),
     ).toContain("<pre");

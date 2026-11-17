@@ -22,6 +22,8 @@ import {
   readDraft,
   readDrafts,
   removeDraft,
+  saveRecovery,
+  readRecovery,
   type LocalDraft,
 } from "./local-drafts";
 const replace = vi.fn();
@@ -207,6 +209,19 @@ it("lists healthy drafts alongside recoverable damaged entries and exports their
   );
   const raw = '{"body":"보존할 원문';
   await writeDraftRecord({ key: "blog:writer:draft:damaged", raw });
+  const recoveryKey = `new:${crypto.randomUUID()}`;
+  await saveRecovery(
+    recoveryKey,
+    {
+      post: { ...post, title: "Recovered draft" },
+      sha: null,
+      savedAt: post.createdAt,
+      baseDraftSavedAt: null,
+      pinned: [],
+      order: [],
+    },
+    null,
+  );
   render(<ManagePosts posts={[]} initialTab="drafts" unavailable />);
   expect(screen.getByRole("status")).toHaveTextContent(
     "서버 글 목록을 불러오지 못했습니다",
@@ -216,11 +231,32 @@ it("lists healthy drafts alongside recoverable damaged entries and exports their
   expect(
     await screen.findByRole("link", { name: "Healthy draft" }),
   ).toBeInTheDocument();
+  const recovered = await screen.findByRole("link", {
+    name: "Recovered draft",
+  });
+  expect(recovered.closest("li")).toBeInTheDocument();
+  expect(recovered).toHaveAttribute(
+    "href",
+    `/write?new=${recoveryKey.slice(4)}`,
+  );
+  expect(
+    screen.queryByRole("region", { name: "작성 중인 새 글" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", {
+      name: "이 브라우저의 전체 작성본 내려받기",
+    }),
+  ).not.toBeInTheDocument();
   const download = screen.getByRole("link", { name: "원문 내려받기" });
   expect(decodeURIComponent(download.getAttribute("href")!.split(",")[1])).toBe(
     raw,
   );
   vi.stubGlobal("confirm", () => true);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Recovered draft 임시 저장 삭제" }),
+  );
+  await waitFor(async () => expect(await readRecovery(recoveryKey)).toBeNull());
+  expect((await readDraft("healthy"))?.post.body).toBe("Saved body");
   fireEvent.click(screen.getByRole("button", { name: "손상된 저장본 삭제" }));
   await waitFor(async () =>
     expect(

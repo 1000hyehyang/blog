@@ -311,39 +311,3 @@ export async function readNewRecoveries(): Promise<{
   }
   return { recoveries, damaged };
 }
-
-export async function writerBackup() {
-  await Promise.allSettled(recoveryWrites.values());
-  const read = (name: "drafts" | "recovery") =>
-    withStore<{ key: string; raw: string }[]>(
-      name,
-      "readonly",
-      (store, done, checkRequest) => {
-        const records: { key: string; raw: string }[] = [];
-        const cursor = store.openCursor();
-        checkRequest(cursor, (entry) => {
-          if (!entry) {
-            done(records);
-            return;
-          }
-          if (typeof entry.key !== "string" || typeof entry.value !== "string")
-            throw new Error(
-              "저장본 형식을 확인할 수 없습니다. 백업을 중단합니다.",
-            );
-          records.push({ key: entry.key, raw: entry.value });
-          entry.continue();
-        });
-      },
-    );
-  const [drafts, recovery] = await Promise.all([
-    read("drafts"),
-    read("recovery"),
-  ]);
-  return {
-    version: 1,
-    origin: window.location.origin,
-    exportedAt: new Date().toISOString(),
-    drafts,
-    recovery,
-  };
-}

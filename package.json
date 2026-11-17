@@ -16,7 +16,6 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "writer:credentials": "node scripts/create-writer-secret.mjs",
-    "images:report": "node scripts/images-report.mts",
     "content:index": "node --conditions=react-server --experimental-transform-types scripts/rebuild-post-index.mjs --write",
     "content:index:check": "node --conditions=react-server --experimental-transform-types scripts/rebuild-post-index.mjs --check"
   },
