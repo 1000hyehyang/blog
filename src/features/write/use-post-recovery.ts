@@ -39,7 +39,6 @@ export function usePostRecovery({
   function checkpoint() {
     if (!dirty || !changed.current || cleared.current) return;
     changed.current = false;
-    // 편집기가 이탈 후 다시 초기화되기 전에 현재 내용을 읽는다.
     const snapshot = readDraft().catch(() => null);
     pending.current = pending.current
       .then(async () => {

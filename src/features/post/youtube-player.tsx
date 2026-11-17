@@ -27,7 +27,6 @@ export function YouTubePlayer({
 
   return (
     <div className="youtube-player" data-youtube-player>
-      {/* Hidden streaming chunks have no geometry for native lazy loading. */}
       {hydrated ? player : <noscript>{player}</noscript>}
     </div>
   );

@@ -24,7 +24,6 @@ async function appearance(root: Locator, editing: boolean) {
         },
       ),
     );
-    // 페이지 여백의 영향을 제외하고 같은 본문 폭에서 비교한다.
     element.style.width = `${Math.min(window.innerWidth - 48, 600)}px`;
     const selectors = {
       paragraph: ":scope > p:not(.content-image-block)",
@@ -109,7 +108,6 @@ for (const theme of ["light", "dark"]) {
     await page.goto("/fixture-id-8");
     const published = page.locator("article .prose:visible");
     await expect(published.locator("pre")).toBeVisible();
-    // ImageViewer가 hydration을 마친 뒤 크기를 측정한다.
     await expect(
       published.getByRole("button", { name: "사진 확대 보기", exact: true }),
     ).toBeAttached();
@@ -146,7 +144,6 @@ for (const theme of ["light", "dark"]) {
     await page.evaluate(() => document.fonts.ready);
     const actual = await appearance(editor, true);
     if (isMobile) {
-      // 65%로 저장한 사진은 모바일 발행 화면에서만 75.5%로 표시한다.
       const imageWidth = Math.round((page.viewportSize()!.width - 48) * 0.755);
       expect(expected).toEqual({
         ...actual,

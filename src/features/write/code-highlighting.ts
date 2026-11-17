@@ -26,7 +26,6 @@ export const CodeHighlighting = Extension.create({
           let generation = 0;
           let destroyed = false;
           let timer: ReturnType<typeof setTimeout> | undefined;
-          // ProseMirror nodes are immutable; unchanged blocks retain their tokens.
           const tokens = new WeakMap<
             ProseMirrorNode,
             ReturnType<typeof tokenizeMarkdownCode>

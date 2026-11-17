@@ -118,8 +118,6 @@ test("네이버 봇은 JavaScript 없이 head 메타데이터와 글·내부 링
       page.locator('head link[type="application/rss+xml"]'),
     ).toHaveAttribute("href", /\/feed\.xml$/);
     await expect(page.locator("h1")).toHaveCount(1);
-    // 원본 HTML에 본문이 있는지 검사한다. 스트리밍 세그먼트의 화면
-    // 재배치는 아래 검색봇 렌더링 테스트에서 별도로 확인한다.
     await expect(page.locator("h1")).toHaveText("Fixture Post 1");
     await expect(
       page.getByText(

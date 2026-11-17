@@ -26,18 +26,15 @@ import {
   type ImageMetadata,
 } from "@/lib/image-metadata";
 
-// 문단 중간에서 표 토큰화를 시작하면 셀이 누락된다.
 const SafeTable = Table.extend({
   markdownTokenizer: { ...Table.config.markdownTokenizer!, start: () => -1 },
 });
 
-// Markdown 파서가 빈 문단을 제거하지 않도록 표식을 남긴다.
 const PreservedParagraph = Paragraph.extend({
   renderMarkdown: (node, helpers) =>
     node.content?.length ? helpers.renderChildren(node.content) : "&nbsp;",
 });
 
-// 블록 이미지에는 링크 마크를 붙일 수 없어 노드 속성에 저장한다.
 const ImageAwareLink = Link.extend({
   parseMarkdown(token, helpers) {
     const attrs = { href: token.href, title: token.title || null };

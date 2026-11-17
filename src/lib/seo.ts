@@ -5,7 +5,6 @@ import type { Post } from "@/domain/post";
 import { resolvePostModifiedAt, resolvePostPublishedAt } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
-// 스트리밍이 시작된 오류 응답도 메타데이터 단계부터 색인에서 제외한다.
 export const missingPageMetadata: Metadata = {
   title: "페이지를 찾을 수 없습니다",
   robots: { index: false, follow: false },
@@ -95,7 +94,6 @@ export function buildWebsiteJsonLd() {
   };
 }
 
-// 본문의 </script>가 JSON-LD 태그를 닫지 못하도록 이스케이프한다.
 export function serializeJsonLd(value: object) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }

@@ -109,7 +109,6 @@ html.theme-circle-transition::view-transition-new(root) {
   border-color: var(--color-border);
 }
 
-/* 표준 스크롤바 속성은 WebKit 스타일보다 우선한다. */
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-width: thin;
@@ -416,7 +415,6 @@ button:not(:disabled):hover {
   line-height: 1.5;
   text-align: center;
 }
-/* 발행 본문은 글 제목(h1) 아래에 놓여 제목 태그가 한 단계씩 내려간다. */
 .prose :is(h1, h2, h3, h4, h5, h6) {
   color: inherit;
   letter-spacing: normal;

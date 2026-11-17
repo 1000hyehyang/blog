@@ -41,7 +41,6 @@ test("accepts a maximally escaped chunk through the real HTTP handler", async ({
     };
   }, POST_CHUNK_MAX_BYTES);
   expect(result.bytes).toBeLessThanOrEqual(POST_HTTP_MAX_BYTES);
-  // The fixture intentionally disables GitHub writes; reaching this check proves parsing succeeded.
   expect(result.status).toBe(503);
   expect(result.data.message).toContain("GitHub");
 });

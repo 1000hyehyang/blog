@@ -67,7 +67,6 @@ async function fetchCounts(owner: string, name: string, category: string) {
       if (page.pageInfo.hasNextPage && (!after || cursors.has(after)))
         return {};
       if (after) cursors.add(after);
-      // 조회를 100페이지로 제한하고 초과하면 저장된 댓글 수를 사용한다.
       if (after && cursors.size >= 100) return {};
     } while (after);
     return counts;

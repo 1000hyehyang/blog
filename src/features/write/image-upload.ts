@@ -36,7 +36,6 @@ export async function uploadPostImage(
       height: image.naturalHeight,
     });
     if (!dimensions) throw new Error("이미지 크기를 확인하지 못했습니다.");
-    // Non-JPEG files keep text, transparency and animation without re-encoding.
     if (file.type === "image/jpeg") {
       const scale = Math.min(
         1,
@@ -63,7 +62,6 @@ export async function uploadPostImage(
           }
         }
       } catch {
-        // Keep uploads working when the browser cannot encode the photo.
       } finally {
         canvas.width = canvas.height = 0;
       }

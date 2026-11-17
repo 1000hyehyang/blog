@@ -13,20 +13,17 @@ const backupSchema = z.object({
   recovery: records,
 });
 
-/** @param {string} raw */
-export function backupSources(raw) {
+export function backupSources(raw: string) {
   const backup = backupSchema.parse(JSON.parse(raw));
   return [...backup.drafts, ...backup.recovery].map(({ raw }) => raw);
 }
 
-/**
- * @param {{ pathname: string; url: string }[]} blobs
- * @param {string[]} sources
- */
-export function imageReferences(blobs, sources) {
+export function imageReferences<T extends { pathname: string; url: string }>(
+  blobs: T[],
+  sources: string[],
+) {
   return blobs.map((blob) => {
     const filename = path.posix.basename(blob.pathname);
-    // 전체 파일명을 비교해 다른 호스트 표기나 인코딩된 이미지 묶음도 보수적으로 보관한다.
     const referenced = sources.some(
       (source) =>
         source.includes(filename) ||
@@ -52,7 +49,7 @@ async function main() {
     try {
       process.loadEnvFile(file);
     } catch (error) {
-      if (error.code !== "ENOENT") throw error;
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
   }
   const entries = await readdir(directory, { withFileTypes: true });
@@ -66,8 +63,8 @@ async function main() {
   );
   for (const file of backups)
     sources.push(...backupSources(await readFile(file, "utf8")));
-  const blobs = [];
-  let cursor;
+  const blobs: Awaited<ReturnType<typeof list>>["blobs"] = [];
+  let cursor: string | undefined;
   do {
     const page = await list({ prefix: "posts/", limit: 1000, cursor });
     blobs.push(...page.blobs);

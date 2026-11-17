@@ -57,9 +57,7 @@ export function PostEditor(props: Props) {
     ? `draft:${props.draft.post.slug}`
     : props.initial
       ? `post:${props.initial.slug}`
-      : props.newId === "legacy"
-        ? "new"
-        : `new:${props.newId ?? fallbackId}`;
+      : `new:${props.newId ?? fallbackId}`;
   const [loaded, setLoaded] = useState<{
     key: string;
     value: RecoveryDraft | null;

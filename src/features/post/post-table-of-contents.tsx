@@ -6,7 +6,6 @@ import type { PostHeading } from "@/lib/content";
 import { usePrefersReducedMotion } from "@/lib/react/use-prefers-reduced-motion";
 
 const HEADER_OFFSET = 96;
-// 스크롤 좌표의 반올림 오차를 1px 보정한다.
 const ACTIVE_HEADING_OFFSET = HEADER_OFFSET + 1;
 const SCROLL_EASING_MS = 160;
 
@@ -127,7 +126,6 @@ export function PostTableOfContents({ headings }: PostTableOfContentsProps) {
       const remaining = top - position;
       const blend =
         1 - Math.exp(-(time - (previousTime ?? time)) / SCROLL_EASING_MS);
-      // 목표와 위치를 차례로 보간해 움직이는 제목을 따라가면서 출발과 도착 모두 완만하게 만든다.
       easedTarget += (top - easedTarget) * blend;
       position += (easedTarget - position) * blend;
       previousTime = time;

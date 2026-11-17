@@ -15,7 +15,7 @@ export function writerDestination(next?: unknown): string {
     const slug = query.get(key);
     const valid =
       key === "new"
-        ? slug === "legacy" || z.uuid().safeParse(slug).success
+        ? z.uuid().safeParse(slug).success
         : slugSchema.safeParse(slug).success;
     if (valid && [...query.keys()].length === 1)
       return `/write?${key}=${encodeURIComponent(slug!)}`;

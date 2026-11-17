@@ -174,7 +174,7 @@ it("serializes concurrent writes and rejects stale overwrite and deletion", asyn
   expect(await readDraft("post-1")).toEqual(saved);
 });
 
-it("keeps independent new recoveries, legacy recovery and damaged raw records accessible", async () => {
+it("lists independent new recoveries and preserves excluded records in backups", async () => {
   const key = `new:${crypto.randomUUID()}`;
   const broken = {
     key: `new:${crypto.randomUUID()}`,
@@ -190,11 +190,12 @@ it("keeps independent new recoveries, legacy recovery and damaged raw records ac
   await saveRecovery("post:existing", recovery, null);
   await writeDraftRecord(broken);
   const result = await readNewRecoveries();
-  expect(result.recoveries.map(({ key }) => key).sort()).toEqual(
-    ["new", key].sort(),
-  );
+  expect(result.recoveries.map(({ key }) => key).sort()).toEqual([key]);
   expect(result.damaged).toEqual([broken]);
-  expect(newRecoveryHref("new")).toBe("/write?new=legacy");
+  expect(() => newRecoveryHref("new")).toThrow();
+  expect((await writerBackup()).recovery.some(({ key }) => key === "new")).toBe(
+    true,
+  );
   expect(newRecoveryHref(key)).toBe(`/write?new=${key.slice(4)}`);
   expect(() => newRecoveryHref("post:existing")).toThrow();
   await removeDamagedDraft(broken);

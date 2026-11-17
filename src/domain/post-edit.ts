@@ -36,7 +36,6 @@ export function applyPostEdit(
     categoryName: string;
   },
 ): StoredPost {
-  // 발행일이 없는 현재 글은 생성일을 사용하고, 초안의 null은 유지한다.
   const publishedAt = previous
     ? previous.publishedAt === undefined
       ? previous.createdAt

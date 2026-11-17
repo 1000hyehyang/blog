@@ -1,6 +1,5 @@
 "use client";
 
-// beui.dev/components/motion/tabs의 밑줄 탭 예제를 바탕으로 작성했다.
 import { motion, MotionConfig, useReducedMotion } from "framer-motion";
 import {
   createContext,

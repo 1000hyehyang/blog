@@ -78,7 +78,6 @@ export async function verifyWriterPassword(password: string) {
   return timingSafeEqual(derived, Buffer.from(match[2], "hex"));
 }
 
-// shortcut: 인스턴스 내 보조 제한이며, 분산 배포의 한도는 Vercel WAF에서 적용한다.
 const attempts = new Map<string, { count: number; resetAt: number }>();
 export function allowLoginAttempt(request: Request, now = Date.now()) {
   const trustedProxy =

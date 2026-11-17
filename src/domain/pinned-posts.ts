@@ -55,7 +55,6 @@ export function pinnedOrderRanks(
     : ranks;
 }
 
-// 해제한 고정은 복원하지 않고, 원격에서 추가한 고정만 로컬 순서 뒤에 붙인다.
 export function rebasePinnedOrder(
   base: string[],
   order: string[],

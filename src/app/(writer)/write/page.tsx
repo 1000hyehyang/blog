@@ -36,7 +36,7 @@ export default async function WritePage({
   }
   if (!slug && !draft) {
     if (!newId) redirect(`/write?new=${randomUUID()}`);
-    if (newId !== "legacy" && !z.uuid().safeParse(newId).success) notFound();
+    if (!z.uuid().safeParse(newId).success) notFound();
   }
   if (draft) {
     if (!slugSchema.safeParse(draft).success) notFound();

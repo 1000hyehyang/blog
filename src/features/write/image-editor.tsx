@@ -412,7 +412,6 @@ function SingleImageNodeView({
         className={`${styles.imageFrame} ${photoActionClassName}`}
         data-current={showControls || undefined}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt ?? ""} {...dimensions} draggable={false} />
         {editor.isEditable && (
           <ImagePhotoActions

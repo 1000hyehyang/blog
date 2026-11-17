@@ -30,6 +30,5 @@ export function renderFeedHtml(source: string, postUrl: string) {
     if ("children" in node) node.children.forEach(resolveLinks);
   }
   resolveLinks(tree);
-  // 블로그 본문과 마찬가지로 원시 HTML을 이스케이프해 출력한다.
   return toHtml(tree);
 }

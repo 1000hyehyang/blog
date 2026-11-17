@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const POST_BODY_MAX_BYTES = 5 * 1024 * 1024;
-// JSON 제어 문자 이스케이프는 원문 한 바이트를 최대 여섯 바이트로 만든다.
 export const POST_REQUEST_MAX_BYTES = POST_BODY_MAX_BYTES * 6 + 128 * 1024;
 
 export const slugSchema = z
@@ -43,7 +42,6 @@ export const storedPostSchema = postFieldsSchema.extend({
   slug: slugSchema,
   id: z.string().min(1),
   createdAt: z.string().datetime(),
-  // 현재 글의 발행일이 없으면 생성일을 사용하고, null은 미발행 초안이다.
   publishedAt: z.string().datetime().nullable().optional(),
   lastEditedAt: z.string().datetime().nullable(),
   commentsCount: z.number().int().nonnegative().default(0),

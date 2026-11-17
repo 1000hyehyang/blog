@@ -352,7 +352,6 @@ function ViewerFrame({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.2 }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className={styles.image}
             src={image.src}

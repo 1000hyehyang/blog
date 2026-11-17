@@ -9,7 +9,6 @@ import {
 } from "./post-file";
 
 export const INDEX_PATH = "content/post-index.json";
-// 청크의 원문과 gzip·base64 결과 모두 캐시·Contents API 크기 제한 이하여야 한다.
 const CHUNK_BYTES = 750_000;
 export const gitShaSchema = z.string().regex(/^[a-f0-9]{40}$/);
 const chunkRefSchema = z.object({

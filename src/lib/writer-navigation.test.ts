@@ -37,7 +37,7 @@ it("only permits known admin destinations, never external redirects", () => {
   expect(writerDestination("/write")).toBe("/write");
   const id = crypto.randomUUID();
   expect(writerDestination(`/write?new=${id}`)).toBe(`/write?new=${id}`);
-  expect(writerDestination("/write?new=legacy")).toBe("/write?new=legacy");
+  expect(writerDestination("/write?new=legacy")).toBe("/manage");
   for (const value of [
     undefined,
     ["/write"],

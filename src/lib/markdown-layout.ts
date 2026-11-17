@@ -3,7 +3,6 @@ import type { Element, Root } from "hast";
 export function rehypeContentLayout() {
   return (tree: Root) => {
     function visit(node: Root | Element) {
-      // pre-wrap에서는 <br> 뒤 개행까지 표시하면 두 줄이 된다.
       node.children.forEach((child, index) => {
         const next = node.children[index + 1];
         if (

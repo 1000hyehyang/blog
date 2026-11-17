@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { z } from "zod";
 import type { PostFields, StoredPost } from "@/domain/post";
 import { pinnedConflictSchema } from "@/domain/pinned-posts";
 import {
@@ -45,15 +44,12 @@ export function usePostPersistence({
   const router = useRouter();
   const generatedSlug = useRef(recovery?.post.slug ?? initial?.slug ?? "");
   const postId = useRef(recovery?.post.id ?? initial?.id ?? "");
-  const isNewPost = useRef(initialSha === null && recovery?.sha == null);
   const [sha, setSha] = useState(recovery ? recovery.sha : initialSha);
   const [draftVersion, setDraftVersion] = useState(draft?.savedAt ?? null);
   const { start, finish, setMessage, setFeedback, showSuccess } = feedback;
   const pinnedOrder = pins.order;
 
   function allocateId() {
-    if (isNewPost.current && !z.uuid().safeParse(postId.current).success)
-      postId.current = crypto.randomUUID();
     return (postId.current ||= crypto.randomUUID());
   }
   async function allocateSlug() {
@@ -69,8 +65,7 @@ export function usePostPersistence({
         throw new Error(
           "발행 전에 작성 내용을 보관하지 못했습니다. 브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.",
         );
-      const localSlug = await allocateSlug();
-      const slug = isNewPost.current ? `post-${allocateId()}` : localSlug;
+      const slug = await allocateSlug();
       const order = pinnedOrder
         .filter((value) => value !== currentPin || fields.featured)
         .map((value) => (value === currentPin ? slug : value));
@@ -102,11 +97,9 @@ export function usePostPersistence({
         throw new Error(data.message);
       }
       setSha(data.sha);
-      isNewPost.current = false;
-      generatedSlug.current = slug;
       if (draftVersion) {
         try {
-          await removeDraft(localSlug, draftVersion);
+          await removeDraft(slug, draftVersion);
           setDraftVersion(null);
         } catch {
           setMessage(

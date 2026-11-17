@@ -127,8 +127,6 @@ function MarkdownImage({ src, alt, title }: ComponentProps<"img">) {
     );
   const settings = readImageMetadata(title);
   const image = (
-    // 본문 이미지는 next/image 허용 목록 밖의 호스트도 사용한다.
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       className="markdown-image"
       src={src ?? ""}
@@ -179,7 +177,6 @@ async function HighlightedCode({
       )}
       <CopyCodeButton code={code} />
       {highlightedHtml ? (
-        // Shiki는 토큰 마크업을 만들기 전에 원본 코드를 이스케이프한다.
         <div dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
       ) : (
         <pre>

@@ -15,7 +15,6 @@ process.env.LOCAL_CONTENT_PATH = "tests/fixtures/posts";
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
-    // jsdom에서 등장 애니메이션 때문에 콘텐츠가 숨겨지지 않도록 한다.
     matches: query === "(prefers-reduced-motion: reduce)",
     media: query,
     onchange: null,

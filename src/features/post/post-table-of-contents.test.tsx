@@ -111,7 +111,6 @@ describe("PostTableOfContents", () => {
     advance();
     expect(scrollY).toBeGreaterThan(previousY);
     expect(scrollY).toBeLessThan(2600);
-    // Transforms move headings without triggering ResizeObserver.
     for (let frame = 0; frame < 30; frame++) {
       top += 1;
       advance();

@@ -121,7 +121,6 @@ export async function savePost(
   const previous = await getStoredPost(slug, ref);
   let matchingVersion = (previous?.sha ?? null) === sha;
   if (!matchingVersion && previous && sha && ordering) {
-    // 고정 순서 변경도 SHA를 바꾸므로, 고정 정보 외의 변경 여부를 비교한다.
     try {
       const original = parsePostFile(await readBlob(sha), slug);
       matchingVersion =

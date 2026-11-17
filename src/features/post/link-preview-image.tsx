@@ -8,7 +8,6 @@ export function LinkPreviewImage({ src }: { src: string }) {
 
   return (
     <span className="link-preview-card__image" aria-hidden="true">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt=""

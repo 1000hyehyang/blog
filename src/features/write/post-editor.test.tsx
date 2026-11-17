@@ -594,8 +594,8 @@ describe("writer data preservation", () => {
       { body: string },
     ][];
     const first = JSON.parse(calls[0][1].body).post;
-    expect(first.id).toMatch(/^[0-9a-f-]{36}$/);
-    expect(calls[0][0]).toBe(`/api/write/posts/post-${first.id}`);
+    expect(first.id).toBe(draft.post.id);
+    expect(calls[0][0]).toBe(`/api/write/posts/${draft.post.slug}`);
     expect(calls[1][0]).toBe(calls[0][0]);
     expect(JSON.parse(calls[1][1].body).post.id).toBe(first.id);
   });

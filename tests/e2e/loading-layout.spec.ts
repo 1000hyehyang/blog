@@ -65,12 +65,13 @@ test("writer skeleton matches the loaded editor layout", async ({
     await loadingContext.addCookies(cookies);
     await page.context().addCookies(cookies);
     const loadingPage = await loadingContext.newPage();
-    await loadingPage.goto(`${baseURL}/write`);
+    const editorPath = `/write?new=${crypto.randomUUID()}`;
+    await loadingPage.goto(`${baseURL}${editorPath}`);
     const skeleton = loadingPage.locator(
       '[aria-label="글쓰기 화면 불러오는 중"]:visible',
     );
     await expect(skeleton).toBeVisible();
-    await page.goto("/write");
+    await page.goto(editorPath);
     await expect(
       page.getByRole("textbox", { name: "본문 편집기" }),
     ).toBeVisible();

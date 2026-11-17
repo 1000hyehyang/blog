@@ -73,7 +73,6 @@ export function ImageGroupDisplay({
     const image = images[imageIndex];
     const activeCover = coverSrc === image.src;
     const content = (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={image.src}
         alt={image.alt}

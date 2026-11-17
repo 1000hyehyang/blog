@@ -217,9 +217,7 @@ function notifyDrafts() {
       const channel = new BroadcastChannel("writer-drafts");
       channel.postMessage(null);
       channel.close();
-    } catch {
-      // 다른 창에 알리지 못해도 완료된 저장은 유지한다.
-    }
+    } catch {}
   }
 }
 
@@ -272,15 +270,12 @@ export async function removeRecovery(key: string, expected: string) {
 }
 
 function isNewRecoveryKey(key: string) {
-  return (
-    key === "new" ||
-    (key.startsWith("new:") && z.uuid().safeParse(key.slice(4)).success)
-  );
+  return key.startsWith("new:") && z.uuid().safeParse(key.slice(4)).success;
 }
 
 export function newRecoveryHref(key: string) {
   if (!isNewRecoveryKey(key)) throw new Error("잘못된 복구 주소입니다.");
-  return `/write?new=${key === "new" ? "legacy" : key.slice(4)}`;
+  return `/write?new=${key.slice(4)}`;
 }
 
 export async function readNewRecoveries(): Promise<{

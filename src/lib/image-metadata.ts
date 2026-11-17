@@ -1,4 +1,3 @@
-// Markdown에서 지원하지 않는 이미지 속성은 title에 저장한다.
 const prefix = "blog-image:v1:";
 
 export type ImageAlignment = "left" | "center" | "right";

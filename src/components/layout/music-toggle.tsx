@@ -45,9 +45,7 @@ function useMusicToggle() {
 
     try {
       window.localStorage.setItem(STORAGE_KEY, String(isPlaying));
-    } catch {
-      // 설정 저장이 막혀도 현재 페이지의 재생은 유지한다.
-    }
+    } catch {}
 
     const audio =
       audioRef.current ??

@@ -459,7 +459,6 @@ describe("Tiptap Markdown preservation", () => {
       width: 100,
       caption: "",
     });
-    // Tiptap은 이미지 뒤에 입력용 빈 문단을 추가한다.
     expect(editor.getMarkdown().trim()).toBe(`${original.trim()}\n\n&nbsp;`);
     editor.destroy();
   });

@@ -18,7 +18,6 @@ function ImagePreview({ file }: { file: File }) {
     return () => URL.revokeObjectURL(url);
   }, [file]);
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={ref}
       alt=""

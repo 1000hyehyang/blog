@@ -40,7 +40,6 @@ export async function GET() {
       <category>${escapeXml(post.category.name)}</category>
       <pubDate>${new Date(resolvePostPublishedAt(post)).toUTCString()}</pubDate>
     </item>`;
-    // 채널 정보를 포함해 10MB 미만을 유지하도록 오래된 항목을 통째로 제외한다.
     bytes += Buffer.byteLength(item);
     if (bytes > 8_000_000) break;
     items.push(item);

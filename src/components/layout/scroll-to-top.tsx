@@ -17,7 +17,6 @@ export function ScrollToTop() {
     } catch {
       return;
     }
-    // 스트리밍 본문과 이미지의 높이가 확정될 때까지 직접 접근한 앵커를 유지한다.
     let stopped = false;
     const align = () => {
       if (stopped) return;

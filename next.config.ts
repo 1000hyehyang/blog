@@ -23,7 +23,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     staleTimes: {
-      // 글 수정 후 이전 프리패치 결과가 오래 남지 않도록 제한한다.
       static: 30,
       dynamic: 0,
     },

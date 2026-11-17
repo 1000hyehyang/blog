@@ -28,7 +28,6 @@ try {
   if (error.code !== "ENOENT") throw error;
 }
 
-// Node.js에서 TypeScript의 경로 별칭과 생략된 확장자를 해석한다.
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (specifier.startsWith("@/"))
@@ -71,7 +70,6 @@ try {
     )
       throw new Error("GitHub content repository settings are required.");
     checkout = await mkdtemp(path.join(os.tmpdir(), "blog-index-"));
-    // 토큰이 명령 인자나 파일에 남지 않도록 환경 변수로 전달한다.
     const credentials = Buffer.from(`x-access-token:${GITHUB_TOKEN}`).toString(
       "base64",
     );

@@ -399,7 +399,6 @@ function PinnedCard({
     >
       <span className={styles.pinnedThumbnail}>
         {post.coverImage.src ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={post.coverImage.src} alt="" draggable={false} />
         ) : (
           <ImageIcon size={22} />
