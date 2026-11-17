@@ -246,10 +246,27 @@ describe("writer trust boundaries", () => {
     );
     expect(cleared.headers.get("set-cookie")).toContain("Max-Age=0");
   });
-  it("throttles repeated attempts in each instance", () => {
+  it("isolates login attempts by trusted client IP and rejects missing or spoofed proxy chains", () => {
+    vi.stubEnv("VERCEL", "1");
+    const request = (ip: string) =>
+      new Request("https://blog.example/api/write/session", {
+        headers: { "x-forwarded-for": ip },
+      });
     const now = Date.now() + 100_000;
-    for (let i = 0; i < 5; i++) expect(allowLoginAttempt(now)).toBe(true);
-    expect(allowLoginAttempt(now)).toBe(false);
-    expect(allowLoginAttempt(now + 60_001)).toBe(true);
+    for (let i = 0; i < 5; i++)
+      expect(allowLoginAttempt(request("192.0.2.1"), now)).toBe(true);
+    expect(allowLoginAttempt(request("192.0.2.1"), now)).toBe(false);
+    expect(allowLoginAttempt(request("192.0.2.2"), now)).toBe(true);
+    expect(allowLoginAttempt(request("192.0.2.1"), now + 60_001)).toBe(true);
+    expect(allowLoginAttempt(request(""), now)).toBe(false);
+    expect(allowLoginAttempt(request("fe80::1%eth0"), now)).toBe(false);
+    expect(allowLoginAttempt(request("192.0.2.1, 192.0.2.2"), now)).toBe(false);
+    for (let i = 0; i < 5; i++)
+      expect(allowLoginAttempt(request("2001:4860:4860::8888"), now)).toBe(
+        true,
+      );
+    expect(allowLoginAttempt(request("2001:4860:4860:0:0:0:0:8888"), now)).toBe(
+      false,
+    );
   });
 });

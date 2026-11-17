@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   parsePostFile,
-  nextPostSlug,
   serializePostFile,
   slugSchema,
   type StoredPost,
@@ -40,9 +39,6 @@ describe("Markdown post files", () => {
     const serialized = serializePostFile(post);
     expect(serialized).not.toContain('"excerpt"');
     expect(parsePostFile(serialized, post.slug).excerpt).toBe("Hello world");
-  });
-  it("allocates the next sequential post slug", () => {
-    expect(nextPostSlug(["post-1", "post-8", "custom-slug"])).toBe("post-9");
   });
   it("rejects traversal, reserved numeric paths and mismatched filenames", () => {
     for (const slug of ["../x", "%2f", "12", "A", "a/b"])

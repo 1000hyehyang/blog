@@ -14,6 +14,7 @@ export function LinkPreviewImage({ src }: { src: string }) {
         alt=""
         loading="lazy"
         decoding="async"
+        referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
       />
     </span>

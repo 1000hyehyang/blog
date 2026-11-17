@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { isIP } from "node:net";
 
 const SESSION_SECONDS = 8 * 60 * 60;
 export const SESSION_COOKIE =
@@ -77,13 +78,27 @@ export async function verifyWriterPassword(password: string) {
   return timingSafeEqual(derived, Buffer.from(match[2], "hex"));
 }
 
-// 인스턴스별 제한이므로 분산 배포에서는 방화벽의 속도 제한도 필요하다.
-let attempts = 0;
-let resetAt = 0;
-export function allowLoginAttempt(now = Date.now()) {
-  if (now >= resetAt) {
-    attempts = 0;
-    resetAt = now + 60_000;
+// shortcut: 인스턴스 내 보조 제한이며, 분산 배포의 한도는 Vercel WAF에서 적용한다.
+const attempts = new Map<string, { count: number; resetAt: number }>();
+export function allowLoginAttempt(request: Request, now = Date.now()) {
+  const trustedProxy =
+    process.env.VERCEL === "1" || process.env.WRITE_TRUST_PROXY === "1";
+  const address = trustedProxy
+    ? request.headers.get("x-forwarded-for")?.trim()
+    : "127.0.0.1";
+  if (!address || address.includes("%") || !isIP(address)) return false;
+  const key = address.includes(":")
+    ? new URL(`http://[${address}]`).hostname
+    : address;
+  let attempt = attempts.get(key);
+  if (!attempt || now >= attempt.resetAt) {
+    if (attempts.size >= 10_000) {
+      for (const [ip, value] of attempts)
+        if (now >= value.resetAt) attempts.delete(ip);
+      if (!attempts.has(key) && attempts.size >= 10_000) return false;
+    }
+    attempt = { count: 0, resetAt: now + 60_000 };
+    attempts.set(key, attempt);
   }
-  return ++attempts <= 5;
+  return ++attempt.count <= 5;
 }

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       { message: "관리자 인증 설정이 필요합니다." },
       { status: 503 },
     );
-  if (!allowLoginAttempt())
+  if (!allowLoginAttempt(request))
     return NextResponse.json(
       { message: "잠시 후 다시 시도해 주세요." },
       { status: 429, headers: { "Retry-After": "60" } },

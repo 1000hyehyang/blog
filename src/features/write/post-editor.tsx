@@ -48,16 +48,20 @@ type Props = {
   initialSha: string | null;
   writable: boolean;
   pinned?: PinnedPost[];
-  postSlugs?: string[];
+  newId?: string;
   draft?: LocalDraft;
 };
 export function PostEditor(props: Props) {
+  const [fallbackId] = useState(() => crypto.randomUUID());
   const recoveryKey = props.draft
     ? `draft:${props.draft.post.slug}`
     : props.initial
       ? `post:${props.initial.slug}`
-      : "new";
+      : props.newId === "legacy"
+        ? "new"
+        : `new:${props.newId ?? fallbackId}`;
   const [loaded, setLoaded] = useState<{
+    key: string;
     value: RecoveryDraft | null;
     failed: boolean;
   }>();
@@ -65,17 +69,17 @@ export function PostEditor(props: Props) {
     let active = true;
     readRecovery(recoveryKey).then(
       (value) => {
-        if (active) setLoaded({ value, failed: false });
+        if (active) setLoaded({ key: recoveryKey, value, failed: false });
       },
       () => {
-        if (active) setLoaded({ value: null, failed: true });
+        if (active) setLoaded({ key: recoveryKey, value: null, failed: true });
       },
     );
     return () => {
       active = false;
     };
   }, [recoveryKey]);
-  return loaded ? (
+  return loaded?.key === recoveryKey ? (
     <LoadedPostEditor
       key={loaded.value?.savedAt ?? recoveryKey}
       {...props}
@@ -92,7 +96,6 @@ function LoadedPostEditor({
   initialSha,
   writable,
   pinned = [],
-  postSlugs = [],
   draft,
   recovery: storedRecovery,
   recoveryKey,
@@ -139,7 +142,6 @@ function LoadedPostEditor({
     initialSha,
     draft,
     recovery,
-    postSlugs,
     currentPin,
     pins,
     readFields: currentFields,
@@ -457,6 +459,10 @@ function LoadedPostEditor({
               setDirty(true);
             }}
           />
+          <p className={styles.notice}>
+            업로드한 이미지는 발행 전에도 URL을 아는 사람이 볼 수 있습니다.
+            글에서 지우거나 글을 삭제해도 이미지 파일은 보관됩니다.
+          </p>
         </fieldset>
         <input
           ref={fileInput}

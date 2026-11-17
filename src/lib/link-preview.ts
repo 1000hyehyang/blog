@@ -14,8 +14,11 @@ export type LinkPreviewMetadata = {
   siteName?: string;
 };
 
-export function getLinkPreviewImagePath(pageUrl: string): string {
-  const parameters = new URLSearchParams({ url: pageUrl });
+export function getLinkPreviewImagePath(
+  imageUrl: string,
+  signature: string,
+): string {
+  const parameters = new URLSearchParams({ url: imageUrl, signature });
   return `/api/link-preview-image?${parameters}`;
 }
 
@@ -134,9 +137,17 @@ function decodeHtmlEntities(value: string): string {
   return value.replace(
     /&(?:#(\d+)|#x([\da-f]+)|([a-z][\da-z]+));/gi,
     (entity, decimal: string, hexadecimal: string, named: string) => {
-      if (decimal) return String.fromCodePoint(Number(decimal));
-      if (hexadecimal)
-        return String.fromCodePoint(Number.parseInt(hexadecimal, 16));
+      if (decimal || hexadecimal) {
+        const code = decimal
+          ? Number(decimal)
+          : Number.parseInt(hexadecimal, 16);
+        return Number.isInteger(code) &&
+          code > 0 &&
+          code <= 0x10ffff &&
+          !(code >= 0xd800 && code <= 0xdfff)
+          ? String.fromCodePoint(code)
+          : "\ufffd";
+      }
       return namedEntities[named.toLowerCase()] ?? entity;
     },
   );

@@ -1,9 +1,7 @@
 import { NextRequest } from "next/server";
 
-import {
-  fetchLinkPreviewImage,
-  getLinkPreview,
-} from "@/infrastructure/link-preview/link-preview";
+import { fetchLinkPreviewImage } from "@/infrastructure/link-preview/link-preview";
+import { verifyPreviewImage } from "@/lib/link-preview-signature";
 
 const CACHE_SECONDS = 24 * 60 * 60;
 
@@ -15,18 +13,23 @@ function errorResponse(status: number) {
 }
 
 export async function GET(request: NextRequest) {
-  const pageUrl = request.nextUrl.searchParams.get("url");
-  if (!pageUrl) return errorResponse(400);
-
-  const preview = await getLinkPreview(pageUrl);
-  if (!preview?.image) return errorResponse(404);
+  const parameters = request.nextUrl.searchParams;
+  const url = parameters.get("url");
+  const signature = parameters.get("signature");
+  if (
+    !url ||
+    !signature ||
+    [...parameters.keys()].length !== 2 ||
+    !verifyPreviewImage(url, signature)
+  )
+    return errorResponse(403);
 
   try {
-    const image = await fetchLinkPreviewImage(preview.image);
+    const image = await fetchLinkPreviewImage(url);
 
     return new Response(image.body, {
       headers: {
-        "Cache-Control": `public, max-age=${CACHE_SECONDS}, stale-while-revalidate=${CACHE_SECONDS * 7}`,
+        "Cache-Control": `public, max-age=${CACHE_SECONDS}, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${CACHE_SECONDS * 7}`,
         "Content-Security-Policy": "default-src 'none'; sandbox",
         "Content-Type": image.contentType,
         "Cross-Origin-Resource-Policy": "same-origin",

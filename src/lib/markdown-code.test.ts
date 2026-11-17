@@ -3,9 +3,24 @@ import { describe, expect, it } from "vitest";
 import {
   getMarkdownCodeLanguage,
   highlightMarkdownCode,
+  tokenizeMarkdownCode,
+  MAX_HIGHLIGHT_CODE_LENGTH,
 } from "./markdown-code";
 
 describe("markdown code highlighting", () => {
+  it("bounds highlighting in both the published renderer and the editor", async () => {
+    const code = "x".repeat(MAX_HIGHLIGHT_CODE_LENGTH + 1);
+    expect(
+      await highlightMarkdownCode(code, getMarkdownCodeLanguage("language-js")),
+    ).toBeNull();
+    expect(await tokenizeMarkdownCode(code, "js")).toEqual([]);
+    expect(
+      await highlightMarkdownCode(
+        "x".repeat(MAX_HIGHLIGHT_CODE_LENGTH),
+        getMarkdownCodeLanguage("language-js"),
+      ),
+    ).toContain("<pre");
+  });
   it("마크다운 클래스에서 Shiki 지원 언어를 찾는다", () => {
     expect(getMarkdownCodeLanguage("language-typescript")).toEqual({
       label: "typescript",

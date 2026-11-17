@@ -36,7 +36,14 @@ export class PostStoreError extends Error {
 }
 
 export function usesGitHubStorage() {
-  return process.env.CONTENT_SOURCE === "github";
+  const source = process.env.CONTENT_SOURCE;
+  if (source === "github") return true;
+  if (source === "local" || (!source && process.env.NODE_ENV !== "production"))
+    return false;
+  throw new PostStoreError(
+    "CONTENT_SOURCE를 github 또는 local로 설정해 주세요.",
+    503,
+  );
 }
 function localPostsPath(...segments: string[]) {
   return path.resolve(
@@ -223,7 +230,11 @@ export async function readLocalPosts() {
   try {
     names = await readdir(localPostsPath());
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    if (
+      (error as NodeJS.ErrnoException).code === "ENOENT" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return [];
     throw error;
   }
   return batches(

@@ -7,6 +7,11 @@ import {
   removeDraft,
   type LocalDraft,
   type DamagedDraft,
+  readNewRecoveries,
+  removeRecovery,
+  newRecoveryHref,
+  type NewRecovery,
+  writerBackup,
 } from "./local-drafts";
 import { DamagedDrafts } from "./damaged-drafts";
 import { deletePostRequest } from "./post-api";
@@ -52,21 +57,28 @@ export function ManagePosts({
   const [page, setPage] = useState(1);
   const [drafts, setDrafts] = useState<LocalDraft[]>([]);
   const [damaged, setDamaged] = useState<DamagedDraft[]>([]);
+  const [recoveries, setRecoveries] = useState<NewRecovery[]>([]);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [removed, setRemoved] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   useEffect(() => {
     let active = true;
+    let generation = 0;
     async function refresh() {
+      const current = ++generation;
       try {
-        const snapshot = await readDrafts();
-        if (!active) return;
+        const [snapshot, recovery] = await Promise.all([
+          readDrafts(),
+          readNewRecoveries(),
+        ]);
+        if (!active || current !== generation) return;
         setDrafts(snapshot.drafts);
-        setDamaged(snapshot.damaged);
+        setDamaged([...snapshot.damaged, ...recovery.damaged]);
+        setRecoveries(recovery.recoveries);
         setError("");
       } catch {
-        if (!active) return;
+        if (!active || current !== generation) return;
         setError("브라우저의 임시 저장소에 접근하지 못했습니다.");
       }
     }
@@ -212,7 +224,66 @@ export function ManagePosts({
         />
       </div>
       {error && <p role="alert">{error}</p>}
+      {tab === "drafts" && (
+        <p className={styles.notice}>
+          임시 글과 자동 저장본은 이 브라우저에 보관됩니다. 백업에는 미발행
+          내용도 포함됩니다.{" "}
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const backup = await writerBackup();
+                const url = URL.createObjectURL(
+                  new Blob([JSON.stringify(backup, null, 2)], {
+                    type: "application/json",
+                  }),
+                );
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `writer-backup-${backup.exportedAt.slice(0, 10)}.json`;
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              } catch {
+                setError(
+                  "백업을 만들지 못했습니다. 브라우저 저장 공간을 확인해 주세요.",
+                );
+              }
+            }}
+          >
+            이 브라우저의 전체 작성본 내려받기
+          </button>
+        </p>
+      )}
       {tab === "drafts" && <DamagedDrafts drafts={damaged} />}
+      {tab === "drafts" && recoveries.length > 0 && (
+        <section aria-label="작성 중인 새 글" className={styles.notice}>
+          <h2>작성 중인 새 글</h2>
+          <ul>
+            {recoveries.map(({ key, draft }) => (
+              <li key={key}>
+                <Link href={newRecoveryHref(key)}>
+                  {draft.post.title || "제목 없음"}
+                </Link>{" "}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm("자동 저장한 새 글을 삭제할까요?")) return;
+                    try {
+                      await removeRecovery(key, draft.savedAt);
+                    } catch {
+                      setError(
+                        "자동 저장본이 변경되었거나 삭제하지 못했습니다. 다시 확인해 주세요.",
+                      );
+                    }
+                  }}
+                >
+                  자동 저장본 삭제
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {filtered.length > 0 && (
         <div className={styles.managementSelection}>
           <WriterCheckbox
@@ -306,7 +377,7 @@ export function ManagePosts({
             </li>
           ))}
       </ul>
-      {!filtered.length && (
+      {!filtered.length && !(tab === "drafts" && recoveries.length > 0) && (
         <div className={styles.emptyState}>
           {tab === "drafts" ? (
             <p>임시 저장한 글이 없습니다.</p>

@@ -9,6 +9,7 @@ const LANGUAGE_CLASS_PATTERN = /(?:^|\s)language-([^\s]+)(?:\s|$)/i;
 const MAX_LANGUAGE_LABEL_LENGTH = 32;
 const PLAIN_TEXT_LANGUAGES = new Set(["text", "txt", "plain", "plaintext"]);
 const themes = { light: "github-light", dark: "github-dark" } as const;
+export const MAX_HIGHLIGHT_CODE_LENGTH = 20_000;
 
 type MarkdownCodeLanguage = {
   label: string;
@@ -39,7 +40,8 @@ export async function highlightMarkdownCode(
   code: string,
   language: MarkdownCodeLanguage | null,
 ): Promise<string | null> {
-  if (!language?.shikiLanguage) return null;
+  if (!language?.shikiLanguage || code.length > MAX_HIGHLIGHT_CODE_LENGTH)
+    return null;
 
   try {
     return await codeToHtml(code, {
@@ -54,6 +56,6 @@ export async function highlightMarkdownCode(
 
 export async function tokenizeMarkdownCode(code: string, label: string) {
   const language = getMarkdownCodeLanguage(`language-${label}`)?.shikiLanguage;
-  if (!language) return [];
+  if (!language || code.length > MAX_HIGHLIGHT_CODE_LENGTH) return [];
   return codeToTokensWithThemes(code, { lang: language, themes });
 }

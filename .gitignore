@@ -12,6 +12,8 @@
 /coverage
 /test-results/
 /playwright-report/
+/writer-backup-*.json
+/images-report*.json
 
 # next.js
 /.next/

@@ -1,7 +1,4 @@
-import {
-  getLinkPreviewImagePath,
-  type LinkPreviewMetadata,
-} from "@/lib/link-preview";
+import type { LinkPreviewMetadata } from "@/lib/link-preview";
 
 import { LinkPreviewFavicon } from "./link-preview-favicon";
 import { LinkPreviewImage } from "./link-preview-image";
@@ -9,6 +6,7 @@ import { LinkPreviewImage } from "./link-preview-image";
 export type LinkPreviewCardData = LinkPreviewMetadata & {
   url: string;
   hostname: string;
+  imageSrc?: string;
 };
 
 export function LinkPreviewCard({ preview }: { preview: LinkPreviewCardData }) {
@@ -22,8 +20,8 @@ export function LinkPreviewCard({ preview }: { preview: LinkPreviewCardData }) {
     >
       {preview.image && (
         <LinkPreviewImage
-          key={preview.url}
-          src={getLinkPreviewImagePath(preview.url)}
+          key={preview.imageSrc ?? preview.image}
+          src={preview.imageSrc ?? preview.image}
         />
       )}
       <span className="link-preview-card__content">

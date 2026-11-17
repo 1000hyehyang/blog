@@ -35,6 +35,9 @@ beforeEach(() => {
 it("only permits known admin destinations, never external redirects", () => {
   expect(writerDestination("/write?slug=post-1")).toBe("/write?slug=post-1");
   expect(writerDestination("/write")).toBe("/write");
+  const id = crypto.randomUUID();
+  expect(writerDestination(`/write?new=${id}`)).toBe(`/write?new=${id}`);
+  expect(writerDestination("/write?new=legacy")).toBe("/write?new=legacy");
   for (const value of [
     undefined,
     ["/write"],
@@ -43,8 +46,25 @@ it("only permits known admin destinations, never external redirects", () => {
     "/write?slug=../escape",
     "/write?slug=a&next=https://evil",
     "/write?slug=a&slug=b",
+    "/write?new=invalid",
+    `/write?new=${id}&slug=a`,
   ])
     expect(writerDestination(value)).toBe("/manage");
+});
+it("assigns a fresh recovery address on each new document request before reading posts", async () => {
+  mocks.authenticated = true;
+  const destinations: string[] = [];
+  for (let i = 0; i < 2; i++) {
+    try {
+      await WritePage({ searchParams: Promise.resolve({}) });
+    } catch (error) {
+      destinations.push((error as Error).message);
+    }
+  }
+  expect(destinations).toHaveLength(2);
+  expect(destinations[0]).toMatch(/^redirect:\/write\?new=[0-9a-f-]{36}$/);
+  expect(destinations[0]).not.toBe(destinations[1]);
+  expect(mocks.read).not.toHaveBeenCalled();
 });
 it("renders local draft management when the remote listing is unavailable", async () => {
   mocks.authenticated = true;

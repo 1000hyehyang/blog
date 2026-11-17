@@ -8,7 +8,9 @@ import {
   readDrafts,
   readDraft,
   saveDraft,
-  reservedDraftSlugs,
+  readNewRecoveries,
+  newRecoveryHref,
+  writerBackup,
   removeDamagedDraft,
   removeDraft,
   readRecovery,
@@ -105,13 +107,6 @@ it("isolates invalid JSON, invalid schemas and mismatched IDs while preserving e
     drafts: [draft],
     damaged: expect.arrayContaining(damaged),
   });
-  expect(await reservedDraftSlugs()).toEqual([
-    "post-1",
-    "post-2",
-    "post-3",
-    "post-4",
-    "post-6",
-  ]);
   for (const { key, raw } of damaged)
     expect(await readDraftRecord({ key })).toBe(raw);
   await expect(
@@ -177,4 +172,57 @@ it("serializes concurrent writes and rejects stale overwrite and deletion", asyn
   const saved = (await readDraft("post-1"))!;
   await expect(removeDraft("post-1", "2025-01-01T00:00:00Z")).rejects.toThrow();
   expect(await readDraft("post-1")).toEqual(saved);
+});
+
+it("keeps independent new recoveries, legacy recovery and damaged raw records accessible", async () => {
+  const key = `new:${crypto.randomUUID()}`;
+  const broken = {
+    key: `new:${crypto.randomUUID()}`,
+    raw: "{",
+    store: "recovery" as const,
+  };
+  await saveRecovery("new", recovery, null);
+  await saveRecovery(
+    key,
+    { ...recovery, post: { ...recovery.post, title: "Other tab" } },
+    null,
+  );
+  await saveRecovery("post:existing", recovery, null);
+  await writeDraftRecord(broken);
+  const result = await readNewRecoveries();
+  expect(result.recoveries.map(({ key }) => key).sort()).toEqual(
+    ["new", key].sort(),
+  );
+  expect(result.damaged).toEqual([broken]);
+  expect(newRecoveryHref("new")).toBe("/write?new=legacy");
+  expect(newRecoveryHref(key)).toBe(`/write?new=${key.slice(4)}`);
+  expect(() => newRecoveryHref("post:existing")).toThrow();
+  await removeDamagedDraft(broken);
+  expect((await readNewRecoveries()).damaged).toEqual([]);
+  expect(await readRecovery("post:existing")).toEqual(recovery);
+});
+
+it("exports manual drafts, all recovery copies and damaged values without modifying them", async () => {
+  await saveDraft(draft, null);
+  await saveRecovery("post:existing", recovery, null);
+  const damaged = { key: "blog:writer:draft:broken", raw: "{unfinished" };
+  await writeDraftRecord(damaged);
+  const backup = await writerBackup();
+  expect(backup.version).toBe(1);
+  expect(backup.drafts).toEqual(
+    expect.arrayContaining([
+      damaged,
+      {
+        key: "blog:writer:draft:post-1",
+        raw: await readDraftRecord({ key: "blog:writer:draft:post-1" }),
+      },
+    ]),
+  );
+  expect(backup.recovery).toEqual([
+    {
+      key: "post:existing",
+      raw: await readDraftRecord({ key: "post:existing", store: "recovery" }),
+    },
+  ]);
+  expect(await readDraftRecord({ key: damaged.key })).toBe(damaged.raw);
 });

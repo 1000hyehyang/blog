@@ -11,12 +11,27 @@ import {
 describe("link preview image path", () => {
   it("encodes the source page URL as a same-origin request", () => {
     expect(
-      getLinkPreviewImagePath("https://example.com/article?id=1&lang=ko"),
+      getLinkPreviewImagePath(
+        "https://example.com/article?id=1&lang=ko",
+        "signed",
+      ),
     ).toBe(
-      "/api/link-preview-image?url=https%3A%2F%2Fexample.com%2Farticle%3Fid%3D1%26lang%3Dko",
+      "/api/link-preview-image?url=https%3A%2F%2Fexample.com%2Farticle%3Fid%3D1%26lang%3Dko&signature=signed",
     );
   });
 });
+
+it.each(["&#99999999;", "&#x110000;", "&#0;", "&#xD800;"])(
+  "preserves metadata around an invalid character reference %s",
+  (entity) => {
+    const preview = parseLinkPreviewHtml(
+      `<title>Before ${entity} after</title><meta property="og:image" content="/cover.png">`,
+      new URL("https://example.com"),
+    );
+    expect(preview.title).toBe("Before \ufffd after");
+    expect(preview.image).toBe("https://example.com/cover.png");
+  },
+);
 
 describe("외부 링크 URL 검증", () => {
   it("공개 HTTP와 HTTPS URL만 허용한다", () => {

@@ -34,7 +34,8 @@ const recoverySchema = draftSchema.safeExtend({
   }),
 });
 export type RecoveryDraft = z.infer<typeof recoverySchema>;
-export type DamagedDraft = { key: string; raw: string };
+export type DamagedDraft = { key: string; raw: string; store?: "recovery" };
+export type NewRecovery = { key: string; draft: RecoveryDraft };
 const recoveryWrites = new Map<string, Promise<unknown>>();
 
 export function trackRecoveryWrite(key: string, pending: Promise<unknown>) {
@@ -130,22 +131,6 @@ function withStore<T>(
   });
 }
 
-// 손상된 임시 저장본도 새 글로 덮어쓰지 않도록 주소를 예약한다.
-export async function reservedDraftSlugs(): Promise<string[]> {
-  const keys = await withStore<IDBValidKey[]>(
-    "drafts",
-    "readonly",
-    (store, done, checkRequest) => {
-      checkRequest(store.getAllKeys(), done);
-    },
-  );
-  return keys
-    .map(String)
-    .filter((key) => key.startsWith(prefix))
-    .map((key) => key.slice(prefix.length))
-    .filter((slug) => slugSchema.safeParse(slug).success);
-}
-
 export async function readDraft(id: string): Promise<LocalDraft | null> {
   const raw = await withStore<string | undefined>(
     "drafts",
@@ -190,16 +175,29 @@ export async function readDrafts(): Promise<{
   return { drafts, damaged };
 }
 
-export async function removeDamagedDraft({ key, raw }: DamagedDraft) {
-  await withStore<void>("drafts", "readwrite", (store, done, checkRequest) => {
-    const request = store.get(key);
-    checkRequest(request, (current) => {
-      if (!key.startsWith(prefix) || current !== raw)
-        throw new Error("임시 저장본이 변경되었습니다. 다시 확인해 주세요.");
-      store.delete(key);
-      done();
-    });
-  });
+export async function removeDamagedDraft({
+  key,
+  raw,
+  store: name,
+}: DamagedDraft) {
+  await withStore<void>(
+    name ?? "drafts",
+    "readwrite",
+    (store, done, checkRequest) => {
+      const request = store.get(key);
+      checkRequest(request, (current) => {
+        if (
+          !(name === "recovery"
+            ? isNewRecoveryKey(key)
+            : key.startsWith(prefix)) ||
+          current !== raw
+        )
+          throw new Error("임시 저장본이 변경되었습니다. 다시 확인해 주세요.");
+        store.delete(key);
+        done();
+      });
+    },
+  );
   notifyDrafts();
 }
 export async function saveDraft(draft: LocalDraft, expected: string | null) {
@@ -266,7 +264,91 @@ export async function saveRecovery(
   expected: string | null,
 ) {
   await writeVersion("recovery", key, recoverySchema.parse(value), expected);
+  if (isNewRecoveryKey(key)) notifyDrafts();
 }
 export async function removeRecovery(key: string, expected: string) {
   await writeVersion("recovery", key, null, expected);
+  notifyDrafts();
+}
+
+function isNewRecoveryKey(key: string) {
+  return (
+    key === "new" ||
+    (key.startsWith("new:") && z.uuid().safeParse(key.slice(4)).success)
+  );
+}
+
+export function newRecoveryHref(key: string) {
+  if (!isNewRecoveryKey(key)) throw new Error("잘못된 복구 주소입니다.");
+  return `/write?new=${key === "new" ? "legacy" : key.slice(4)}`;
+}
+
+export async function readNewRecoveries(): Promise<{
+  recoveries: NewRecovery[];
+  damaged: DamagedDraft[];
+}> {
+  await Promise.allSettled(recoveryWrites.values());
+  const records = await withStore<{ key: string; raw: string }[]>(
+    "recovery",
+    "readonly",
+    (store, done, checkRequest) => {
+      const records: { key: string; raw: string }[] = [];
+      const cursor = store.openCursor();
+      checkRequest(cursor, (entry) => {
+        if (!entry) {
+          done(records);
+          return;
+        }
+        const key = String(entry.key);
+        if (isNewRecoveryKey(key)) records.push({ key, raw: entry.value });
+        entry.continue();
+      });
+    },
+  );
+  const recoveries: NewRecovery[] = [];
+  const damaged: DamagedDraft[] = [];
+  for (const { key, raw } of records) {
+    try {
+      recoveries.push({ key, draft: recoverySchema.parse(JSON.parse(raw)) });
+    } catch {
+      damaged.push({ key, raw, store: "recovery" });
+    }
+  }
+  return { recoveries, damaged };
+}
+
+export async function writerBackup() {
+  await Promise.allSettled(recoveryWrites.values());
+  const read = (name: "drafts" | "recovery") =>
+    withStore<{ key: string; raw: string }[]>(
+      name,
+      "readonly",
+      (store, done, checkRequest) => {
+        const records: { key: string; raw: string }[] = [];
+        const cursor = store.openCursor();
+        checkRequest(cursor, (entry) => {
+          if (!entry) {
+            done(records);
+            return;
+          }
+          if (typeof entry.key !== "string" || typeof entry.value !== "string")
+            throw new Error(
+              "저장본 형식을 확인할 수 없습니다. 백업을 중단합니다.",
+            );
+          records.push({ key: entry.key, raw: entry.value });
+          entry.continue();
+        });
+      },
+    );
+  const [drafts, recovery] = await Promise.all([
+    read("drafts"),
+    read("recovery"),
+  ]);
+  return {
+    version: 1,
+    origin: window.location.origin,
+    exportedAt: new Date().toISOString(),
+    drafts,
+    recovery,
+  };
 }

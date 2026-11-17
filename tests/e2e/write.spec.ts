@@ -517,13 +517,13 @@ test("password login, WYSIWYG editing, publishing controls and logout", async ({
   });
   expect(unauthorized.status()).toBe(401);
   await page.getByLabel("비밀번호", { exact: true }).fill(testPassword);
-  await expect(page).toHaveURL("/write");
+  await expect(page).toHaveURL(/\/write\?new=[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: "글쓰기" })).toBeAttached();
   await page.getByLabel("제목", { exact: true }).fill("에디터 확인");
   await page.getByLabel("태그", { exact: true }).fill("한글, 테스트");
   page.once("dialog", (dialog) => dialog.dismiss());
   await page.locator('header a[href="/manage"]').click();
-  await expect(page).toHaveURL("/write");
+  await expect(page).toHaveURL(/\/write\?new=[0-9a-f-]{36}$/);
   await expect(page.getByLabel("제목", { exact: true })).toHaveValue(
     "에디터 확인",
   );
@@ -699,7 +699,7 @@ test("management is separate and authentication preserves the edit destination",
   await page.goto("/login?next=https://attacker.example");
   await expect(page).toHaveURL("/manage");
   await page.getByRole("link", { name: "글쓰기" }).click();
-  await expect(page).toHaveURL("/write");
+  await expect(page).toHaveURL(/\/write\?new=[0-9a-f-]{36}$/);
   await expect(
     page.getByRole("textbox", { name: "본문 편집기" }),
   ).toBeVisible();

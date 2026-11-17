@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { notFound, redirect } from "next/navigation";
 import { isWriter } from "@/lib/writer-auth";
 import {
@@ -19,16 +21,22 @@ export const metadata: Metadata = {
 export default async function WritePage({
   searchParams,
 }: {
-  searchParams: Promise<{ slug?: string; draft?: string }>;
+  searchParams: Promise<{ slug?: string; draft?: string; new?: string }>;
 }) {
-  const { slug, draft } = await searchParams;
+  const { slug, draft, new: newId } = await searchParams;
   if (!(await isWriter())) {
     const next = draft
       ? `/write?draft=${encodeURIComponent(draft)}`
       : slug
         ? `/write?slug=${encodeURIComponent(slug)}`
-        : "/write";
+        : newId
+          ? `/write?new=${encodeURIComponent(newId)}`
+          : "/write";
     redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
+  if (!slug && !draft) {
+    if (!newId) redirect(`/write?new=${randomUUID()}`);
+    if (newId !== "legacy" && !z.uuid().safeParse(newId).success) notFound();
   }
   if (draft) {
     if (!slugSchema.safeParse(draft).success) notFound();
@@ -55,12 +63,12 @@ export default async function WritePage({
   const posts = await getStoredPosts();
   return (
     <PostEditor
-      key={slug ?? "new"}
+      key={slug ?? newId}
+      newId={newId}
       initial={stored?.post ?? null}
       initialSha={stored?.sha ?? null}
       writable={usesGitHubStorage()}
       pinned={pinnedPosts(posts)}
-      postSlugs={posts.map((post) => post.slug)}
     />
   );
 }

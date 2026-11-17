@@ -91,6 +91,7 @@ test("restores unfinished image URLs and the latest body after logout", async ({
   await page.goto("/write");
   const editor = page.getByRole("textbox", { name: "본문 편집기" });
   await expect(editor).toBeVisible();
+  const recoveryKey = `new:${new URL(page.url()).searchParams.get("new")}`;
   await page.getByLabel("제목", { exact: true }).fill("로그아웃 복구 확인");
   await page.getByRole("button", { name: "완료", exact: true }).click();
   await page.getByLabel("대표 이미지", { exact: true }).fill("https://");
@@ -100,7 +101,7 @@ test("restores unfinished image URLs and the latest body after logout", async ({
   await page.getByRole("button", { name: "로그아웃" }).click();
   await expect(page).toHaveURL(/\/login$/);
   const raw = await page.evaluate(readDraftRecord, {
-    key: "new",
+    key: recoveryKey,
     store: "recovery",
   });
   expect(JSON.parse(raw!).post.body).toContain("로그아웃 직전 마지막 본문");
@@ -116,7 +117,10 @@ test("restores unfinished image URLs and the latest body after logout", async ({
       sameSite: "Strict",
     },
   ]);
-  await page.goto("/write");
+  await page.goto("/manage?tab=drafts");
+  await page
+    .getByRole("link", { name: "로그아웃 복구 확인", exact: true })
+    .click();
   await expect(editor).toHaveText("로그아웃 직전 마지막 본문");
   await expect(page.getByLabel("제목", { exact: true })).toHaveValue(
     "로그아웃 복구 확인",
@@ -134,6 +138,7 @@ test("restores the latest unsaved title and body after browser Back and Forward"
   await page.getByRole("link", { name: "글쓰기", exact: true }).click();
   const editor = page.getByRole("textbox", { name: "본문 편집기" });
   await expect(editor).toBeVisible();
+  const recoveryKey = `new:${new URL(page.url()).searchParams.get("new")}`;
   await page.getByLabel("제목", { exact: true }).fill("미저장 복구 확인");
   await editor.fill("뒤로 가기 직전 마지막 본문");
   await page.goBack();
@@ -143,7 +148,7 @@ test("restores the latest unsaved title and body after browser Back and Forward"
   await expect
     .poll(async () => {
       const raw = await page.evaluate(readDraftRecord, {
-        key: "new",
+        key: recoveryKey,
         store: "recovery",
       });
       return raw && JSON.parse(raw).post.body;
@@ -335,15 +340,57 @@ test("damaged drafts remain downloadable and do not block new draft saves", asyn
     .getByRole("dialog", { name: "임시 저장" })
     .getByRole("button", { name: "임시 저장", exact: true })
     .click();
-  await expect(page).toHaveURL(/draft=post-21$/);
+  await expect(page).toHaveURL(/draft=post-[0-9a-f-]{36}$/);
+  const slug = new URL(page.url()).searchParams.get("draft");
   expect(
     await page.evaluate(readDraftRecord, { key: "blog:writer:draft:post-20" }),
   ).toBe('{"body":"preserve me');
   expect(
     JSON.parse(
       (await page.evaluate(readDraftRecord, {
-        key: "blog:writer:draft:post-21",
+        key: `blog:writer:draft:${slug}`,
       }))!,
     ).post.body,
   ).toBe("Saved despite damaged neighbor");
+});
+
+test("keeps two new tabs independent and reopens a closed tab from management", async ({
+  page,
+  context,
+}) => {
+  const second = await context.newPage();
+  for (const [index, tab] of [page, second].entries()) {
+    await tab.goto("/write");
+    await tab.getByLabel("제목", { exact: true }).fill(`독립 글 ${index + 1}`);
+    await tab
+      .getByRole("textbox", { name: "본문 편집기" })
+      .fill(`각 탭의 본문 ${index + 1}`);
+    await tab.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+    const key = `new:${new URL(tab.url()).searchParams.get("new")}`;
+    await expect
+      .poll(async () => {
+        const raw = await tab.evaluate(readDraftRecord, {
+          key,
+          store: "recovery",
+        });
+        return raw && JSON.parse(raw).post.body;
+      })
+      .toBe(`각 탭의 본문 ${index + 1}`);
+  }
+  expect(page.url()).not.toBe(second.url());
+  second.on("dialog", (dialog) => dialog.accept());
+  await second.reload();
+  await expect(second.getByRole("textbox", { name: "본문 편집기" })).toHaveText(
+    "각 탭의 본문 2",
+  );
+  await second.close();
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/manage?tab=drafts");
+  await expect(
+    page.getByRole("link", { name: "독립 글 1", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "독립 글 2", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "본문 편집기" })).toHaveText(
+    "각 탭의 본문 2",
+  );
 });

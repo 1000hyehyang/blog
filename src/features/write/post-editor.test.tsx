@@ -589,6 +589,15 @@ describe("writer data preservation", () => {
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/manage"));
     expect(await readDraft(draft.post.slug)).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    const calls = fetchMock.mock.calls as unknown as [
+      string,
+      { body: string },
+    ][];
+    const first = JSON.parse(calls[0][1].body).post;
+    expect(first.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(calls[0][0]).toBe(`/api/write/posts/post-${first.id}`);
+    expect(calls[1][0]).toBe(calls[0][0]);
+    expect(JSON.parse(calls[1][1].body).post.id).toBe(first.id);
   });
 
   it("shares the upload lock with saving and logout and restores editing after upload", async () => {
@@ -681,12 +690,12 @@ describe("writer data preservation", () => {
       }),
     );
     await waitFor(async () =>
-      expect((await readDraft("post-1"))?.post.id).toBe(id),
+      expect((await readDraft(`post-${id}`))?.post.id).toBe(id),
     );
     await waitFor(() => expect(mocks.replace).toHaveBeenCalled());
     view.unmount();
 
-    render(<DraftEditor id="post-1" writable pinned={[]} />);
+    render(<DraftEditor id={`post-${id}`} writable pinned={[]} />);
     const reopened = await screen.findByRole("textbox", {
       name: "본문 편집기",
     });
@@ -836,7 +845,11 @@ describe("writer data preservation", () => {
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "발행" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/write/posts/post-13");
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.post.id).toMatch(/^[a-f0-9-]{36}$/);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `/api/write/posts/post-${sent.post.id}`,
+    );
     expect(await readDraftRecord({ key: "blog:writer:draft:post-12" })).toBe(
       "{",
     );
@@ -939,7 +952,9 @@ describe("writer data preservation", () => {
     fireEvent.click(screen.getByRole("button", { name: "발행" }));
     await within(screen.getByRole("dialog")).findByText("재시도");
     const url = fetchMock.mock.calls[0][0];
-    expect(url).toBe("/api/write/posts/post-1");
+    expect(url).toBe(
+      `/api/write/posts/post-${JSON.parse(fetchMock.mock.calls[0][1].body).post.id}`,
+    );
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).pinned).toEqual({
       base: ["first", "second"],
       order: ["first", url.split("/").at(-1)],

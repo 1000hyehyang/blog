@@ -14,6 +14,7 @@ import {
   type LinkPreviewMetadata,
 } from "@/lib/link-preview";
 import { readLimitedResponseText } from "@/lib/limited-response";
+import { previewImageSource } from "@/lib/link-preview-signature";
 
 const CACHE_SECONDS = 24 * 60 * 60;
 const FETCH_TIMEOUT_MS = 5_000;
@@ -31,6 +32,7 @@ const ALLOWED_IMAGE_TYPES = new Set([
 type LinkPreview = LinkPreviewMetadata & {
   url: string;
   hostname: string;
+  imageSrc?: string;
 };
 
 async function resolvePublicDestinations(url: URL) {
@@ -236,7 +238,12 @@ export async function getLinkPreview(
 
   try {
     const metadata = await loadRemoteMetadata(url.href);
-    return { ...fallback, ...metadata, icon: metadata.icon ?? fallback.icon };
+    return {
+      ...fallback,
+      ...metadata,
+      imageSrc: previewImageSource(metadata.image),
+      icon: metadata.icon ?? fallback.icon,
+    };
   } catch (error) {
     console.warn(
       `[link-preview] Failed to load metadata for ${url.hostname}.`,

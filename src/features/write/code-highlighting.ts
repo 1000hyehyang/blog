@@ -45,7 +45,6 @@ export const CodeHighlighting = Extension.create({
               if (node.type.name !== "codeBlock" || !node.attrs.language)
                 return;
               const code = node.textContent;
-              if (code.length > 20_000) return;
               blocks.push({
                 node,
                 code,
