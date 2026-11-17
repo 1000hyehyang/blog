@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHmac, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { isIP } from "node:net";
 
@@ -14,11 +14,38 @@ export const sessionCookieOptions = {
   path: "/",
   maxAge: SESSION_SECONDS,
 };
-const hashPattern = /^scrypt:([a-f0-9]{32}):([a-f0-9]{128})$/;
+
+export function writerOrigin() {
+  try {
+    const url = new URL(
+      process.env.WRITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || "",
+    );
+    if (
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.pathname !== "/" ||
+      (url.protocol !== "https:" &&
+        !(
+          url.protocol === "http:" &&
+          ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+        ))
+    )
+      return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
 
 export function writerConfigured() {
   return (
-    hashPattern.test(process.env.WRITE_PASSWORD_HASH ?? "") &&
+    Boolean(process.env.WRITE_GITHUB_CLIENT_ID?.trim()) &&
+    Boolean(process.env.WRITE_GITHUB_CLIENT_SECRET?.trim()) &&
+    /^[1-9]\d{0,15}$/.test(process.env.WRITE_GITHUB_USER_ID ?? "") &&
+    Number.isSafeInteger(Number(process.env.WRITE_GITHUB_USER_ID)) &&
+    Boolean(writerOrigin()) &&
     (process.env.WRITE_SESSION_SECRET?.length ?? 0) >= 32
   );
 }
@@ -38,7 +65,9 @@ export function sameOrigin(request: Request) {
 function sign(value: string) {
   if (!writerConfigured()) return "";
   return createHmac("sha256", process.env.WRITE_SESSION_SECRET!)
-    .update(`${process.env.WRITE_PASSWORD_HASH}:${value}`)
+    .update(
+      `github:${process.env.WRITE_GITHUB_CLIENT_ID}:${process.env.WRITE_GITHUB_USER_ID}:${value}`,
+    )
     .digest("base64url");
 }
 export function createWriterSession(now = Date.now()) {
@@ -61,21 +90,6 @@ export function verifyWriterSession(token?: string, now = Date.now()) {
 }
 export async function isWriter() {
   return verifyWriterSession((await cookies()).get(SESSION_COOKIE)?.value);
-}
-
-export async function verifyWriterPassword(password: string) {
-  const match = hashPattern.exec(process.env.WRITE_PASSWORD_HASH ?? "");
-  if (!writerConfigured() || !match || password.length > 1024) return false;
-  const derived = await new Promise<Buffer>((resolve, reject) =>
-    scrypt(
-      password,
-      Buffer.from(match[1], "hex"),
-      64,
-      { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 },
-      (error, key) => (error ? reject(error) : resolve(key)),
-    ),
-  );
-  return timingSafeEqual(derived, Buffer.from(match[2], "hex"));
 }
 
 const attempts = new Map<string, { count: number; resetAt: number }>();

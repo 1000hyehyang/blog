@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import {
   allowLoginAttempt,
-  createWriterSession,
   sameOrigin,
   SESSION_COOKIE,
   sessionCookieOptions,
-  verifyWriterPassword,
   writerConfigured,
 } from "@/lib/writer-auth";
 import { readWriterJson } from "@/lib/writer-api";
+import {
+  createGitHubLogin,
+  OAUTH_COOKIE,
+  oauthCookieOptions,
+} from "@/lib/writer-github-oauth";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request))
@@ -26,30 +30,24 @@ export async function POST(request: Request) {
       { message: "잠시 후 다시 시도해 주세요." },
       { status: 429, headers: { "Retry-After": "60" } },
     );
-  let password: unknown;
+  let next: string;
   try {
-    password = ((await readWriterJson(request, 4096)) as { password?: unknown })
-      ?.password;
+    ({ next } = z
+      .object({ next: z.string().max(512) })
+      .strict()
+      .parse(await readWriterJson(request, 4096)));
   } catch {
     return NextResponse.json(
       { message: "잘못된 요청입니다." },
       { status: 400 },
     );
   }
-  if (typeof password !== "string" || !(await verifyWriterPassword(password)))
-    return NextResponse.json(
-      { message: "비밀번호를 확인해 주세요." },
-      { status: 401 },
-    );
+  const login = createGitHubLogin(next);
   const response = NextResponse.json(
-    { authenticated: true },
+    { url: login.url },
     { headers: { "Cache-Control": "no-store" } },
   );
-  response.cookies.set(
-    SESSION_COOKIE,
-    createWriterSession(),
-    sessionCookieOptions,
-  );
+  response.cookies.set(OAUTH_COOKIE, login.cookie, oauthCookieOptions);
   return response;
 }
 export async function DELETE(request: Request) {
@@ -66,5 +64,6 @@ export async function DELETE(request: Request) {
     ...sessionCookieOptions,
     maxAge: 0,
   });
+  response.cookies.set(OAUTH_COOKIE, "", { ...oauthCookieOptions, maxAge: 0 });
   return response;
 }

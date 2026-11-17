@@ -105,7 +105,7 @@ it("opens the select above the viewport edge and keeps keyboard selection", () =
   expect(onChange).toHaveBeenCalledWith("vite");
 });
 
-it("uses seven masked password slots, posts to the existing session API and retains retry access", async () => {
+it("starts GitHub login once, retains retry access and restores the button after returning", async () => {
   let rejectLogin!: (response: Response) => void;
   const fetchMock = vi
     .fn()
@@ -114,32 +114,51 @@ it("uses seven masked password slots, posts to the existing session API and reta
         rejectLogin = resolve;
       }),
     )
-    .mockResolvedValueOnce(Response.json({ ok: true }));
+    .mockResolvedValueOnce(Response.json({ url: "https://attacker.example" }));
   vi.stubGlobal("fetch", fetchMock);
   const { container } = render(<WriterLogin configured destination="/write" />);
-  expect(container.querySelectorAll("[data-filled]")).toHaveLength(7);
-  expect(
-    screen.queryByRole("button", { name: "로그인" }),
-  ).not.toBeInTheDocument();
-  const input = screen.getByLabelText("비밀번호");
-  expect(input).toHaveAttribute("type", "password");
-  expect(input).toHaveFocus();
-  fireEvent.change(input, { target: { value: "123456?" } });
-  expect(screen.queryByLabelText("인증 중")).not.toBeInTheDocument();
+  expect(container.querySelector('input[type="password"]')).toBeNull();
+  const button = screen.getByRole("button", { name: "GitHub로 로그인" });
+  expect(button).toHaveFocus();
+  fireEvent.click(button);
+  fireEvent.click(button);
+  expect(button).toBeDisabled();
+  expect(fetchMock).toHaveBeenCalledTimes(1);
   rejectLogin(
-    Response.json({ message: "비밀번호를 확인해 주세요." }, { status: 401 }),
+    Response.json({ message: "잠시 후 다시 시도해 주세요." }, { status: 429 }),
   );
-  await screen.findByText("비밀번호를 확인해 주세요.");
-  expect(input).toHaveValue("");
-  fireEvent.change(input, { target: { value: "731204!" } });
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/write"));
+  await screen.findByText("잠시 후 다시 시도해 주세요.");
+  expect(button).toBeEnabled();
+  fireEvent.click(button);
+  await screen.findByText("로그인에 실패했습니다.");
   expect(fetchMock.mock.calls[1]).toEqual([
     "/api/write/session",
     expect.objectContaining({
       method: "POST",
-      body: JSON.stringify({ password: "731204!" }),
+      body: JSON.stringify({ next: "/write" }),
     }),
   ]);
+  fetchMock.mockReturnValueOnce(new Promise(() => {}));
+  fireEvent.click(button);
+  expect(button).toBeDisabled();
+  fireEvent(window, new Event("pageshow"));
+  expect(button).toBeEnabled();
+});
+
+it("shows OAuth failures and disables unconfigured login", () => {
+  const { rerender } = render(
+    <WriterLogin configured destination="/manage" failed />,
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "GitHub 로그인을 완료하지 못했습니다.",
+  );
+  rerender(<WriterLogin configured={false} destination="/manage" />);
+  expect(
+    screen.getByRole("button", { name: "GitHub로 로그인" }),
+  ).toBeDisabled();
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "관리자 인증이 설정되지 않았습니다.",
+  );
 });
 
 it("keeps draft Markdown, pinned order and SHA locally and refuses stale overwrites/deletion", async () => {

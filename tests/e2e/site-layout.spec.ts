@@ -41,7 +41,9 @@ test("login, management and editing retain the writer frame", async ({
   page,
 }, testInfo) => {
   await page.goto("/login");
-  await expect(page.getByLabel("비밀번호", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "GitHub로 로그인" }),
+  ).toBeVisible();
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.locator("main")).toHaveCSS("padding-top", "0px");
   await expect(page.locator(".site-header-glass")).toHaveCount(0);

@@ -1437,38 +1437,23 @@
 .login {
   width: min(100%, 28rem);
 }
-.otp {
-  position: relative;
-}
-.writer .otp input {
-  position: absolute;
-  inset: 0;
+.writer .githubLogin {
   width: 100%;
-  height: 100%;
-  opacity: 0;
-  z-index: 1;
-  cursor: text;
-}
-.otpSlots {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) 1.4rem minmax(0, 1fr);
-  gap: 0.4rem;
-}
-.otpSlots span {
-  display: grid;
-  place-items: center;
   height: 3.5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: 1.4rem;
-  background: var(--background);
-  transition: border-color 0.2s;
+  justify-content: center;
+  gap: 0.65rem;
+  border-color: #656d76;
+  background: #24292f;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
 }
-.otpSlots span:last-child {
-  grid-column: 8;
+.writer .githubLogin:hover:not(:disabled) {
+  background: #32383f;
+  color: #fff;
 }
-.otpSlots span[data-active="true"] {
-  border-color: var(--foreground);
+.writer .githubLogin:focus-visible {
+  border-color: #c9d1d9;
 }
 .loginStatus {
   display: flex;
@@ -1506,9 +1491,6 @@
   .skeleton {
     animation: none;
   }
-  .otpSlots span {
-    transition: none;
-  }
 }
 @media (max-width: 640px) {
   .managementTabs {
@@ -1517,11 +1499,7 @@
   .managementFilters > button {
     flex: 1;
   }
-  .otpSlots {
-    gap: 0.25rem;
-    grid-template-columns: repeat(6, minmax(0, 1fr)) 0.5rem minmax(0, 1fr);
-  }
-  .otpSlots span {
+  .writer .githubLogin {
     height: 3rem;
   }
 }

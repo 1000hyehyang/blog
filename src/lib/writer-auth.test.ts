@@ -1,10 +1,9 @@
-import { scryptSync, webcrypto } from "node:crypto";
+import { createHmac, webcrypto } from "node:crypto";
 import { issueSignedToken } from "@vercel/blob";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createWriterSession,
   verifyWriterSession,
-  verifyWriterPassword,
   sameOrigin,
   allowLoginAttempt,
 } from "./writer-auth";
@@ -33,14 +32,13 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
 }));
-const password = "test-password-not-a-production-secret";
-const salt = Buffer.alloc(16, 1);
-const hash = `scrypt:${salt.toString("hex")}:${scryptSync(password, salt, 64, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }).toString("hex")}`;
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal("crypto", webcrypto);
   vi.stubEnv("BLOB_WEBHOOK_PUBLIC_KEY", "test-public-key");
-  vi.stubEnv("WRITE_PASSWORD_HASH", hash);
+  vi.stubEnv("WRITE_GITHUB_CLIENT_ID", "test-client");
+  vi.stubEnv("WRITE_GITHUB_CLIENT_SECRET", "test-client-secret");
+  vi.stubEnv("WRITE_GITHUB_USER_ID", "12345");
   vi.stubEnv("WRITE_SESSION_SECRET", "a".repeat(40));
   vi.stubEnv("WRITE_ORIGIN", "https://blog.example");
   state.cookie = "";
@@ -105,16 +103,22 @@ describe("writer trust boundaries", () => {
       expect((await imageUpload(request(path))).status).toBe(400);
     expect(issueSignedToken).toHaveBeenCalledTimes(2);
   });
-  it("verifies scrypt and rejects forged, expired, malformed and rotated sessions", async () => {
-    expect(await verifyWriterPassword(password)).toBe(true);
-    expect(await verifyWriterPassword("incorrect")).toBe(false);
+  it("rejects forged, expired, malformed, legacy and rotated sessions", () => {
     const now = Date.now();
     const token = createWriterSession(now);
     expect(verifyWriterSession(token, now)).toBe(true);
     expect(verifyWriterSession(`${token.slice(0, -1)}!`, now)).toBe(false);
     expect(verifyWriterSession(token, now + 8 * 3600_000)).toBe(false);
     expect(verifyWriterSession("x".repeat(1000))).toBe(false);
-    vi.stubEnv("WRITE_PASSWORD_HASH", "");
+    const payload = token.slice(0, token.lastIndexOf("."));
+    const legacy = createHmac("sha256", "a".repeat(40))
+      .update(`old-password-hash:${payload}`)
+      .digest("base64url");
+    expect(verifyWriterSession(`${payload}.${legacy}`, now)).toBe(false);
+    vi.stubEnv("WRITE_GITHUB_USER_ID", "67890");
+    expect(verifyWriterSession(token, now)).toBe(false);
+    vi.stubEnv("WRITE_GITHUB_USER_ID", "12345");
+    vi.stubEnv("WRITE_SESSION_SECRET", "b".repeat(40));
     expect(verifyWriterSession(token, now)).toBe(false);
   });
   it("denies all post mutations and image token requests before storage is called", async () => {
@@ -221,23 +225,19 @@ describe("writer trust boundaries", () => {
     ).toBe(false);
     expect(sameOrigin(new Request(request.url))).toBe(false);
   });
-  it("sets HttpOnly cookies only after password verification and clears them on logout", async () => {
-    const request = (value: string) =>
+  it("rejects the old password login and clears sessions on logout", async () => {
+    const request = () =>
       new Request("https://blog.example/api/write/session", {
         method: "POST",
         headers: {
           origin: "https://blog.example",
           "content-type": "application/json",
         },
-        body: JSON.stringify({ password: value }),
+        body: JSON.stringify({ password: "previous-password" }),
       });
-    const failure = await login(request("wrong"));
-    expect(failure.status).toBe(401);
+    const failure = await login(request());
+    expect(failure.status).toBe(400);
     expect(failure.headers.get("set-cookie")).toBeNull();
-    const success = await login(request(password));
-    expect(success.status).toBe(200);
-    expect(success.headers.get("set-cookie")).toContain("HttpOnly");
-    expect(success.headers.get("set-cookie")).toContain("SameSite=strict");
     const cleared = await logout(
       new Request("https://blog.example/api/write/session", {
         method: "DELETE",
@@ -245,6 +245,8 @@ describe("writer trust boundaries", () => {
       }),
     );
     expect(cleared.headers.get("set-cookie")).toContain("Max-Age=0");
+    expect(cleared.headers.get("set-cookie")).toContain("HttpOnly");
+    expect(cleared.headers.get("set-cookie")).toContain("SameSite=strict");
   });
   it("isolates login attempts by trusted client IP and rejects missing or spoofed proxy chains", () => {
     vi.stubEnv("VERCEL", "1");

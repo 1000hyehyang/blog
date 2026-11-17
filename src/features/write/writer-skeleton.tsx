@@ -155,15 +155,14 @@ export function LoginSkeleton() {
         <h1 className={styles.loginBrand}>
           {siteConfig.shortName} <span>STUDIO</span>
         </h1>
-        <div
+        <button
           style={{ marginTop: "2rem" }}
-          className={styles.otpSlots}
+          className={`${styles.githubLogin} ${styles.skeletonControl}`}
           aria-hidden="true"
+          disabled
         >
-          {Array.from({ length: 7 }, (_, index) => (
-            <span className={styles.skeleton} key={index} />
-          ))}
-        </div>
+          GitHub로 로그인
+        </button>
         <div className={styles.loginStatus} />
       </div>
     </div>

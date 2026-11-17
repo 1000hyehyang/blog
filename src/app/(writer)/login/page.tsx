@@ -12,11 +12,16 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
-  const destination = writerDestination((await searchParams).next);
+  const query = await searchParams;
+  const destination = writerDestination(query.next);
   if (await isWriter()) redirect(destination);
   return (
-    <WriterLogin configured={writerConfigured()} destination={destination} />
+    <WriterLogin
+      configured={writerConfigured()}
+      destination={destination}
+      failed={query.error === "github"}
+    />
   );
 }

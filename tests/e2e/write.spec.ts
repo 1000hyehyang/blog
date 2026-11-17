@@ -4,8 +4,8 @@ import {
   testSessionCookie,
   testSessionSecure,
   createTestSession,
-  testPassword,
 } from "./writer-credentials";
+import { mockGitHubAuthorization } from "./github-login";
 
 test("category options become visible when the select opens", async ({
   page,
@@ -502,21 +502,26 @@ test("post ID URLs are canonical across pages, feed and sitemap", async ({
   );
 });
 
-test("password login, WYSIWYG editing, publishing controls and logout", async ({
+test("GitHub login, WYSIWYG editing, publishing controls and logout", async ({
   page,
   isMobile,
 }) => {
+  await mockGitHubAuthorization(page);
   await page.goto("/write");
   await expect(page).toHaveURL(/\/login\?next=%2Fwrite$/);
-  await expect(page.getByLabel("비밀번호", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("비밀번호", { exact: true })).toBeFocused();
+  await expect(
+    page.getByRole("button", { name: "GitHub로 로그인" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "GitHub로 로그인" }),
+  ).toBeFocused();
   await expect(page.getByText("글 관리", { exact: true })).toHaveCount(0);
   const unauthorized = await page.request.put("/api/write/posts/test", {
     data: { post: {}, sha: null },
     headers: { origin: "http://127.0.0.1:3100" },
   });
   expect(unauthorized.status()).toBe(401);
-  await page.getByLabel("비밀번호", { exact: true }).fill(testPassword);
+  await page.getByRole("button", { name: "GitHub로 로그인" }).click();
   await expect(page).toHaveURL(/\/write\?new=[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: "글쓰기" })).toBeAttached();
   await page.getByLabel("제목", { exact: true }).fill("에디터 확인");
@@ -646,18 +651,21 @@ test("password login, WYSIWYG editing, publishing controls and logout", async ({
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "로그아웃" }).click();
   await expect(page).toHaveURL("/login");
-  await expect(page.getByLabel("비밀번호", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "GitHub로 로그인" }),
+  ).toBeVisible();
 });
 
 test("management is separate and authentication preserves the edit destination", async ({
   page,
 }) => {
+  await mockGitHubAuthorization(page);
   await page.goto("/manage");
   await expect(page).toHaveURL(/\/login\?next=%2Fmanage$/);
   await expect(page.locator('a[href^="/write?slug="]')).toHaveCount(0);
   await page.goto("/write?slug=post-1");
   await expect(page).toHaveURL(/\/login\?next=%2Fwrite%3Fslug%3Dpost-1$/);
-  await page.getByLabel("비밀번호", { exact: true }).fill(testPassword);
+  await page.getByRole("button", { name: "GitHub로 로그인" }).click();
   await expect(page).toHaveURL("/write?slug=post-1");
   await expect(page.getByRole("heading", { name: "글 수정" })).toBeAttached();
   await page.getByRole("link", { name: "Blog STUDIO" }).click();
