@@ -74,10 +74,11 @@ export function getRecentArtPosts(posts: PostSummary[], limit: number) {
   return posts.filter((post) => post.category.slug === "art").slice(0, limit);
 }
 
-export function getRelatedPosts(
+export async function getRelatedPosts(
   posts: PostSummary[],
-  current: PostSummary,
+  current: Pick<PostSummary, "slug" | "category" | "tags" | "title">,
   limit = 3,
-): PostSummary[] {
+): Promise<PostSummary[]> {
+  "use cache";
   return rankRelatedPosts(posts, current, { limit });
 }

@@ -153,7 +153,7 @@ describe("홈 최근 포스트 선택", () => {
 });
 
 describe("관련 포스트 선택", () => {
-  it("랭킹 정책에 limit을 전달한다", () => {
+  it("랭킹 정책에 limit을 전달한다", async () => {
     const current = basePost({
       number: 1,
       category: { name: "Development", slug: "development" },
@@ -167,8 +167,8 @@ describe("관련 포스트 선택", () => {
       category: { name: "Development", slug: "development" },
     });
 
-    expect(getRelatedPosts([current, second, third], current, 1)).toHaveLength(
-      1,
-    );
+    expect(
+      await getRelatedPosts([current, second, third], current, 1),
+    ).toHaveLength(1);
   });
 });

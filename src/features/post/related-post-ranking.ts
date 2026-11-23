@@ -110,14 +110,14 @@ function normalizeLimit(limit: number): number {
 
 function getCandidates(
   posts: PostSummary[],
-  current: PostSummary,
+  currentSlug: string,
 ): PostSummary[] {
   const seenPostSlugs = new Set<string>();
 
   return posts.filter((post) => {
     if (
       !post.published ||
-      post.slug === current.slug ||
+      post.slug === currentSlug ||
       seenPostSlugs.has(post.slug)
     ) {
       return false;
@@ -130,7 +130,7 @@ function getCandidates(
 
 export function rankRelatedPosts(
   posts: PostSummary[],
-  current: PostSummary,
+  current: Pick<PostSummary, "slug" | "category" | "tags" | "title">,
   {
     limit = DEFAULT_RELATED_POST_LIMIT,
     now = new Date(),
@@ -143,7 +143,7 @@ export function rankRelatedPosts(
   const currentTags = toUniqueNormalizedSet(current.tags);
   const currentTokens = tokenizeTitle(current.title);
 
-  return getCandidates(posts, current)
+  return getCandidates(posts, current.slug)
     .map((post): ScoredPost => {
       const hasSameCategory =
         currentCategory.length > 0 &&

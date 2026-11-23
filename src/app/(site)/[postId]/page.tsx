@@ -30,6 +30,11 @@ type PostPageProps = {
   params: Promise<{ postId: string }>;
 };
 
+export async function generateStaticParams() {
+  const posts = await getAllPosts();
+  return posts.map(({ id }) => ({ postId: id }));
+}
+
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
@@ -72,7 +77,13 @@ export default async function PostPage({ params }: PostPageProps) {
   const post = await getPostContent(postId);
   if (!post || !post.published) notFound();
   const posts = await getAllPosts();
-  const relatedPosts = getRelatedPosts(posts, post);
+  const { slug, category, tags, title } = post;
+  const relatedPosts = await getRelatedPosts(posts, {
+    slug,
+    category,
+    tags,
+    title,
+  });
   const headings = extractHeadings(post.body);
   const breadcrumbs = getPostBreadcrumbs(post);
 

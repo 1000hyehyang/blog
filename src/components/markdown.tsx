@@ -154,6 +154,14 @@ function MarkdownImage({ src, alt, title }: ComponentProps<"img">) {
   );
 }
 
+async function cachedHighlightedHtml(
+  code: string,
+  language: NonNullable<ReturnType<typeof getMarkdownCodeLanguage>>,
+) {
+  "use cache";
+  return highlightMarkdownCode(code, language);
+}
+
 async function HighlightedCode({
   className,
   children,
@@ -168,7 +176,9 @@ async function HighlightedCode({
   }
 
   const language = getMarkdownCodeLanguage(className);
-  const highlightedHtml = await highlightMarkdownCode(code, language);
+  const highlightedHtml = language?.shikiLanguage
+    ? await cachedHighlightedHtml(code, language)
+    : null;
 
   return (
     <div className="markdown-code-block group">
