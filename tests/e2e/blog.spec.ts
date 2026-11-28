@@ -1,5 +1,36 @@
 import { expect, test, type Page } from "@playwright/test";
 
+test("the home hero enters before hydration and honors reduced motion", async ({
+  page,
+}) => {
+  await page.route("**/_next/static/**/*.js*", (route) => route.abort());
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+
+  const description = page.locator("[data-hero-desc]");
+  const firstWord = page.locator("[data-hero-word]").first();
+  await expect(firstWord).toBeVisible();
+  for (const text of [firstWord, description]) {
+    const opacities = await text.evaluate((element) => {
+      const [animation] = element.getAnimations();
+      animation.pause();
+      animation.currentTime = 0;
+      const start = getComputedStyle(element).opacity;
+      animation.finish();
+      return [start, getComputedStyle(element).opacity];
+    });
+    expect(opacities).toEqual(["0", "1"]);
+  }
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await expect(firstWord).toBeVisible();
+  for (const text of [firstWord, description]) {
+    await expect(text).toHaveCSS("animation-name", "none");
+    await expect(text).toHaveCSS("opacity", "1");
+  }
+});
+
 async function getVisibleSearchbox(page: Page) {
   const menuButton = page.getByRole("button", { name: "메뉴 열기" });
   if (await menuButton.isVisible()) {
